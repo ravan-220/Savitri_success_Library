@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Echo AI</title>
+
+<style>
+
+body{
+margin:0;
+background:black;
+color:white;
+font-family:Arial;
+display:flex;
+align-items:center;
+justify-content:center;
+height:100vh;
+flex-direction:column;
+}
+
+.signup{
+position:absolute;
+top:20px;
+right:20px;
+font-size:28px;
+cursor:pointer;
+}
+
+.ai-image{
+width:420px;
+filter:drop-shadow(0 0 40px cyan);
+}
+
+#response{
+margin-top:30px;
+font-size:22px;
+text-align:center;
+width:70%;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="signup">⚙️</div>
+
+<img src="ai.png" class="ai-image">
+
+<p id="response">Listening...</p>
+
+<script>
+
+const API_KEY="AIzaSyDG70kKtsFT2BPPDBRlBOxpeHtYu2foGvw";
+
+const responseText=document.getElementById("response");
+
+const recognition=new webkitSpeechRecognition();
+recognition.lang="en-US";
+
+window.onload=()=>{
+recognition.start();
+};
+
+recognition.onresult=function(event){
+
+let speech=event.results[0][0].transcript;
+
+responseText.innerText="You said: "+speech;
+
+sendToAI(speech);
+
+};
+
+async function sendToAI(message){
+
+const url=https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY};
+
+const res=await fetch(url,{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+contents:[{parts:[{text:message}]}]
+})
+});
+
+const data=await res.json();
+
+let reply=data.candidates[0].content.parts[0].text;
+
+responseText.innerText=reply;
+
+const speech=new SpeechSynthesisUtterance(reply);
+window.speechSynthesis.speak(speech);
+
+setTimeout(()=>{
+recognition.start();
+},2000);
+
+}
+
+</script>
+
+</body>
+</html>
