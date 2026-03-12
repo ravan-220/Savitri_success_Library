@@ -7,88 +7,60 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        .glass {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .fade-in { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .sync-indicator {
-            position: fixed;
-            top: 4px;
-            right: 4px;
-            width: 8px;
-            height: 8px;
-            background: #10b981;
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-            z-index: 100;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-
-    <!-- Sync Indicator -->
-    <div id="syncIndicator" class="sync-indicator hidden"></div>
 
     <!-- Login Screen -->
     <div id="loginScreen" class="fixed inset-0 gradient-bg flex items-center justify-center z-50">
         <div class="glass p-8 rounded-2xl w-full max-w-md mx-4 text-center">
             <div class="text-6xl mb-4">📚</div>
             <h1 class="text-3xl font-bold text-white mb-1">Savitri Success Library</h1>
-            <p class="text-white/90 mb-8 text-lg font-medium">Attendance</p>
+            <p class="text-white/90 mb-8 text-lg">Attendance</p>
             
-            <!-- Teacher Login Form -->
+            <!-- Teacher Login -->
             <div id="teacherLoginForm" class="hidden mb-6 text-left">
-                <input type="text" id="adminId" placeholder="Admin ID" class="w-full mb-3 px-4 py-3 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                <input type="password" id="adminPass" placeholder="Password" class="w-full mb-4 px-4 py-3 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <input type="text" id="adminId" placeholder="Admin ID" class="w-full mb-3 px-4 py-3 rounded-lg text-gray-800">
+                <input type="password" id="adminPass" placeholder="Password" class="w-full mb-4 px-4 py-3 rounded-lg text-gray-800">
                 <div class="flex gap-2">
-                    <button onclick="verifyTeacher()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition">Login</button>
-                    <button onclick="backToMain()" class="bg-white/20 text-white px-4 py-3 rounded-lg hover:bg-white/30 transition">Back</button>
+                    <button onclick="verifyTeacher()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold">Login</button>
+                    <button onclick="backToMain()" class="bg-white/20 text-white px-4 py-3 rounded-lg">Back</button>
                 </div>
             </div>
 
-            <!-- Student Login Form -->
+            <!-- Student Login -->
             <div id="studentLoginForm" class="hidden mb-6 text-left">
-                <select id="studentSelect" class="w-full mb-3 px-4 py-3 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <select id="studentSelect" class="w-full mb-3 px-4 py-3 rounded-lg text-gray-800">
                     <option value="">Select Your Name</option>
                 </select>
-                <input type="password" id="studentPass" placeholder="Enter Your Roll Number" class="w-full mb-4 px-4 py-3 rounded-lg text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <input type="password" id="studentPass" placeholder="Enter Your Roll Number" class="w-full mb-3 px-4 py-3 rounded-lg text-gray-800">
+                
+                <!-- Sync Section -->
+                <div class="bg-white/10 p-3 rounded-lg mb-3">
+                    <p class="text-white text-sm mb-2">⚠️ No students found? Scan Teacher's QR Code:</p>
+                    <button onclick="startStudentSync()" class="w-full bg-yellow-500 text-white py-2 rounded-lg font-bold text-sm">
+                        📷 Scan Teacher's Data QR
+                    </button>
+                </div>
+                
                 <div class="flex gap-2">
-                    <button onclick="verifyStudent()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition">Login</button>
-                    <button onclick="backToMain()" class="bg-white/20 text-white px-4 py-3 rounded-lg hover:bg-white/30 transition">Back</button>
+                    <button onclick="verifyStudent()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold">Login</button>
+                    <button onclick="backToMain()" class="bg-white/20 text-white px-4 py-3 rounded-lg">Back</button>
                 </div>
             </div>
 
             <div id="mainButtons" class="space-y-4">
-                <button onclick="showTeacherLogin()" class="w-full bg-white text-purple-600 font-bold py-4 rounded-xl hover:bg-gray-100 transition transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
+                <button onclick="showTeacherLogin()" class="w-full bg-white text-purple-600 font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2">
                     <span class="text-2xl">👨‍🏫</span>
-                    <div class="text-left">
-                        <div class="text-sm opacity-70">Login as</div>
-                        <div class="text-lg">Teacher / Admin</div>
-                    </div>
+                    <div class="text-left"><div class="text-sm opacity-70">Login as</div><div class="text-lg">Teacher</div></div>
                 </button>
-                
-                <button onclick="showStudentLogin()" class="w-full bg-white/20 text-white font-bold py-4 rounded-xl hover:bg-white/30 transition transform hover:scale-105 border border-white/30 flex items-center justify-center gap-2">
+                <button onclick="showStudentLogin()" class="w-full bg-white/20 text-white font-bold py-4 rounded-xl border border-white/30 flex items-center justify-center gap-2">
                     <span class="text-2xl">🎓</span>
-                    <div class="text-left">
-                        <div class="text-sm opacity-70">Login as</div>
-                        <div class="text-lg">Student</div>
-                    </div>
+                    <div class="text-left"><div class="text-sm opacity-70">Login as</div><div class="text-lg">Student</div></div>
                 </button>
             </div>
         </div>
@@ -105,28 +77,26 @@
                         <p class="text-xs opacity-80" id="currentDate"></p>
                     </div>
                 </div>
-                <button onclick="logout()" class="bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition text-sm font-semibold">
-                    Logout
-                </button>
+                <button onclick="logout()" class="bg-white/20 px-4 py-2 rounded-lg text-sm font-semibold">Logout</button>
             </div>
         </nav>
 
         <div class="max-w-6xl mx-auto p-4 space-y-6">
-            <!-- Stats Cards -->
+            <!-- Stats -->
             <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="bg-white p-4 rounded-xl shadow-sm">
                     <div class="text-3xl font-bold text-purple-600" id="totalStudents">0</div>
                     <div class="text-sm text-gray-600">Total Students</div>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="bg-white p-4 rounded-xl shadow-sm">
                     <div class="text-3xl font-bold text-green-600" id="presentToday">0</div>
                     <div class="text-sm text-gray-600">Present Today</div>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="bg-white p-4 rounded-xl shadow-sm">
                     <div class="text-3xl font-bold text-red-600" id="absentToday">0</div>
                     <div class="text-sm text-gray-600">Absent Today</div>
                 </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                <div class="bg-white p-4 rounded-xl shadow-sm">
                     <div class="text-3xl font-bold text-blue-600" id="avgTime">0h</div>
                     <div class="text-sm text-gray-600">Avg Time</div>
                 </div>
@@ -134,108 +104,86 @@
 
             <!-- Actions -->
             <div class="flex flex-wrap gap-3">
-                <button onclick="showSection('addStudent')" class="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition flex items-center gap-2 shadow-lg">
-                    <span>➕</span> Add Student
-                </button>
-                <button onclick="showSection('studentList')" class="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition flex items-center gap-2 shadow-lg">
-                    <span>👥</span> View Students
-                </button>
-                <button onclick="generateClassQR()" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition flex items-center gap-2 shadow-lg">
-                    <span>📱</span> Class QR Code
-                </button>
-                <button onclick="exportData()" class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition flex items-center gap-2 shadow-lg">
-                    <span>📊</span> Export Excel
-                </button>
-                <button onclick="clearAllData()" class="bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition flex items-center gap-2 shadow-lg">
-                    <span>🗑️</span> Clear All
-                </button>
+                <button onclick="showSection('addStudent')" class="bg-purple-600 text-white px-6 py-3 rounded-xl shadow-lg">➕ Add Student</button>
+                <button onclick="showSection('studentList')" class="bg-indigo-600 text-white px-6 py-3 rounded-xl shadow-lg">👥 View Students</button>
+                <button onclick="generateClassQR()" class="bg-blue-600 text-white px-6 py-3 rounded-xl shadow-lg">📱 Class QR</button>
+                <button onclick="generateDataQR()" class="bg-orange-600 text-white px-6 py-3 rounded-xl shadow-lg">📤 Share Data QR</button>
+                <button onclick="exportData()" class="bg-green-600 text-white px-6 py-3 rounded-xl shadow-lg">📊 Export Excel</button>
+                <button onclick="clearAllData()" class="bg-red-600 text-white px-6 py-3 rounded-xl shadow-lg">🗑️ Clear All</button>
             </div>
 
-            <!-- Add Student Form -->
-            <div id="addStudentSection" class="hidden bg-white rounded-2xl shadow-lg p-6 border border-gray-100 fade-in">
-                <h3 class="text-xl font-bold mb-4 text-gray-800">Add New Student</h3>
+            <!-- Add Student -->
+            <div id="addStudentSection" class="hidden bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-xl font-bold mb-4">Add New Student</h3>
                 <div class="grid md:grid-cols-3 gap-4">
-                    <input type="text" id="studentName" placeholder="Student Name" class="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                    <input type="text" id="studentRoll" placeholder="Roll Number (This is Password)" class="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                    <input type="text" id="studentClass" placeholder="Class/Subject" class="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <input type="text" id="studentName" placeholder="Student Name" class="border rounded-lg px-4 py-3">
+                    <input type="text" id="studentRoll" placeholder="Roll Number (Password)" class="border rounded-lg px-4 py-3">
+                    <input type="text" id="studentClass" placeholder="Class" class="border rounded-lg px-4 py-3">
                 </div>
-                <p class="text-sm text-gray-500 mt-2">💡 Note: Roll Number will be the student's password</p>
+                <p class="text-sm text-gray-500 mt-2">💡 Roll Number = Student's Password</p>
                 <div class="flex gap-3 mt-4">
-                    <button onclick="addStudent()" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition">
-                        Save Student
-                    </button>
-                    <button onclick="hideSection('addStudent')" class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition">
-                        Cancel
-                    </button>
+                    <button onclick="addStudent()" class="bg-purple-600 text-white px-6 py-3 rounded-lg">Save</button>
+                    <button onclick="hideSection('addStudent')" class="bg-gray-300 px-6 py-3 rounded-lg">Cancel</button>
                 </div>
             </div>
 
-            <!-- Student List Section -->
-            <div id="studentListSection" class="hidden bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100 fade-in">
-                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-gray-800">All Students</h3>
-                    <button onclick="hideSection('studentList')" class="text-gray-500 hover:text-gray-700">
-                        ✕ Close
-                    </button>
+            <!-- Student List -->
+            <div id="studentListSection" class="hidden bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="p-4 border-b flex justify-between">
+                    <h3 class="text-lg font-bold">All Students</h3>
+                    <button onclick="hideSection('studentList')" class="text-gray-500">✕</button>
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Roll Number (Password)</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Class</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentTable" class="divide-y divide-gray-100">
-                            <!-- Dynamic content -->
-                        </tbody>
-                    </table>
-                </div>
-                <div id="noStudents" class="hidden p-8 text-center text-gray-500">
-                    <div class="text-4xl mb-2">👥</div>
-                    <p>No students added yet</p>
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Name</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Roll (Password)</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Class</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTable" class="divide-y"></tbody>
+                </table>
+            </div>
+
+            <!-- Data QR Modal (For Sharing) -->
+            <div id="dataQRModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center">
+                    <h3 class="text-xl font-bold mb-2">📤 Share Student Data</h3>
+                    <p class="text-gray-600 mb-4">Students scan this to get all names</p>
+                    <div id="dataQR" class="flex justify-center mb-4"></div>
+                    <p class="text-sm text-gray-500 mb-4">This QR contains all student names & roll numbers</p>
+                    <button onclick="closeDataQR()" class="bg-gray-600 text-white px-6 py-2 rounded-lg">Close</button>
                 </div>
             </div>
 
-            <!-- QR Modal -->
+            <!-- Class QR Modal -->
             <div id="qrModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center">
                     <h3 class="text-xl font-bold mb-4">Class QR Code</h3>
-                    <p class="text-gray-600 mb-4">Students scan this to mark attendance</p>
                     <div id="classQR" class="flex justify-center mb-4"></div>
-                    <button onclick="closeQR()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">Close</button>
+                    <button onclick="closeQR()" class="bg-gray-600 text-white px-6 py-2 rounded-lg">Close</button>
                 </div>
             </div>
 
             <!-- Attendance Table -->
-            <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
-                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-gray-800">Attendance Records</h3>
-                    <input type="date" id="dateFilter" onchange="renderAttendanceTable()" class="border border-gray-300 rounded-lg px-3 py-1 text-sm">
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                <div class="p-4 border-b flex justify-between">
+                    <h3 class="text-lg font-bold">Attendance Records</h3>
+                    <input type="date" id="dateFilter" onchange="renderAttendanceTable()" class="border rounded-lg px-3 py-1 text-sm">
                 </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Student</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">In Time</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Out Time</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Duration</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="attendanceTable" class="divide-y divide-gray-100">
-                            <!-- Dynamic content -->
-                        </tbody>
-                    </table>
-                </div>
-                <div id="emptyState" class="hidden p-8 text-center text-gray-500">
-                    <div class="text-4xl mb-2">📋</div>
-                    <p>No attendance records found</p>
-                </div>
+                <table class="w-full">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Student</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Status</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">In Time</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Out Time</th>
+                            <th class="px-4 py-3 text-left text-sm font-semibold">Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody id="attendanceTable" class="divide-y"></tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -251,174 +199,128 @@
                         <p class="text-xs opacity-80" id="studentNavName">Welcome</p>
                     </div>
                 </div>
-                <button onclick="logout()" class="bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition text-sm font-semibold">
-                    Logout
-                </button>
+                <button onclick="logout()" class="bg-white/20 px-4 py-2 rounded-lg text-sm font-semibold">Logout</button>
             </div>
         </nav>
 
         <div class="max-w-md mx-auto p-4 space-y-6">
-            <!-- Student Profile -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 text-center border border-gray-100">
+            <!-- Profile -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 text-center">
                 <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">👤</div>
-                <h3 class="text-xl font-bold text-gray-800" id="studentDisplayName">Student Name</h3>
+                <h3 class="text-xl font-bold" id="studentDisplayName">Name</h3>
                 <p class="text-gray-600" id="studentDisplayRoll">Roll: -</p>
-                <p class="text-sm text-purple-600 mt-1" id="studentDisplayClass">Class: -</p>
+                <p class="text-sm text-purple-600" id="studentDisplayClass">Class: -</p>
             </div>
 
-            <!-- Status Card -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+            <!-- Status -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
                 <h3 class="text-lg font-bold mb-4">My Today's Status</h3>
-                <div id="myStatus" class="space-y-3">
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span class="text-gray-600">Status</span>
-                        <span class="px-3 py-1 rounded-full text-sm font-bold bg-gray-200 text-gray-600" id="myStatusBadge">Not Marked</span>
+                <div class="space-y-3">
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span>Status</span>
+                        <span id="myStatusBadge" class="px-3 py-1 rounded-full text-sm font-bold bg-gray-200">Not Marked</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span class="text-gray-600">Check In</span>
-                        <span class="font-mono font-semibold" id="myCheckIn">--:--</span>
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span>Check In</span>
+                        <span id="myCheckIn" class="font-mono">--:--</span>
                     </div>
-                    <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                        <span class="text-gray-600">Check Out</span>
-                        <span class="font-mono font-semibold" id="myCheckOut">--:--</span>
+                    <div class="flex justify-between p-3 bg-gray-50 rounded-lg">
+                        <span>Check Out</span>
+                        <span id="myCheckOut" class="font-mono">--:--</span>
                     </div>
                 </div>
-                
-                <!-- Log In / Log Out Button -->
-                <div class="mt-6">
-                    <button id="actionBtn" onclick="handleAttendanceAction()" class="w-full py-4 rounded-xl font-bold text-lg transition transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
-                        🟢 Log In
-                    </button>
-                </div>
+                <button id="actionBtn" onclick="handleAttendanceAction()" class="w-full mt-6 py-4 rounded-xl font-bold text-lg bg-green-600 text-white shadow-lg">
+                    🟢 Log In
+                </button>
             </div>
 
-            <!-- Scanner (Optional) -->
-            <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
-                <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
-                    <span>📷</span>
-                    Scan QR Code (Optional)
-                </h3>
+            <!-- Scanner -->
+            <div class="bg-white rounded-2xl shadow-lg p-6">
+                <h3 class="text-lg font-bold mb-4">📷 Scan QR Code</h3>
                 <div id="reader" class="rounded-xl overflow-hidden"></div>
-                <button onclick="toggleScanner()" id="scannerBtn" class="mt-4 w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">
+                <button onclick="toggleScanner()" id="scannerBtn" class="mt-4 w-full bg-blue-600 text-white py-3 rounded-xl font-bold">
                     Start Camera
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-2">
-        <span id="toastIcon">✅</span>
-        <span id="toastMessage">Success!</span>
+    <!-- Sync Scanner Modal (For Students) -->
+    <div id="syncModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center">
+            <h3 class="text-xl font-bold mb-4">📥 Scan Teacher's Data QR</h3>
+            <p class="text-gray-600 mb-4">Point camera at teacher's "Share Data QR"</p>
+            <div id="syncReader" class="rounded-xl overflow-hidden mb-4"></div>
+            <button onclick="closeSyncModal()" class="bg-gray-600 text-white px-6 py-2 rounded-lg">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50">
+        <span id="toastIcon">✅</span> <span id="toastMessage">Success!</span>
     </div>
 
     <script>
-        // Admin Credentials
+        // Admin
         const ADMIN_ID = 'admin';
         const ADMIN_PASS = '1234';
 
-        // Storage
-        const STORAGE_KEY = 'savitri_library_data_v3';
+        // Storage Keys
+        const TEACHER_DATA_KEY = 'savitri_teacher_data';
+        const STUDENT_SYNC_KEY = 'savitri_student_sync';
+        const CURRENT_USER_KEY = 'savitri_current_user';
+
         let appData = { students: [], attendance: [], lastSync: Date.now() };
         let currentUser = null;
         let html5QrCode = null;
+        let syncScanner = null;
         let isScannerRunning = false;
-        let syncInterval = null;
 
         // Initialize
         window.onload = function() {
             loadData();
-            startSync();
-            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { 
-                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
-            });
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
             document.getElementById('dateFilter').valueAsDate = new Date();
             updateStudentSelect();
-            
-            // Check if already logged in
-            const savedUser = localStorage.getItem('savitri_currentUser_v3');
+
+            const savedUser = localStorage.getItem(CURRENT_USER_KEY);
             if (savedUser) {
                 const user = JSON.parse(savedUser);
                 if (user.role === 'teacher') {
                     openTeacherDashboard();
                 } else {
-                    // Verify student still exists
                     const studentExists = appData.students.find(s => s.id === user.id);
-                    if (studentExists) {
-                        loginStudent(studentExists);
-                    } else {
-                        localStorage.removeItem('savitri_currentUser_v3');
-                        showToast('❌ Your record was deleted. Contact teacher.', 'error');
-                    }
+                    if (studentExists) loginStudent(studentExists);
                 }
             }
         };
 
-        // Real-time Sync System
-        function startSync() {
-            // Show sync indicator
-            document.getElementById('syncIndicator').classList.remove('hidden');
-            
-            // Listen for changes from other tabs/devices
-            window.addEventListener('storage', function(e) {
-                if (e.key === STORAGE_KEY) {
-                    loadData();
-                    refreshUI();
-                    showToast('🔄 Data Updated');
-                }
-            });
-            
-            // Periodic sync every 2 seconds
-            syncInterval = setInterval(() => {
-                loadData();
-                refreshUI();
-            }, 2000);
-        }
-
         function loadData() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                const newData = JSON.parse(saved);
-                // Only update if data changed
-                if (JSON.stringify(newData) !== JSON.stringify(appData)) {
-                    appData = newData;
-                    return true; // Data changed
-                }
+            // Try to load from teacher data first
+            const teacherData = localStorage.getItem(TEACHER_DATA_KEY);
+            const studentData = localStorage.getItem(STUDENT_SYNC_KEY);
+            
+            if (teacherData) {
+                appData = JSON.parse(teacherData);
+            } else if (studentData) {
+                appData = JSON.parse(studentData);
             }
-            return false;
         }
 
         function saveData() {
-            appData.lastSync = Date.now();
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
-            // Trigger sync for other tabs
-            window.dispatchEvent(new StorageEvent('storage', { key: STORAGE_KEY }));
+            const data = JSON.stringify(appData);
+            localStorage.setItem(TEACHER_DATA_KEY, data);
+            localStorage.setItem(STUDENT_SYNC_KEY, data);
         }
 
-        function refreshUI() {
-            if (!currentUser) return;
-            
-            if (currentUser.role === 'teacher') {
-                updateTeacherStats();
-                renderAttendanceTable();
-                if (!document.getElementById('studentListSection').classList.contains('hidden')) {
-                    renderStudentList();
-                }
-            } else {
-                // Update student dropdown in case new students added
-                updateStudentSelect();
-                updateMyStatus();
-            }
-        }
-
-        // Login Screen Functions
+        // Login Functions
         function showTeacherLogin() {
             document.getElementById('mainButtons').classList.add('hidden');
             document.getElementById('teacherLoginForm').classList.remove('hidden');
         }
 
         function showStudentLogin() {
-            updateStudentSelect(); // Refresh list
+            updateStudentSelect();
             document.getElementById('mainButtons').classList.add('hidden');
             document.getElementById('studentLoginForm').classList.remove('hidden');
         }
@@ -431,7 +333,6 @@
 
         function updateStudentSelect() {
             const select = document.getElementById('studentSelect');
-            const currentValue = select.value; // Save current selection
             select.innerHTML = '<option value="">Select Your Name</option>';
             
             appData.students.forEach(student => {
@@ -440,30 +341,18 @@
                 option.textContent = `${student.name} (Roll: ${student.roll})`;
                 select.appendChild(option);
             });
-            
-            // Restore selection if still valid
-            if (currentValue) {
-                try {
-                    const currentStudent = JSON.parse(currentValue);
-                    const stillExists = appData.students.find(s => s.id === currentStudent.id);
-                    if (stillExists) {
-                        select.value = currentValue;
-                    }
-                } catch(e) {}
-            }
         }
 
-        // Verify Functions
         function verifyTeacher() {
             const id = document.getElementById('adminId').value.trim();
             const pass = document.getElementById('adminPass').value.trim();
             
             if (id === ADMIN_ID && pass === ADMIN_PASS) {
-                currentUser = { role: 'teacher', id: 'admin', name: 'Admin' };
-                localStorage.setItem('savitri_currentUser_v3', JSON.stringify(currentUser));
+                currentUser = { role: 'teacher' };
+                localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
                 openTeacherDashboard();
             } else {
-                showToast('❌ Invalid ID or Password', 'error');
+                showToast('❌ Invalid credentials', 'error');
             }
         }
 
@@ -472,73 +361,63 @@
             const pass = document.getElementById('studentPass').value.trim();
             
             if (!select.value) {
-                showToast('❌ Please select your name', 'error');
+                showToast('❌ Select your name', 'error');
                 return;
             }
             
-            const studentData = JSON.parse(select.value);
-            
-            // Password is Roll Number
-            if (pass !== studentData.roll) {
-                showToast('❌ Wrong Password (Use your Roll Number)', 'error');
+            const student = JSON.parse(select.value);
+            if (pass !== student.roll) {
+                showToast('❌ Wrong password (Use Roll Number)', 'error');
                 return;
             }
             
-            loginStudent(studentData);
+            loginStudent(student);
         }
 
-        function loginStudent(studentData) {
-            currentUser = { 
-                role: 'student', 
-                id: studentData.id,
-                name: studentData.name,
-                roll: studentData.roll,
-                class: studentData.class,
-                studentData: studentData
-            };
-            localStorage.setItem('savitri_currentUser_v3', JSON.stringify(currentUser));
+        function loginStudent(student) {
+            currentUser = { role: 'student', ...student };
+            localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(currentUser));
             
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('studentDashboard').classList.remove('hidden');
             
-            // Display student info
-            document.getElementById('studentDisplayName').textContent = studentData.name;
-            document.getElementById('studentDisplayRoll').textContent = 'Roll: ' + studentData.roll;
-            document.getElementById('studentDisplayClass').textContent = 'Class: ' + (studentData.class || '-');
-            document.getElementById('studentNavName').textContent = 'Welcome, ' + studentData.name;
+            document.getElementById('studentDisplayName').textContent = student.name;
+            document.getElementById('studentDisplayRoll').textContent = 'Roll: ' + student.roll;
+            document.getElementById('studentDisplayClass').textContent = 'Class: ' + (student.class || '-');
+            document.getElementById('studentNavName').textContent = 'Welcome, ' + student.name;
             
             updateMyStatus();
-            showToast('✅ Welcome ' + studentData.name + '!');
         }
 
         function openTeacherDashboard() {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('teacherDashboard').classList.remove('hidden');
-            updateTeacherStats();
+            updateStats();
             renderAttendanceTable();
         }
 
-        // Logout
         function logout() {
             if (html5QrCode && isScannerRunning) {
-                html5QrCode.stop().then(() => { isScannerRunning = false; }).catch(() => {});
+                html5QrCode.stop().catch(() => {});
+            }
+            if (syncScanner) {
+                syncScanner.stop().catch(() => {});
             }
             
             currentUser = null;
-            localStorage.removeItem('savitri_currentUser_v3');
+            localStorage.removeItem(CURRENT_USER_KEY);
             
             document.getElementById('teacherDashboard').classList.add('hidden');
             document.getElementById('studentDashboard').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
             
-            // Reset forms
             document.getElementById('adminId').value = '';
             document.getElementById('adminPass').value = '';
             document.getElementById('studentSelect').value = '';
             document.getElementById('studentPass').value = '';
             backToMain();
             
-            showToast('👋 Logged out successfully');
+            showToast('👋 Logged out');
         }
 
         // Teacher Functions
@@ -563,33 +442,28 @@
             const cls = document.getElementById('studentClass').value.trim();
 
             if (!name || !roll) {
-                showToast('❌ Please fill required fields', 'error');
+                showToast('❌ Fill required fields', 'error');
                 return;
             }
 
             if (appData.students.find(s => s.roll === roll)) {
-                showToast('❌ Roll number already exists', 'error');
+                showToast('❌ Roll number exists', 'error');
                 return;
             }
 
-            const student = {
+            appData.students.push({
                 id: Date.now(),
-                name,
-                roll,
-                class: cls,
-                createdAt: new Date().toISOString()
-            };
-
-            appData.students.push(student);
-            saveData();
+                name, roll, class: cls
+            });
             
-            showToast('✅ Student added! Password is: ' + roll);
+            saveData();
+            showToast('✅ Student added! Password: ' + roll);
+            
             document.getElementById('studentName').value = '';
             document.getElementById('studentRoll').value = '';
             document.getElementById('studentClass').value = '';
             hideSection('addStudent');
-            updateTeacherStats();
-            renderAttendanceTable();
+            updateStats();
             updateStudentSelect();
         }
 
@@ -597,22 +471,15 @@
             const tbody = document.getElementById('studentTable');
             tbody.innerHTML = '';
             
-            if (appData.students.length === 0) {
-                document.getElementById('noStudents').classList.remove('hidden');
-                return;
-            }
-            
-            document.getElementById('noStudents').classList.add('hidden');
-            
-            appData.students.forEach(student => {
+            appData.students.forEach(s => {
                 const row = document.createElement('tr');
-                row.className = 'hover:bg-gray-50 transition';
+                row.className = 'hover:bg-gray-50';
                 row.innerHTML = `
-                    <td class="px-4 py-3 font-semibold text-gray-800">${student.name}</td>
-                    <td class="px-4 py-3 text-gray-600 font-mono">${student.roll}</td>
-                    <td class="px-4 py-3 text-gray-600">${student.class || '-'}</td>
+                    <td class="px-4 py-3 font-semibold">${s.name}</td>
+                    <td class="px-4 py-3 font-mono">${s.roll}</td>
+                    <td class="px-4 py-3">${s.class || '-'}</td>
                     <td class="px-4 py-3">
-                        <button onclick="deleteStudent(${student.id})" class="text-red-600 hover:text-red-800 text-sm font-semibold">Delete</button>
+                        <button onclick="deleteStudent(${s.id})" class="text-red-600 font-semibold">Delete</button>
                     </td>
                 `;
                 tbody.appendChild(row);
@@ -620,33 +487,26 @@
         }
 
         function deleteStudent(id) {
-            if (confirm('Delete this student?')) {
+            if (confirm('Delete student?')) {
                 appData.students = appData.students.filter(s => s.id !== id);
                 appData.attendance = appData.attendance.filter(a => a.studentId !== id);
                 saveData();
                 renderStudentList();
-                updateTeacherStats();
+                updateStats();
                 renderAttendanceTable();
                 updateStudentSelect();
-                showToast('🗑️ Student deleted');
+                showToast('🗑️ Deleted');
             }
         }
 
+        // QR Functions
         function generateClassQR() {
             document.getElementById('qrModal').classList.remove('hidden');
             document.getElementById('classQR').innerHTML = '';
             
-            const classData = {
-                type: 'class_attendance',
-                timestamp: Date.now()
-            };
-            
             new QRCode(document.getElementById('classQR'), {
-                text: JSON.stringify(classData),
-                width: 200,
-                height: 200,
-                colorDark: "#667eea",
-                colorLight: "#ffffff",
+                text: JSON.stringify({type: 'attendance', time: Date.now()}),
+                width: 200, height: 200
             });
         }
 
@@ -654,114 +514,157 @@
             document.getElementById('qrModal').classList.add('hidden');
         }
 
-        function updateTeacherStats() {
+        // NEW: Generate Data QR for sharing students
+        function generateDataQR() {
+            document.getElementById('dataQRModal').classList.remove('hidden');
+            document.getElementById('dataQR').innerHTML = '';
+            
+            // Create compressed data QR with all students
+            const shareData = {
+                type: 'student_sync',
+                students: appData.students,
+                timestamp: Date.now()
+            };
+            
+            new QRCode(document.getElementById('dataQR'), {
+                text: JSON.stringify(shareData),
+                width: 250, height: 250
+            });
+        }
+
+        function closeDataQR() {
+            document.getElementById('dataQRModal').classList.add('hidden');
+        }
+
+        // NEW: Student Sync Scanner
+        function startStudentSync() {
+            document.getElementById('syncModal').classList.remove('hidden');
+            
+            if (!syncScanner) {
+                syncScanner = new Html5Qrcode("syncReader");
+            }
+            
+            syncScanner.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onSyncSuccess,
+                onSyncError
+            ).catch(err => {
+                showToast('⚠️ Camera error', 'error');
+            });
+        }
+
+        function onSyncSuccess(decodedText) {
+            try {
+                const data = JSON.parse(decodedText);
+                if (data.type === 'student_sync') {
+                    // Save received data
+                    appData.students = data.students;
+                    saveData();
+                    
+                    // Close scanner
+                    syncScanner.stop().then(() => {
+                        document.getElementById('syncModal').classList.add('hidden');
+                        updateStudentSelect();
+                        showToast('✅ Student list updated! ' + data.students.length + ' students found');
+                    });
+                }
+            } catch(e) {
+                showToast('❌ Invalid QR code', 'error');
+            }
+        }
+
+        function onSyncError(error) {}
+
+        function closeSyncModal() {
+            if (syncScanner) {
+                syncScanner.stop().catch(() => {});
+            }
+            document.getElementById('syncModal').classList.add('hidden');
+        }
+
+        function updateStats() {
             const today = new Date().toDateString();
             const todayRecords = appData.attendance.filter(a => new Date(a.date).toDateString() === today);
             
             document.getElementById('totalStudents').textContent = appData.students.length;
             
-            const uniquePresent = new Set(todayRecords.map(r => r.studentId)).size;
-            document.getElementById('presentToday').textContent = uniquePresent;
-            document.getElementById('absentToday').textContent = appData.students.length - uniquePresent;
+            const unique = new Set(todayRecords.map(r => r.studentId)).size;
+            document.getElementById('presentToday').textContent = unique;
+            document.getElementById('absentToday').textContent = appData.students.length - unique;
             
-            const totalMinutes = todayRecords.reduce((acc, r) => {
+            let totalMin = 0;
+            todayRecords.forEach(r => {
                 if (r.checkIn && r.checkOut) {
-                    return acc + ((new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60));
+                    totalMin += (new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60);
                 }
-                return acc;
-            }, 0);
-            
-            const avgHours = todayRecords.length ? Math.round(totalMinutes / todayRecords.length / 60 * 10) / 10 : 0;
-            document.getElementById('avgTime').textContent = avgHours + 'h';
+            });
+            const avg = todayRecords.length ? Math.round(totalMin / todayRecords.length / 60 * 10) / 10 : 0;
+            document.getElementById('avgTime').textContent = avg + 'h';
         }
 
         function renderAttendanceTable() {
             const tbody = document.getElementById('attendanceTable');
-            const dateFilter = document.getElementById('dateFilter').value;
-            const filterDate = dateFilter ? new Date(dateFilter).toDateString() : new Date().toDateString();
+            const filter = document.getElementById('dateFilter').value;
+            const filterDate = filter ? new Date(filter).toDateString() : new Date().toDateString();
             
             tbody.innerHTML = '';
             
-            const filteredRecords = appData.attendance.filter(a => 
+            const records = appData.attendance.filter(a => 
                 new Date(a.date).toDateString() === filterDate
-            ).sort((a, b) => new Date(b.date) - new Date(a.date));
+            ).sort((a, b) => b.id - a.id);
 
-            if (filteredRecords.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
-            } else {
-                document.getElementById('emptyState').classList.add('hidden');
+            records.forEach(r => {
+                const duration = r.checkIn && r.checkOut ? 
+                    Math.round((new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60)) + ' min' : 
+                    (r.checkIn ? 'In Progress' : '--');
                 
-                filteredRecords.forEach(record => {
-                    const row = document.createElement('tr');
-                    row.className = 'hover:bg-gray-50 transition';
-                    
-                    const duration = record.checkIn && record.checkOut ? 
-                        Math.round((new Date(record.checkOut) - new Date(record.checkIn)) / (1000 * 60)) + ' min' : 
-                        (record.checkIn ? 'In Progress' : '--');
-                    
-                    let statusClass = 'bg-gray-100 text-gray-700';
-                    if (record.status === 'Checked Out') statusClass = 'bg-blue-100 text-blue-700';
-                    else if (record.status === 'Checked In') statusClass = 'bg-green-100 text-green-700';
-                    
-                    row.innerHTML = `
-                        <td class="px-4 py-3">
-                            <div class="font-semibold text-gray-800">${record.studentName || 'Unknown'}</div>
-                            <div class="text-sm text-gray-500">Roll: ${record.studentRoll || '-'}</div>
-                        </td>
-                        <td class="px-4 py-3">
-                            <span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">
-                                ${record.status}
-                            </span>
-                        </td>
-                        <td class="px-4 py-3 font-mono text-sm">${record.checkIn ? new Date(record.checkIn).toLocaleTimeString() : '--'}</td>
-                        <td class="px-4 py-3 font-mono text-sm">${record.checkOut ? new Date(record.checkOut).toLocaleTimeString() : '--'}</td>
-                        <td class="px-4 py-3 text-sm text-gray-600">${duration}</td>
-                        <td class="px-4 py-3">
-                            <button onclick="deleteRecord(${record.id})" class="text-red-600 hover:text-red-800 text-sm font-semibold">Delete</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            }
-        }
-
-        function deleteRecord(id) {
-            if (confirm('Delete this record?')) {
-                appData.attendance = appData.attendance.filter(a => a.id !== id);
-                saveData();
-                renderAttendanceTable();
-                updateTeacherStats();
-                showToast('🗑️ Record deleted');
-            }
+                let statusClass = 'bg-gray-100';
+                if (r.status === 'Checked Out') statusClass = 'bg-blue-100 text-blue-700';
+                else if (r.status === 'Checked In') statusClass = 'bg-green-100 text-green-700';
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-4 py-3">
+                        <div class="font-semibold">${r.studentName}</div>
+                        <div class="text-sm text-gray-500">Roll: ${r.studentRoll}</div>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold ${statusClass}">${r.status}</span>
+                    </td>
+                    <td class="px-4 py-3 font-mono text-sm">${r.checkIn ? new Date(r.checkIn).toLocaleTimeString() : '--'}</td>
+                    <td class="px-4 py-3 font-mono text-sm">${r.checkOut ? new Date(r.checkOut).toLocaleTimeString() : '--'}</td>
+                    <td class="px-4 py-3 text-sm">${duration}</td>
+                `;
+                tbody.appendChild(row);
+            });
         }
 
         function exportData() {
-            let csv = 'Date,Student Name,Roll Number,Class,Status,Check In,Check Out,Duration (minutes)\n';
-            
-            appData.attendance.forEach(record => {
-                const duration = record.checkIn && record.checkOut ? 
-                    Math.round((new Date(record.checkOut) - new Date(record.checkIn)) / (1000 * 60)) : '';
-                
-                csv += `${new Date(record.date).toLocaleDateString()},${record.studentName || ''},${record.studentRoll || ''},${record.studentClass || ''},${record.status},${record.checkIn ? new Date(record.checkIn).toLocaleTimeString() : ''},${record.checkOut ? new Date(record.checkOut).toLocaleTimeString() : ''},${duration}\n`;
+            let csv = 'Date,Name,Roll,Class,Status,In,Out,Duration\n';
+            appData.attendance.forEach(r => {
+                const dur = r.checkIn && r.checkOut ? 
+                    Math.round((new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60)) : '';
+                csv += `${new Date(r.date).toLocaleDateString()},${r.studentName},${r.studentRoll},${r.studentClass || ''},${r.status},${r.checkIn || ''},${r.checkOut || ''},${dur}\n`;
             });
             
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
+            const blob = new Blob([csv], {type: 'text/csv'});
             const a = document.createElement('a');
-            a.href = url;
+            a.href = URL.createObjectURL(blob);
             a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
             a.click();
-            showToast('📊 Excel file downloaded!');
+            showToast('📊 Downloaded!');
         }
 
         function clearAllData() {
-            if (confirm('⚠️ WARNING: Delete ALL data?')) {
+            if (confirm('Delete ALL data?')) {
                 appData = { students: [], attendance: [], lastSync: Date.now() };
                 saveData();
-                updateTeacherStats();
+                updateStats();
                 renderAttendanceTable();
                 updateStudentSelect();
-                showToast('🗑️ All data cleared');
+                showToast('🗑️ Cleared');
             }
         }
 
@@ -775,48 +678,41 @@
                 html5QrCode.start(
                     { facingMode: "environment" },
                     { fps: 10, qrbox: { width: 250, height: 250 } },
-                    onScanSuccess,
-                    onScanError
+                    (text) => {
+                        try {
+                            const data = JSON.parse(text);
+                            if (data.type === 'attendance') handleAttendance();
+                        } catch(e) { handleAttendance(); }
+                    },
+                    () => {}
                 ).then(() => {
                     isScannerRunning = true;
                     btn.textContent = 'Stop Camera';
-                    btn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                    btn.classList.add('bg-red-600', 'hover:bg-red-700');
-                }).catch(() => showToast('⚠️ Camera access denied', 'error'));
+                    btn.classList.replace('bg-blue-600', 'bg-red-600');
+                }).catch(() => showToast('⚠️ Camera error', 'error'));
             } else {
                 html5QrCode.stop().then(() => {
                     isScannerRunning = false;
                     btn.textContent = 'Start Camera';
-                    btn.classList.remove('bg-red-600', 'hover:bg-red-700');
-                    btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                }).catch(() => {});
+                    btn.classList.replace('bg-red-600', 'bg-blue-600');
+                });
             }
         }
 
-        function onScanSuccess(decodedText) {
-            try {
-                const data = JSON.parse(decodedText);
-                if (data.type === 'class_attendance') handleAttendanceAction();
-            } catch (e) { handleAttendanceAction(); }
-        }
-
-        function onScanError(error) {}
-
-        function handleAttendanceAction() {
+        function handleAttendance() {
             const today = new Date().toDateString();
-            const studentId = currentUser.id;
+            const sid = currentUser.id;
             
-            let record = appData.attendance.find(a => 
-                a.studentId === studentId && new Date(a.date).toDateString() === today
+            let rec = appData.attendance.find(a => 
+                a.studentId === sid && new Date(a.date).toDateString() === today
             );
             
             const now = new Date().toISOString();
             
-            if (!record) {
-                // Log In
-                record = {
+            if (!rec) {
+                rec = {
                     id: Date.now(),
-                    studentId: currentUser.id,
+                    studentId: sid,
                     studentName: currentUser.name,
                     studentRoll: currentUser.roll,
                     studentClass: currentUser.class,
@@ -825,17 +721,16 @@
                     checkIn: now,
                     checkOut: null
                 };
-                appData.attendance.push(record);
+                appData.attendance.push(rec);
                 saveData();
-                showToast('✅ Logged In successfully!');
-            } else if (!record.checkOut) {
-                // Log Out
-                record.checkOut = now;
-                record.status = 'Checked Out';
+                showToast('✅ Logged In!');
+            } else if (!rec.checkOut) {
+                rec.checkOut = now;
+                rec.status = 'Checked Out';
                 saveData();
-                showToast('✅ Logged Out successfully!');
+                showToast('✅ Logged Out!');
             } else {
-                showToast('⚠️ Already completed today!', 'error');
+                showToast('⚠️ Already done!', 'error');
                 return;
             }
             
@@ -844,57 +739,49 @@
 
         function updateMyStatus() {
             const today = new Date().toDateString();
-            const studentId = currentUser.id;
+            const sid = currentUser.id;
             
-            const record = appData.attendance.find(a => 
-                a.studentId === studentId && new Date(a.date).toDateString() === today
+            const rec = appData.attendance.find(a => 
+                a.studentId === sid && new Date(a.date).toDateString() === today
             );
             
             const btn = document.getElementById('actionBtn');
             
-            if (record) {
-                const badge = document.getElementById('myStatusBadge');
-                
-                if (record.checkOut) {
-                    badge.textContent = 'Completed';
-                    badge.className = 'px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-700';
+            if (rec) {
+                if (rec.checkOut) {
+                    document.getElementById('myStatusBadge').textContent = 'Completed';
+                    document.getElementById('myStatusBadge').className = 'px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-700';
                     btn.textContent = '✓ Completed';
-                    btn.className = 'w-full py-4 rounded-xl font-bold text-lg bg-gray-400 text-white cursor-not-allowed';
+                    btn.className = 'w-full mt-6 py-4 rounded-xl font-bold text-lg bg-gray-400 text-white';
                     btn.disabled = true;
                 } else {
-                    badge.textContent = 'Checked In';
-                    badge.className = 'px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-700';
+                    document.getElementById('myStatusBadge').textContent = 'Checked In';
+                    document.getElementById('myStatusBadge').className = 'px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-700';
                     btn.textContent = '🔴 Log Out';
-                    btn.className = 'w-full py-4 rounded-xl font-bold text-lg bg-red-600 text-white hover:bg-red-700 transition transform hover:scale-105 shadow-lg flex items-center justify-center gap-2';
+                    btn.className = 'w-full mt-6 py-4 rounded-xl font-bold text-lg bg-red-600 text-white shadow-lg';
                     btn.disabled = false;
                 }
                 
-                document.getElementById('myCheckIn').textContent = record.checkIn ? new Date(record.checkIn).toLocaleTimeString() : '--:--';
-                document.getElementById('myCheckOut').textContent = record.checkOut ? new Date(record.checkOut).toLocaleTimeString() : '--:--';
+                document.getElementById('myCheckIn').textContent = rec.checkIn ? new Date(rec.checkIn).toLocaleTimeString() : '--:--';
+                document.getElementById('myCheckOut').textContent = rec.checkOut ? new Date(rec.checkOut).toLocaleTimeString() : '--:--';
             } else {
                 document.getElementById('myStatusBadge').textContent = 'Not Marked';
-                document.getElementById('myStatusBadge').className = 'px-3 py-1 rounded-full text-sm font-bold bg-gray-200 text-gray-600';
+                document.getElementById('myStatusBadge').className = 'px-3 py-1 rounded-full text-sm font-bold bg-gray-200';
                 btn.textContent = '🟢 Log In';
-                btn.className = 'w-full py-4 rounded-xl font-bold text-lg bg-green-600 text-white hover:bg-green-700 transition transform hover:scale-105 shadow-lg flex items-center justify-center gap-2';
+                btn.className = 'w-full mt-6 py-4 rounded-xl font-bold text-lg bg-green-600 text-white shadow-lg';
                 btn.disabled = false;
                 document.getElementById('myCheckIn').textContent = '--:--';
                 document.getElementById('myCheckOut').textContent = '--:--';
             }
         }
 
-        // Utility
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            document.getElementById('toastMessage').textContent = message;
+        function showToast(msg, type='success') {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = msg;
             document.getElementById('toastIcon').textContent = type === 'error' ? '❌' : '✅';
-            toast.classList.remove('translate-y-20', 'opacity-0');
-            setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
         }
-
-        window.onbeforeunload = function() {
-            if (html5QrCode && isScannerRunning) html5QrCode.stop().catch(() => {});
-            if (syncInterval) clearInterval(syncInterval);
-        };
     </script>
 </body>
 </html>
