@@ -7,19 +7,49 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, set, push, onValue, remove, query, orderByChild, equalTo, update, get } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        
+        // Your Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6K4XYLzmvUF-qfm_6YM4vATwKfQQ5ZVA",
+            authDomain: "savitri-library.firebaseapp.com",
+            projectId: "savitri-library",
+            storageBucket: "savitri-library.firebasestorage.app",
+            messagingSenderId: "77666381914",
+            appId: "1:77666381914:web:3fcedc130fc706c6416863",
+            measurementId: "G-28RJRZTD78",
+            databaseURL: "https://savitri-library-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        
+        window.firebaseDB = db;
+        window.firebaseRefs = { ref, set, push, onValue, remove, query, orderByChild, equalTo, update, get };
+    </script>
+    
     <style>
         body { font-family: 'Inter', sans-serif; }
         .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
         .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
-        .loading { animation: spin 1s linear infinite; }
-        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .sync-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
 
+    <!-- Connection Status -->
+    <div id="connectionStatus" class="fixed top-2 right-2 z-50 flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-lg text-xs font-bold">
+        <span id="statusDot" class="w-2 h-2 rounded-full bg-yellow-500"></span>
+        <span id="statusText">Connecting...</span>
+    </div>
+
     <!-- Login Screen -->
-    <div id="loginScreen" class="fixed inset-0 gradient-bg flex items-center justify-center z-50">
+    <div id="loginScreen" class="fixed inset-0 gradient-bg flex items-center justify-center z-40">
         <div class="glass p-6 rounded-2xl w-full max-w-md mx-4 text-center">
             <div class="text-5xl mb-3">📚</div>
             <h1 class="text-2xl font-bold text-white mb-1">Savitri Success Library</h1>
@@ -37,18 +67,11 @@
 
             <!-- Student Login -->
             <div id="studentLoginForm" class="hidden mb-4 text-left">
+                <div id="loadingStudents" class="text-white text-center mb-2 hidden">Loading students...</div>
                 <select id="studentSelect" class="w-full mb-2 px-4 py-3 rounded-lg text-gray-800 text-lg">
                     <option value="">👤 Select Your Name</option>
                 </select>
-                <input type="password" id="studentPass" placeholder="🔑 Enter Roll Number (Password)" class="w-full mb-3 px-4 py-3 rounded-lg text-gray-800">
-                
-                <!-- Sync Option -->
-                <div class="bg-white/20 p-3 rounded-lg mb-3">
-                    <p class="text-white text-sm mb-2">⚠️ No names in list?</p>
-                    <button onclick="startStudentSync()" class="w-full bg-yellow-500 text-white py-2 rounded-lg font-bold">
-                        📷 Scan Teacher's QR Code
-                    </button>
-                </div>
+                <input type="password" id="studentPass" placeholder="🔑 Enter Roll Number" class="w-full mb-3 px-4 py-3 rounded-lg text-gray-800">
                 
                 <div class="flex gap-2">
                     <button onclick="verifyStudent()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold text-lg">Login</button>
@@ -71,7 +94,7 @@
 
     <!-- Teacher Dashboard -->
     <div id="teacherDashboard" class="hidden min-h-screen bg-gray-50">
-        <nav class="gradient-bg text-white p-4 sticky top-0 z-40 shadow-lg">
+        <nav class="gradient-bg text-white p-4 sticky top-0 z-30 shadow-lg">
             <div class="max-w-6xl mx-auto flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">👨‍🏫</div>
@@ -107,12 +130,11 @@
 
             <!-- Actions -->
             <div class="flex flex-wrap gap-2">
-                <button onclick="showSection('addStudent')" class="bg-purple-600 text-white px-4 py-2 rounded-lg shadow text-sm">➕ Add</button>
-                <button onclick="showSection('studentList')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow text-sm">👥 View</button>
+                <button onclick="showSection('addStudent')" class="bg-purple-600 text-white px-4 py-2 rounded-lg shadow text-sm">➕ Add Student</button>
+                <button onclick="showSection('studentList')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow text-sm">👥 View Students</button>
                 <button onclick="generateClassQR()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow text-sm">📱 Class QR</button>
-                <button onclick="generateDataQR()" class="bg-orange-600 text-white px-4 py-2 rounded-lg shadow text-sm">📤 Share Data</button>
-                <button onclick="exportData()" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow text-sm">📊 Export</button>
-                <button onclick="clearAllData()" class="bg-red-600 text-white px-4 py-2 rounded-lg shadow text-sm">🗑️ Clear</button>
+                <button onclick="exportData()" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow text-sm">📊 Export Excel</button>
+                <button onclick="clearAllData()" class="bg-red-600 text-white px-4 py-2 rounded-lg shadow text-sm">🗑️ Clear All</button>
             </div>
 
             <!-- Add Student -->
@@ -121,7 +143,7 @@
                 <div class="grid gap-3">
                     <input type="text" id="studentName" placeholder="Full Name" class="border rounded-lg px-4 py-3 w-full">
                     <input type="text" id="studentRoll" placeholder="Roll Number (This = Password)" class="border rounded-lg px-4 py-3 w-full">
-                    <input type="text" id="studentClass" placeholder="Class/Subject (Optional)" class="border rounded-lg px-4 py-3 w-full">
+                    <input type="text" id="studentClass" placeholder="Class (Optional)" class="border rounded-lg px-4 py-3 w-full">
                 </div>
                 <div class="flex gap-2 mt-3">
                     <button onclick="addStudent()" class="flex-1 bg-purple-600 text-white py-3 rounded-lg font-bold">Save Student</button>
@@ -147,36 +169,27 @@
                         <tbody id="studentTable" class="divide-y"></tbody>
                     </table>
                 </div>
-                <div id="noStudents" class="hidden p-4 text-center text-gray-500">No students added</div>
-            </div>
-
-            <!-- Data QR Modal -->
-            <div id="dataQRModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                <div class="bg-white rounded-xl p-4 max-w-sm w-full text-center">
-                    <h3 class="text-lg font-bold mb-2">📤 Share Student Data</h3>
-                    <p class="text-xs text-gray-600 mb-2">Students scan this to get names</p>
-                    <div id="dataQR" class="flex justify-center mb-2"></div>
-                    <p class="text-xs text-gray-500 mb-3" id="qrStatus"></p>
-                    <button onclick="closeDataQR()" class="bg-gray-600 text-white px-4 py-2 rounded-lg w-full">Close</button>
-                </div>
             </div>
 
             <!-- Class QR Modal -->
             <div id="qrModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
                 <div class="bg-white rounded-xl p-4 max-w-sm w-full text-center">
-                    <h3 class="text-lg font-bold mb-2">📱 Class QR</h3>
+                    <h3 class="text-lg font-bold mb-2">📱 Scan for Attendance</h3>
                     <div id="classQR" class="flex justify-center mb-2"></div>
                     <button onclick="closeQR()" class="bg-gray-600 text-white px-4 py-2 rounded-lg w-full">Close</button>
                 </div>
             </div>
 
-            <!-- Attendance Table -->
+            <!-- Live Attendance Table -->
             <div class="bg-white rounded-xl shadow-lg overflow-hidden">
                 <div class="p-3 border-b bg-gray-50 flex justify-between items-center">
-                    <h3 class="font-bold text-sm">Attendance Records</h3>
+                    <h3 class="font-bold text-sm flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-500 rounded-full sync-pulse"></span>
+                        Live Attendance
+                    </h3>
                     <input type="date" id="dateFilter" onchange="renderAttendanceTable()" class="border rounded px-2 py-1 text-xs">
                 </div>
-                <div class="max-h-64 overflow-y-auto">
+                <div class="max-h-96 overflow-y-auto">
                     <table class="w-full text-xs">
                         <thead class="bg-gray-50 sticky top-0">
                             <tr>
@@ -189,13 +202,17 @@
                         <tbody id="attendanceTable" class="divide-y"></tbody>
                     </table>
                 </div>
+                <div id="emptyState" class="hidden p-8 text-center text-gray-500">
+                    <div class="text-4xl mb-2">📋</div>
+                    <p>No attendance yet</p>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Student Dashboard -->
     <div id="studentDashboard" class="hidden min-h-screen bg-gray-50">
-        <nav class="gradient-bg text-white p-4 sticky top-0 z-40 shadow-lg">
+        <nav class="gradient-bg text-white p-4 sticky top-0 z-30 shadow-lg">
             <div class="max-w-md mx-auto flex justify-between items-center">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">🎓</div>
@@ -235,7 +252,6 @@
                     </div>
                 </div>
                 
-                <!-- Big Action Button -->
                 <button id="actionBtn" onclick="handleAttendanceAction()" class="w-full mt-4 py-4 rounded-xl font-bold text-lg bg-green-600 text-white shadow-lg active:scale-95 transition">
                     🟢 Log In
                 </button>
@@ -243,21 +259,12 @@
 
             <!-- Scanner -->
             <div class="bg-white rounded-xl shadow-lg p-4">
-                <h3 class="font-bold mb-2 text-sm">Scan QR (Optional)</h3>
+                <h3 class="font-bold mb-2 text-sm">📷 Scan QR Code</h3>
                 <div id="reader" class="rounded-lg overflow-hidden mb-2"></div>
                 <button onclick="toggleScanner()" id="scannerBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-sm">
                     Start Camera
                 </button>
             </div>
-        </div>
-    </div>
-
-    <!-- Sync Modal -->
-    <div id="syncModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-xl p-4 max-w-sm w-full text-center">
-            <h3 class="text-lg font-bold mb-2">📥 Scan Teacher's QR</h3>
-            <div id="syncReader" class="rounded-lg overflow-hidden mb-2"></div>
-            <button onclick="closeSyncModal()" class="bg-gray-600 text-white px-4 py-2 rounded-lg w-full">Cancel</button>
         </div>
     </div>
 
@@ -267,80 +274,229 @@
     </div>
 
     <script>
-        // Admin
+        // ==========================================
+        // GLOBAL VARIABLES
+        // ==========================================
         const ADMIN_ID = 'admin';
         const ADMIN_PASS = '1234';
-
-        // Storage
-        const STORAGE_KEY = 'savitri_data_v4';
-        const USER_KEY = 'savitri_user_v4';
+        const USER_KEY = 'savitri_user_v7';
         
-        let appData = { students: [], attendance: [], lastSync: Date.now() };
         let currentUser = null;
         let html5QrCode = null;
-        let syncScanner = null;
         let isScannerRunning = false;
+        let db = null;
+        let dbRefs = null;
+        let unsubscribeStudents = null;
+        let unsubscribeAttendance = null;
 
-        // Initialize
-        window.onload = function() {
-            loadData();
+        // ==========================================
+        // WAIT FOR FIREBASE TO LOAD
+        // ==========================================
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                if (window.firebaseDB && window.firebaseRefs) {
+                    db = window.firebaseDB;
+                    dbRefs = window.firebaseRefs;
+                    updateConnectionStatus(true);
+                    console.log("Firebase connected!");
+                } else {
+                    updateConnectionStatus(false);
+                    console.error("Firebase not loaded");
+                }
+                
+                initApp();
+            }, 1000);
+        });
+
+        function updateConnectionStatus(connected) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            if (connected) {
+                dot.className = 'w-2 h-2 rounded-full bg-green-500 sync-pulse';
+                text.textContent = 'Live Sync';
+                text.className = 'text-green-600';
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-red-500';
+                text.textContent = 'Offline';
+                text.className = 'text-red-600';
+            }
+        }
+
+        function initApp() {
             document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
             document.getElementById('dateFilter').valueAsDate = new Date();
-            updateStudentSelect();
-
+            
             const saved = localStorage.getItem(USER_KEY);
             if (saved) {
                 const user = JSON.parse(saved);
                 if (user.role === 'teacher') {
                     openTeacherDashboard();
                 } else {
-                    const exists = appData.students.find(s => s.id === user.id);
-                    if (exists) loginStudent(exists);
+                    loginStudent(user);
                 }
             }
-        };
-
-        function loadData() {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) appData = JSON.parse(saved);
         }
 
-        function saveData() {
-            appData.lastSync = Date.now();
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        // ==========================================
+        // REAL-TIME DATABASE FUNCTIONS
+        // ==========================================
+        
+        function listenToStudents() {
+            if (!db) {
+                showToast('❌ Database not connected', 'error');
+                return;
+            }
+            
+            const { ref, onValue } = dbRefs;
+            const studentsRef = ref(db, 'students');
+            
+            unsubscribeStudents = onValue(studentsRef, (snapshot) => {
+                const data = snapshot.val();
+                const students = data ? Object.values(data) : [];
+                
+                const select = document.getElementById('studentSelect');
+                select.innerHTML = '<option value="">👤 Select Your Name</option>';
+                
+                students.sort((a, b) => a.name.localeCompare(b.name));
+                
+                students.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify(s);
+                    opt.textContent = `${s.name} (Roll: ${s.roll})`;
+                    select.appendChild(opt);
+                });
+                
+                if (!document.getElementById('teacherDashboard').classList.contains('hidden')) {
+                    renderStudentTable(students);
+                    document.getElementById('totalStudents').textContent = students.length;
+                }
+            });
         }
 
-        // Login Functions
+        function listenToAttendance() {
+            if (!db) return;
+            
+            const { ref, onValue } = dbRefs;
+            const attendanceRef = ref(db, 'attendance');
+            
+            unsubscribeAttendance = onValue(attendanceRef, (snapshot) => {
+                const data = snapshot.val();
+                const records = data ? Object.values(data) : [];
+                
+                renderAttendanceTable(records);
+                updateStats(records);
+            });
+        }
+
+        function renderStudentTable(students) {
+            const tbody = document.getElementById('studentTable');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            students.forEach(s => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-3 py-2 font-medium">${s.name}</td>
+                    <td class="px-3 py-2 font-mono text-xs">${s.roll}</td>
+                    <td class="px-3 py-2">
+                        <button onclick="deleteStudent('${s.id}')" class="text-red-600 text-xs font-bold">❌</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderAttendanceTable(records) {
+            const tbody = document.getElementById('attendanceTable');
+            const filter = document.getElementById('dateFilter').value;
+            const filterDate = filter ? new Date(filter).toDateString() : new Date().toDateString();
+            
+            tbody.innerHTML = '';
+            
+            const recs = records
+                .filter(a => new Date(a.date).toDateString() === filterDate)
+                .sort((a, b) => b.timestamp - a.timestamp);
+
+            if (recs.length === 0) {
+                document.getElementById('emptyState')?.classList.remove('hidden');
+            } else {
+                document.getElementById('emptyState')?.classList.add('hidden');
+            }
+
+            recs.forEach(r => {
+                const dur = r.checkIn && r.checkOut ? 
+                    Math.round((new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60)) + 'm' : 
+                    (r.checkIn ? '...' : '--');
+                
+                let badge = 'bg-gray-200';
+                if (r.status === 'Checked In') badge = 'bg-green-200 text-green-800';
+                if (r.status === 'Checked Out') badge = 'bg-blue-200 text-blue-800';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-2 py-2">
+                        <div class="font-medium text-xs">${r.studentName}</div>
+                        <div class="text-xs text-gray-500">${r.studentRoll}</div>
+                    </td>
+                    <td class="px-2 py-2">
+                        <span class="px-2 py-1 rounded text-xs font-bold ${badge}">${r.status}</span>
+                    </td>
+                    <td class="px-2 py-2 font-mono text-xs">${r.checkIn ? new Date(r.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}</td>
+                    <td class="px-2 py-2 font-mono text-xs">${r.checkOut ? new Date(r.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateStats(records) {
+            const today = new Date().toDateString();
+            const todayRec = records.filter(a => new Date(a.date).toDateString() === today);
+            
+            const unique = new Set(todayRec.map(r => r.studentId)).size;
+            document.getElementById('presentToday').textContent = unique;
+            
+            const total = parseInt(document.getElementById('totalStudents').textContent) || 0;
+            document.getElementById('absentToday').textContent = Math.max(0, total - unique);
+            
+            let totalMin = 0, count = 0;
+            todayRec.forEach(r => {
+                if (r.checkIn && r.checkOut) {
+                    totalMin += (new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60);
+                    count++;
+                }
+            });
+            const avg = count ? Math.round(totalMin / count / 60 * 10) / 10 : 0;
+            document.getElementById('avgTime').textContent = avg + 'h';
+        }
+
+        // ==========================================
+        // LOGIN FUNCTIONS
+        // ==========================================
         function showTeacherLogin() {
             document.getElementById('mainButtons').classList.add('hidden');
             document.getElementById('teacherLoginForm').classList.remove('hidden');
         }
 
         function showStudentLogin() {
-            updateStudentSelect();
+            document.getElementById('loadingStudents').classList.remove('hidden');
+            listenToStudents();
             document.getElementById('mainButtons').classList.add('hidden');
             document.getElementById('studentLoginForm').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('loadingStudents').classList.add('hidden');
+            }, 1000);
         }
 
         function backToMain() {
             document.getElementById('teacherLoginForm').classList.add('hidden');
             document.getElementById('studentLoginForm').classList.add('hidden');
             document.getElementById('mainButtons').classList.remove('hidden');
-        }
-
-        function updateStudentSelect() {
-            const select = document.getElementById('studentSelect');
-            select.innerHTML = '<option value="">👤 Select Your Name</option>';
             
-            // Sort by name
-            const sorted = [...appData.students].sort((a, b) => a.name.localeCompare(b.name));
-            
-            sorted.forEach(s => {
-                const opt = document.createElement('option');
-                opt.value = JSON.stringify(s);
-                opt.textContent = `${s.name} (Roll: ${s.roll})`;
-                select.appendChild(opt);
-            });
+            if (unsubscribeStudents) {
+                unsubscribeStudents();
+                unsubscribeStudents = null;
+            }
         }
 
         function verifyTeacher() {
@@ -386,14 +542,28 @@
             document.getElementById('studentDisplayClass').textContent = student.class || '';
             document.getElementById('studentNavName').textContent = 'Hi, ' + student.name.split(' ')[0];
             
-            updateMyStatus();
+            listenToMyAttendance(student.id);
+        }
+
+        function listenToMyAttendance(studentId) {
+            if (!db) return;
+            
+            const { ref, query, orderByChild, equalTo, onValue } = dbRefs;
+            const myAttendanceQuery = query(ref(db, 'attendance'), orderByChild('studentId'), equalTo(studentId));
+            
+            onValue(myAttendanceQuery, (snapshot) => {
+                const data = snapshot.val();
+                const records = data ? Object.values(data) : [];
+                updateMyStatus(records);
+            });
         }
 
         function openTeacherDashboard() {
             document.getElementById('loginScreen').classList.add('hidden');
             document.getElementById('teacherDashboard').classList.remove('hidden');
-            updateStats();
-            renderAttendanceTable();
+            
+            listenToStudents();
+            listenToAttendance();
         }
 
         function logout() {
@@ -401,8 +571,14 @@
                 html5QrCode.stop().catch(() => {});
                 isScannerRunning = false;
             }
-            if (syncScanner) {
-                syncScanner.stop().catch(() => {});
+            
+            if (unsubscribeStudents) {
+                unsubscribeStudents();
+                unsubscribeStudents = null;
+            }
+            if (unsubscribeAttendance) {
+                unsubscribeAttendance();
+                unsubscribeAttendance = null;
             }
             
             currentUser = null;
@@ -412,7 +588,6 @@
             document.getElementById('studentDashboard').classList.add('hidden');
             document.getElementById('loginScreen').classList.remove('hidden');
             
-            // Reset
             document.getElementById('adminId').value = '';
             document.getElementById('adminPass').value = '';
             document.getElementById('studentSelect').value = '';
@@ -422,7 +597,9 @@
             showToast('👋 Bye!');
         }
 
-        // Teacher Functions
+        // ==========================================
+        // TEACHER FUNCTIONS
+        // ==========================================
         function showSection(section) {
             document.getElementById('addStudentSection').classList.add('hidden');
             document.getElementById('studentListSection').classList.add('hidden');
@@ -431,7 +608,6 @@
                 document.getElementById('addStudentSection').classList.remove('hidden');
             } else if (section === 'studentList') {
                 document.getElementById('studentListSection').classList.remove('hidden');
-                renderStudentList();
             }
         }
 
@@ -440,6 +616,11 @@
         }
 
         function addStudent() {
+            if (!db) {
+                showToast('❌ Database not connected', 'error');
+                return;
+            }
+            
             const name = document.getElementById('studentName').value.trim();
             const roll = document.getElementById('studentRoll').value.trim();
             const cls = document.getElementById('studentClass').value.trim();
@@ -449,116 +630,36 @@
                 return;
             }
 
-            if (appData.students.find(s => s.roll === roll)) {
-                showToast('❌ Roll exists', 'error');
-                return;
-            }
-
-            appData.students.push({
-                id: Date.now(),
-                name, roll, class: cls
-            });
+            const { ref, set, query, orderByChild, equalTo, get } = dbRefs;
             
-            saveData();
-            showToast('✅ Added! Pass: ' + roll);
-            
-            document.getElementById('studentName').value = '';
-            document.getElementById('studentRoll').value = '';
-            document.getElementById('studentClass').value = '';
-            hideSection('addStudent');
-            updateStats();
-        }
-
-        function renderStudentList() {
-            const tbody = document.getElementById('studentTable');
-            tbody.innerHTML = '';
-            
-            if (appData.students.length === 0) {
-                document.getElementById('noStudents').classList.remove('hidden');
-                return;
-            }
-            document.getElementById('noStudents').classList.add('hidden');
-            
-            // Sort by name
-            const sorted = [...appData.students].sort((a, b) => a.name.localeCompare(b.name));
-            
-            sorted.forEach(s => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="px-3 py-2 font-medium">${s.name}</td>
-                    <td class="px-3 py-2 font-mono text-xs">${s.roll}</td>
-                    <td class="px-3 py-2">
-                        <button onclick="deleteStudent(${s.id})" class="text-red-600 text-xs font-bold">❌</button>
-                    </td>
-                `;
-                tbody.appendChild(row);
+            const rollQuery = query(ref(db, 'students'), orderByChild('roll'), equalTo(roll));
+            get(rollQuery).then((snapshot) => {
+                if (snapshot.exists()) {
+                    showToast('❌ Roll number exists', 'error');
+                } else {
+                    const id = Date.now().toString();
+                    set(ref(db, 'students/' + id), {
+                        id, name, roll, class: cls || ''
+                    }).then(() => {
+                        showToast('✅ Added! Password: ' + roll);
+                        document.getElementById('studentName').value = '';
+                        document.getElementById('studentRoll').value = '';
+                        document.getElementById('studentClass').value = '';
+                        hideSection('addStudent');
+                    }).catch(err => {
+                        showToast('❌ Error: ' + err.message, 'error');
+                    });
+                }
             });
         }
 
         function deleteStudent(id) {
             if (!confirm('Delete?')) return;
             
-            appData.students = appData.students.filter(s => s.id !== id);
-            appData.attendance = appData.attendance.filter(a => a.studentId !== id);
-            saveData();
-            renderStudentList();
-            updateStats();
-            renderAttendanceTable();
-            showToast('🗑️ Deleted');
-        }
-
-        // QR Functions - FIXED for multiple students
-        function generateDataQR() {
-            document.getElementById('dataQRModal').classList.remove('hidden');
-            document.getElementById('dataQR').innerHTML = '';
-            
-            const statusEl = document.getElementById('qrStatus');
-            
-            try {
-                // Compress data for QR
-                const minimalStudents = appData.students.map(s => ({
-                    i: s.id,
-                    n: s.name,
-                    r: s.roll,
-                    c: s.class || ''
-                }));
-                
-                const data = {
-                    t: 'sync',
-                    s: minimalStudents,
-                    d: Date.now()
-                };
-                
-                // Use shorter JSON
-                const jsonStr = JSON.stringify(data);
-                
-                // Check size - if too big, show warning
-                if (jsonStr.length > 1000) {
-                    statusEl.textContent = '⚠️ Many students! Scanning may be slow';
-                    statusEl.className = 'text-xs text-orange-500 mb-3';
-                } else {
-                    statusEl.textContent = `${appData.students.length} students ready to scan`;
-                    statusEl.className = 'text-xs text-green-600 mb-3';
-                }
-                
-                // Generate QR with medium error correction
-                new QRCode(document.getElementById('dataQR'), {
-                    text: jsonStr,
-                    width: 220,
-                    height: 220,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.M // Medium = good balance
-                });
-                
-            } catch(e) {
-                statusEl.textContent = '❌ Error generating QR';
-                statusEl.className = 'text-xs text-red-500 mb-3';
-            }
-        }
-
-        function closeDataQR() {
-            document.getElementById('dataQRModal').classList.add('hidden');
+            const { ref, remove } = dbRefs;
+            remove(ref(db, 'students/' + id)).then(() => {
+                showToast('🗑️ Deleted');
+            });
         }
 
         function generateClassQR() {
@@ -575,144 +676,47 @@
             document.getElementById('qrModal').classList.add('hidden');
         }
 
-        // Student Sync
-        function startStudentSync() {
-            document.getElementById('syncModal').classList.remove('hidden');
-            
-            if (!syncScanner) {
-                syncScanner = new Html5Qrcode("syncReader");
-            }
-            
-            syncScanner.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: { width: 200, height: 200 } },
-                onSyncSuccess,
-                () => {}
-            ).catch(() => {
-                showToast('⚠️ Camera error', 'error');
-            });
-        }
-
-        function onSyncSuccess(text) {
-            try {
-                const data = JSON.parse(text);
-                
-                if (data.t === 'sync' && Array.isArray(data.s)) {
-                    // Convert back to full format
-                    appData.students = data.s.map(s => ({
-                        id: s.i,
-                        name: s.n,
-                        roll: s.r,
-                        class: s.c
-                    }));
-                    
-                    saveData();
-                    
-                    syncScanner.stop().then(() => {
-                        document.getElementById('syncModal').classList.add('hidden');
-                        updateStudentSelect();
-                        showToast(`✅ ${appData.students.length} students loaded!`);
-                    });
-                }
-            } catch(e) {
-                showToast('❌ Invalid QR', 'error');
-            }
-        }
-
-        function closeSyncModal() {
-            if (syncScanner) {
-                syncScanner.stop().catch(() => {});
-            }
-            document.getElementById('syncModal').classList.add('hidden');
-        }
-
-        function updateStats() {
-            const today = new Date().toDateString();
-            const todayRec = appData.attendance.filter(a => 
-                new Date(a.date).toDateString() === today
-            );
-            
-            document.getElementById('totalStudents').textContent = appData.students.length;
-            
-            const unique = new Set(todayRec.map(r => r.studentId)).size;
-            document.getElementById('presentToday').textContent = unique;
-            document.getElementById('absentToday').textContent = Math.max(0, appData.students.length - unique);
-            
-            let totalMin = 0, count = 0;
-            todayRec.forEach(r => {
-                if (r.checkIn && r.checkOut) {
-                    totalMin += (new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60);
-                    count++;
-                }
-            });
-            const avg = count ? Math.round(totalMin / count / 60 * 10) / 10 : 0;
-            document.getElementById('avgTime').textContent = avg + 'h';
-        }
-
-        function renderAttendanceTable() {
-            const tbody = document.getElementById('attendanceTable');
-            const filter = document.getElementById('dateFilter').value;
-            const filterDate = filter ? new Date(filter).toDateString() : new Date().toDateString();
-            
-            tbody.innerHTML = '';
-            
-            const recs = appData.attendance
-                .filter(a => new Date(a.date).toDateString() === filterDate)
-                .sort((a, b) => b.id - a.id);
-
-            recs.forEach(r => {
-                const dur = r.checkIn && r.checkOut ? 
-                    Math.round((new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60)) + 'm' : 
-                    (r.checkIn ? '...' : '--');
-                
-                let badge = 'bg-gray-200';
-                if (r.status === 'Checked In') badge = 'bg-green-200 text-green-800';
-                if (r.status === 'Checked Out') badge = 'bg-blue-200 text-blue-800';
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="px-2 py-2">
-                        <div class="font-medium text-xs">${r.studentName}</div>
-                        <div class="text-xs text-gray-500">${r.studentRoll}</div>
-                    </td>
-                    <td class="px-2 py-2">
-                        <span class="px-2 py-1 rounded text-xs font-bold ${badge}">${r.status}</span>
-                    </td>
-                    <td class="px-2 py-2 font-mono text-xs">${r.checkIn ? new Date(r.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}</td>
-                    <td class="px-2 py-2 font-mono text-xs">${r.checkOut ? new Date(r.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}</td>
-                `;
-                tbody.appendChild(row);
-            });
-        }
-
         function exportData() {
-            let csv = 'Date,Name,Roll,Class,Status,In,Out,Duration\n';
-            appData.attendance.forEach(r => {
-                const dur = r.checkIn && r.checkOut ? 
-                    Math.round((new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60)) : '';
-                csv += `${new Date(r.date).toLocaleDateString()},${r.studentName},${r.studentRoll},${r.studentClass || ''},${r.status},${r.checkIn || ''},${r.checkOut || ''},${dur}\n`;
-            });
+            if (!db) {
+                showToast('❌ Database not connected', 'error');
+                return;
+            }
             
-            const blob = new Blob([csv], {type: 'text/csv'});
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
-            a.click();
-            showToast('📊 Downloaded!');
+            const { ref, get } = dbRefs;
+            get(ref(db, 'attendance')).then((snapshot) => {
+                const data = snapshot.val();
+                const records = data ? Object.values(data) : [];
+                
+                let csv = 'Date,Name,Roll,Class,Status,In,Out,Duration\n';
+                records.forEach(r => {
+                    const dur = r.checkIn && r.checkOut ? 
+                        Math.round((new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60)) : '';
+                    csv += `${new Date(r.date).toLocaleDateString()},${r.studentName},${r.studentRoll},${r.studentClass || ''},${r.status},${r.checkIn || ''},${r.checkOut || ''},${dur}\n`;
+                });
+                
+                const blob = new Blob([csv], {type: 'text/csv'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                showToast('📊 Downloaded!');
+            });
         }
 
         function clearAllData() {
-            if (!confirm('Delete everything?')) return;
+            if (!confirm('Delete ALL data?')) return;
             
-            appData = { students: [], attendance: [], lastSync: Date.now() };
-            saveData();
-            updateStats();
-            renderAttendanceTable();
-            updateStudentSelect();
-            showToast('🗑️ Cleared');
+            if (!db) return;
+            
+            const { ref, remove } = dbRefs;
+            remove(ref(db, 'students'));
+            remove(ref(db, 'attendance'));
+            showToast('🗑️ All cleared');
         }
 
-        // Student Functions
+        // ==========================================
+        // STUDENT FUNCTIONS
+        // ==========================================
         function toggleScanner() {
             const btn = document.getElementById('scannerBtn');
             
@@ -725,13 +729,13 @@
                     (text) => {
                         try {
                             const data = JSON.parse(text);
-                            if (data.t === 'att') handleAttendance();
-                        } catch(e) { handleAttendance(); }
+                            if (data.t === 'att') handleAttendanceAction();
+                        } catch(e) { handleAttendanceAction(); }
                     },
                     () => {}
                 ).then(() => {
                     isScannerRunning = true;
-                    btn.textContent = '⏹️ Stop Camera';
+                    btn.textContent = '⏹️ Stop';
                     btn.classList.replace('bg-blue-600', 'bg-red-600');
                 }).catch(() => showToast('⚠️ Camera failed', 'error'));
             } else {
@@ -744,104 +748,85 @@
         }
 
         function handleAttendanceAction() {
-            const btn = document.getElementById('actionBtn');
+            if (!db) {
+                showToast('❌ Database not connected', 'error');
+                return;
+            }
             
-            // Prevent double clicks
+            const btn = document.getElementById('actionBtn');
             if (btn.disabled) return;
             
             const today = new Date().toDateString();
             const sid = currentUser.id;
             
-            let rec = appData.attendance.find(a => 
-                a.studentId === sid && new Date(a.date).toDateString() === today
-            );
+            const { ref, query, orderByChild, equalTo, get, push, update } = dbRefs;
             
-            const now = new Date().toISOString();
-            
-            if (!rec) {
-                // Login
-                rec = {
-                    id: Date.now(),
-                    studentId: sid,
-                    studentName: currentUser.name,
-                    studentRoll: currentUser.roll,
-                    studentClass: currentUser.class,
-                    date: now,
-                    status: 'Checked In',
-                    checkIn: now,
-                    checkOut: null
-                };
-                appData.attendance.push(rec);
-                saveData();
-                showToast('✅ Logged In!');
+            const todayQuery = query(ref(db, 'attendance'), orderByChild('studentId'), equalTo(sid));
+            get(todayQuery).then((snapshot) => {
+                const data = snapshot.val();
+                const records = data ? Object.values(data) : [];
+                const todayRec = records.find(r => new Date(r.date).toDateString() === today);
                 
-                // Update UI immediately
-                document.getElementById('myStatusBadge').textContent = 'Checked In';
-                document.getElementById('myStatusBadge').className = 'px-2 py-1 rounded text-xs font-bold bg-green-200 text-green-800';
-                document.getElementById('myCheckIn').textContent = new Date(now).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                const now = new Date().toISOString();
+                const timestamp = Date.now();
                 
-                btn.textContent = '🔴 Log Out';
-                btn.className = 'w-full mt-4 py-4 rounded-xl font-bold text-lg bg-red-600 text-white shadow-lg active:scale-95 transition';
-                
-            } else if (!rec.checkOut) {
-                // Logout
-                rec.checkOut = now;
-                rec.status = 'Checked Out';
-                saveData();
-                showToast('✅ Logged Out!');
-                
-                // Update UI immediately
-                document.getElementById('myStatusBadge').textContent = 'Completed';
-                document.getElementById('myStatusBadge').className = 'px-2 py-1 rounded text-xs font-bold bg-blue-200 text-blue-800';
-                document.getElementById('myCheckOut').textContent = new Date(now).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
-                btn.textContent = '✓ Done';
-                btn.className = 'w-full mt-4 py-4 rounded-xl font-bold text-lg bg-gray-400 text-white';
-                btn.disabled = true;
-                
-            } else {
-                showToast('⚠️ Already done today!', 'error');
-            }
+                if (!todayRec) {
+                    const newRef = push(ref(db, 'attendance'));
+                    set(newRef, {
+                        id: newRef.key,
+                        studentId: sid,
+                        studentName: currentUser.name,
+                        studentRoll: currentUser.roll,
+                        studentClass: currentUser.class || '',
+                        date: now,
+                        timestamp: timestamp,
+                        status: 'Checked In',
+                        checkIn: now,
+                        checkOut: null
+                    }).then(() => {
+                        showToast('✅ Logged In!');
+                    });
+                } else if (!todayRec.checkOut) {
+                    update(ref(db, 'attendance/' + todayRec.id), {
+                        checkOut: now,
+                        status: 'Checked Out'
+                    }).then(() => {
+                        showToast('✅ Logged Out!');
+                    });
+                } else {
+                    showToast('⚠️ Already done!', 'error');
+                }
+            });
         }
 
-        function updateMyStatus() {
+        function updateMyStatus(records) {
             const today = new Date().toDateString();
-            const sid = currentUser.id;
-            
-            const rec = appData.attendance.find(a => 
-                a.studentId === sid && new Date(a.date).toDateString() === today
-            );
+            const rec = records.find(r => new Date(r.date).toDateString() === today);
             
             const btn = document.getElementById('actionBtn');
             btn.disabled = false;
             
             if (!rec) {
-                // Not marked
                 document.getElementById('myStatusBadge').textContent = 'Not Marked';
                 document.getElementById('myStatusBadge').className = 'px-2 py-1 rounded text-xs font-bold bg-gray-200';
                 document.getElementById('myCheckIn').textContent = '--:--';
                 document.getElementById('myCheckOut').textContent = '--:--';
-                
                 btn.textContent = '🟢 Log In';
                 btn.className = 'w-full mt-4 py-4 rounded-xl font-bold text-lg bg-green-600 text-white shadow-lg active:scale-95 transition';
                 
             } else if (!rec.checkOut) {
-                // Checked in
                 document.getElementById('myStatusBadge').textContent = 'Checked In';
                 document.getElementById('myStatusBadge').className = 'px-2 py-1 rounded text-xs font-bold bg-green-200 text-green-800';
                 document.getElementById('myCheckIn').textContent = new Date(rec.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 document.getElementById('myCheckOut').textContent = '--:--';
-                
                 btn.textContent = '🔴 Log Out';
                 btn.className = 'w-full mt-4 py-4 rounded-xl font-bold text-lg bg-red-600 text-white shadow-lg active:scale-95 transition';
                 
             } else {
-                // Completed
                 document.getElementById('myStatusBadge').textContent = 'Completed';
                 document.getElementById('myStatusBadge').className = 'px-2 py-1 rounded text-xs font-bold bg-blue-200 text-blue-800';
                 document.getElementById('myCheckIn').textContent = new Date(rec.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
                 document.getElementById('myCheckOut').textContent = new Date(rec.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                
                 btn.textContent = '✓ Done';
                 btn.className = 'w-full mt-4 py-4 rounded-xl font-bold text-lg bg-gray-400 text-white';
                 btn.disabled = true;
@@ -858,7 +843,6 @@
 
         window.onbeforeunload = () => {
             if (html5QrCode && isScannerRunning) html5QrCode.stop().catch(() => {});
-            if (syncScanner) syncScanner.stop().catch(() => {});
         };
     </script>
 </body>
