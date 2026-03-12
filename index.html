@@ -1,440 +1,625 @@
-[8:16 pm, 9/3/2026] Rahul Chauhan: <!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>Echo AI</title>
-
-<style>
-body{
-margin:0;
-background:black;
-color:white;
-font-family:Arial;
-display:flex;
-align-items:center;
-justify-content:center;
-flex-direction:column;
-height:100vh;
-}
-
-.ai-image{
-width:400px;
-filter:drop-shadow(0 0 30px cyan);
-}
-
-#response{
-margin-top:30px;
-font-size:22px;
-text-align:center;
-width:70%;
-}
-</style>
-
-</head>
-
-<body>
-
-<img src="ai.png" class="ai-image">
-
-<p id="response">Listening...</p>
-
-<script>
-
-const API_KEY="AIzaSyAZkFj8bE3EyhvJaCmiiaEeaUbPrLcGvqg";
-
-const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-const recognition = new SpeechRecognition();
-
-const responseText=document.getElementById("response");
-
-recognition.lang="en-US";…
-[8:26 pm, 9/3/2026] Rahul Chauhan: <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Robot Assistant</title>
+    <title>Attendance System - Savitri Success Library</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #000; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
-        #ui-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10; pointer-events: none; }
-        .interactive { pointer-events: auto; }
-        .glow-text { text-shadow: 0 0 20px rgba(0, 200, 255, 0.8); }
-        
-        #chat-display {
-            position: absolute; bottom: 200px; left: 50%; transform: translateX(-50%);
-            max-width: 700px; width: 90%; text-align: center; color: white;
-            font-size: 1.3rem; padding: 25px; background: rgba(0, 0, 0, 0.8);
-            border-radius: 20px; border: 1px solid rgba(0, 200, 255, 0.4);
-            backdrop-filter: blur(15px); opacity: 0; transition: opacity 0.5s;
+        body { font-family: 'Inter', sans-serif; }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
-        #start-button {
-            position: absolute; bottom: 60px; left: 50%; transform: translateX(-50%);
-            padding: 20px 60px; font-size: 1.3rem; font-weight: bold; color: white;
-            background: linear-gradient(135deg, #00c8ff, #0077b6); border: none;
-            border-radius: 50px; cursor: pointer; display: none;
-            box-shadow: 0 0 30px rgba(0, 200, 255, 0.5); transition: all 0.3s;
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        #start-button:hover { transform: translateX(-50%) translateY(-3px); box-shadow: 0 10px 40px rgba(0, 200, 255, 0.7); }
-        #start-button.listening { background: linear-gradient(135deg, #ff4444, #cc0000); animation: pulse 1.5s infinite; }
-        
-        @keyframes pulse { 0%, 100% { transform: translateX(-50%) scale(1); } 50% { transform: translateX(-50%) scale(1.05); } }
-        
-        .status-indicator { position: absolute; top: 30px; right: 30px; padding: 12px 25px; background: rgba(0,0,0,0.8); border-radius: 25px; border: 1px solid rgba(0, 200, 255, 0.4); color: #00c8ff; font-size: 1rem; }
-        
-        #signin-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at center, #0a0a0a 0%, #000000 100%); z-index: 100; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .signin-box { background: rgba(20, 20, 20, 0.95); padding: 50px; border-radius: 30px; border: 1px solid rgba(0, 200, 255, 0.3); text-align: center; max-width: 450px; box-shadow: 0 0 50px rgba(0, 200, 255, 0.2); }
-        .robot-icon { width: 100px; height: 100px; margin: 0 auto 30px; background: linear-gradient(135deg, #00c8ff, #0077b6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 50px; box-shadow: 0 0 30px rgba(0, 200, 255, 0.5); }
-        #google-signin { margin-top: 30px; display: flex; justify-content: center; }
-        
-        #speech-waves { position: absolute; bottom: 160px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; opacity: 0; transition: opacity 0.3s; }
-        .wave-bar { width: 6px; background: linear-gradient(to top, #00c8ff, #ffffff); border-radius: 3px; animation: wave 0.5s ease-in-out infinite alternate; }
-        .wave-bar:nth-child(1) { height: 20px; animation-delay: 0s; }
-        .wave-bar:nth-child(2) { height: 35px; animation-delay: 0.1s; }
-        .wave-bar:nth-child(3) { height: 25px; animation-delay: 0.2s; }
-        .wave-bar:nth-child(4) { height: 40px; animation-delay: 0.3s; }
-        .wave-bar:nth-child(5) { height: 30px; animation-delay: 0.4s; }
-        @keyframes wave { from { transform: scaleY(0.3); opacity: 0.5; } to { transform: scaleY(1); opacity: 1; } }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            100% { transform: scale(1.3); opacity: 0; }
+        }
+        .scanning::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border: 3px solid #10b981;
+            border-radius: 50%;
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
     </style>
 </head>
-<body>
-    <div id="signin-modal" class="interactive">
-        <div class="signin-box">
-            <div class="robot-icon">🤖</div>
-            <h2 class="text-4xl font-bold text-white mb-3 glow-text">AI ROBOT</h2>
-            <p class="text-gray-400 mb-8 text-lg">Your Personal AI Assistant</p>
-            <div id="google-signin"></div>
-            <p class="text-gray-500 mt-6 text-sm">Sign in with Google to continue</p>
+<body class="bg-gray-50 min-h-screen">
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="fixed inset-0 gradient-bg flex items-center justify-center z-50">
+        <div class="glass p-8 rounded-2xl w-full max-w-md mx-4 text-center">
+            <div class="text-6xl mb-4">📚</div>
+            <h1 class="text-3xl font-bold text-white mb-1">Savitri Success Library</h1>
+            <p class="text-white/90 mb-8 text-lg font-medium">Attendance</p>
+            
+            <div class="space-y-4">
+                <button onclick="login('teacher')" class="w-full bg-white text-purple-600 font-bold py-4 rounded-xl hover:bg-gray-100 transition transform hover:scale-105 shadow-lg flex items-center justify-center gap-2">
+                    <span class="text-2xl">👨‍🏫</span>
+                    <div class="text-left">
+                        <div class="text-sm opacity-70">Login as</div>
+                        <div class="text-lg">Teacher</div>
+                    </div>
+                </button>
+                
+                <button onclick="login('student')" class="w-full bg-white/20 text-white font-bold py-4 rounded-xl hover:bg-white/30 transition transform hover:scale-105 border border-white/30 flex items-center justify-center gap-2">
+                    <span class="text-2xl">🎓</span>
+                    <div class="text-left">
+                        <div class="text-sm opacity-70">Login as</div>
+                        <div class="text-lg">Student</div>
+                    </div>
+                </button>
+            </div>
         </div>
     </div>
 
-    <div id="canvas-container"></div>
-    <div id="ui-layer">
-        <div class="status-indicator" id="status">Ready</div>
-        <div id="chat-display"></div>
-        <div id="speech-waves">
-            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
-            <div class="wave-bar"></div><div class="wave-bar"></div>
+    <!-- Teacher Dashboard -->
+    <div id="teacherDashboard" class="hidden min-h-screen bg-gray-50">
+        <!-- Header -->
+        <nav class="gradient-bg text-white p-4 sticky top-0 z-40 shadow-lg">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">👨‍🏫</div>
+                    <div>
+                        <h2 class="font-bold text-lg">Teacher Panel</h2>
+                        <p class="text-xs opacity-80" id="currentDate"></p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition text-sm">Logout</button>
+            </div>
+        </nav>
+
+        <div class="max-w-6xl mx-auto p-4 space-y-6">
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="text-3xl font-bold text-purple-600" id="totalStudents">0</div>
+                    <div class="text-sm text-gray-600">Total Students</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="text-3xl font-bold text-green-600" id="presentToday">0</div>
+                    <div class="text-sm text-gray-600">Present Today</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="text-3xl font-bold text-red-600" id="absentToday">0</div>
+                    <div class="text-sm text-gray-600">Absent Today</div>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                    <div class="text-3xl font-bold text-blue-600" id="avgTime">0h</div>
+                    <div class="text-sm text-gray-600">Avg Time</div>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex flex-wrap gap-3">
+                <button onclick="showSection('addStudent')" class="bg-purple-600 text-white px-6 py-3 rounded-xl hover:bg-purple-700 transition flex items-center gap-2 shadow-lg">
+                    <span>➕</span> Add Student
+                </button>
+                <button onclick="generateClassQR()" class="bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition flex items-center gap-2 shadow-lg">
+                    <span>📱</span> Class QR Code
+                </button>
+                <button onclick="exportData()" class="bg-green-600 text-white px-6 py-3 rounded-xl hover:bg-green-700 transition flex items-center gap-2 shadow-lg">
+                    <span>📊</span> Export Excel
+                </button>
+                <button onclick="clearAllData()" class="bg-red-600 text-white px-6 py-3 rounded-xl hover:bg-red-700 transition flex items-center gap-2 shadow-lg">
+                    <span>🗑️</span> Clear All
+                </button>
+            </div>
+
+            <!-- Add Student Form -->
+            <div id="addStudentSection" class="hidden bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                <h3 class="text-xl font-bold mb-4 text-gray-800">Add New Student</h3>
+                <div class="grid md:grid-cols-3 gap-4">
+                    <input type="text" id="studentName" placeholder="Student Name" class="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <input type="text" id="studentRoll" placeholder="Roll Number" class="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                    <input type="text" id="studentClass" placeholder="Class/Subject" class="border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <button onclick="addStudent()" class="mt-4 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition w-full md:w-auto">
+                    Save Student
+                </button>
+            </div>
+
+            <!-- QR Modal -->
+            <div id="qrModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-2xl p-8 max-w-md w-full text-center">
+                    <h3 class="text-xl font-bold mb-4">Class QR Code</h3>
+                    <p class="text-gray-600 mb-4">Students scan this to mark attendance</p>
+                    <div id="classQR" class="flex justify-center mb-4"></div>
+                    <button onclick="closeQR()" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition">Close</button>
+                </div>
+            </div>
+
+            <!-- Attendance Table -->
+            <div class="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
+                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-800">Today's Attendance</h3>
+                    <input type="date" id="dateFilter" onchange="filterByDate()" class="border border-gray-300 rounded-lg px-3 py-1 text-sm">
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Student</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Status</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">In Time</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Out Time</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Duration</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-600">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTable" class="divide-y divide-gray-100">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="hidden p-8 text-center text-gray-500">
+                    <div class="text-4xl mb-2">📋</div>
+                    <p>No attendance records found</p>
+                </div>
+            </div>
         </div>
-        <button id="start-button" class="interactive" onclick="toggleConversation()">START CONVERSATION</button>
+    </div>
+
+    <!-- Student Dashboard -->
+    <div id="studentDashboard" class="hidden min-h-screen bg-gray-50">
+        <nav class="gradient-bg text-white p-4 sticky top-0 z-40 shadow-lg">
+            <div class="max-w-md mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">🎓</div>
+                    <h2 class="font-bold">Student Panel</h2>
+                </div>
+                <button onclick="logout()" class="bg-white/20 px-4 py-2 rounded-lg hover:bg-white/30 transition text-sm">Logout</button>
+            </div>
+        </nav>
+
+        <div class="max-w-md mx-auto p-4 space-y-6">
+            <!-- Student Profile -->
+            <div class="bg-white rounded-2xl shadow-lg p-6 text-center border border-gray-100">
+                <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">👤</div>
+                <h3 class="text-xl font-bold text-gray-800" id="studentDisplayName">Guest Student</h3>
+                <p class="text-gray-600" id="studentDisplayRoll">Please register first</p>
+            </div>
+
+            <!-- Registration Form (if not registered) -->
+            <div id="studentRegisterForm" class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                <h3 class="text-lg font-bold mb-4">Student Registration</h3>
+                <input type="text" id="regName" placeholder="Your Name" class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <input type="text" id="regRoll" placeholder="Roll Number" class="w-full border border-gray-300 rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <button onclick="registerStudent()" class="w-full bg-purple-600 text-white py-3 rounded-xl font-bold hover:bg-purple-700 transition">
+                    Register
+                </button>
+            </div>
+
+            <!-- Scanner Section -->
+            <div id="scannerSection" class="hidden space-y-4">
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                        Scan QR Code
+                    </h3>
+                    <div id="reader" class="rounded-xl overflow-hidden"></div>
+                    <div class="mt-4 p-4 bg-gray-50 rounded-lg text-center">
+                        <p class="text-sm text-gray-600">Point camera at teacher's QR code</p>
+                    </div>
+                </div>
+
+                <!-- Manual Entry -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                    <h3 class="text-lg font-bold mb-4">Or Enter Code</h3>
+                    <div class="flex gap-2">
+                        <input type="text" id="manualCode" placeholder="Enter attendance code" class="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                        <button onclick="manualCheckIn()" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 transition">
+                            GO
+                        </button>
+                    </div>
+                </div>
+
+                <!-- My Attendance -->
+                <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+                    <h3 class="text-lg font-bold mb-4">My Today's Status</h3>
+                    <div id="myStatus" class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">Status</span>
+                            <span class="px-3 py-1 rounded-full text-sm font-bold bg-gray-200 text-gray-600" id="myStatusBadge">Not Marked</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">Check In</span>
+                            <span class="font-mono" id="myCheckIn">--:--</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                            <span class="text-gray-600">Check Out</span>
+                            <span class="font-mono" id="myCheckOut">--:--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-2">
+        <span id="toastIcon">✅</span>
+        <span id="toastMessage">Success!</span>
     </div>
 
     <script>
-        // ⚠️ REPLACE THESE KEYS WITH YOUR OWN
-        const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY_HERE';
-        const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com';
-        
-        let scene, camera, renderer, robot, robotHead, robotEyes = [];
-        let isSpeaking = false, isListening = false, isConversationActive = false;
-        let recognition, userName = 'User';
+        // Data Storage
+        let students = JSON.parse(localStorage.getItem('students')) || [];
+        let attendance = JSON.parse(localStorage.getItem('attendance')) || [];
+        let currentUser = null;
+        let html5QrCode = null;
 
+        // Initialize
         window.onload = function() {
-            google.accounts.id.initialize({
-                client_id: GOOGLE_CLIENT_ID,
-                callback: handleGoogleSignIn
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', { 
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
             });
-            google.accounts.id.renderButton(
-                document.getElementById("google-signin"),
-                { theme: "filled_black", size: "large", width: 300, text: "signin_with", shape: "pill" }
-            );
+            document.getElementById('dateFilter').valueAsDate = new Date();
         };
 
-        function handleGoogleSignIn(response) {
-            const payload = JSON.parse(atob(response.credential.split('.')[1]));
-            userName = payload.name || payload.email.split('@')[0];
-            document.getElementById('signin-modal').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('signin-modal').style.display = 'none';
-                document.getElementById('start-button').style.display = 'block';
-                initScene();
-            }, 500);
-        }
-
-        function initScene() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x000000);
+        // Login System
+        function login(role) {
+            currentUser = { role: role, id: Date.now() };
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
             
-            camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0.5, 3.5);
+            document.getElementById('loginScreen').classList.add('hidden');
             
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
-            
-            // Lights
-            const spotLight = new THREE.SpotLight(0x00c8ff, 2);
-            spotLight.position.set(2, 5, 5);
-            spotLight.castShadow = true;
-            scene.add(spotLight);
-            
-            const rimLight = new THREE.DirectionalLight(0x0080ff, 1);
-            rimLight.position.set(-3, 2, -3);
-            scene.add(rimLight);
-            
-            createRobot();
-            createParticles();
-            animate();
-            window.addEventListener('resize', onWindowResize);
-        }
-
-        function createRobot() {
-            robot = new THREE.Group();
-            
-            const bodyMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.9, roughness: 0.2 });
-            const glowMat = new THREE.MeshBasicMaterial({ color: 0x00c8ff, emissive: 0x00c8ff, emissiveIntensity: 0.8 });
-            const jointMat = new THREE.MeshStandardMaterial({ color: 0x111111, metalness: 0.8, roughness: 0.3 });
-            
-            // Head
-            const headGroup = new THREE.Group();
-            headGroup.position.y = 1.4;
-            
-            robotHead = new THREE.Mesh(new THREE.SphereGeometry(0.25, 64, 64), bodyMat);
-            robotHead.castShadow = true;
-            headGroup.add(robotHead);
-            
-            // Eyes
-            const eyeGeo = new THREE.SphereGeometry(0.04, 32, 32);
-            const leftEye = new THREE.Mesh(eyeGeo, glowMat.clone());
-            leftEye.position.set(-0.08, 0.05, 0.2);
-            headGroup.add(leftEye);
-            robotEyes.push(leftEye);
-            
-            const rightEye = new THREE.Mesh(eyeGeo, glowMat.clone());
-            rightEye.position.set(0.08, 0.05, 0.2);
-            headGroup.add(rightEye);
-            robotEyes.push(rightEye);
-            
-            // Glow behind eyes
-            const glowGeo = new THREE.SphereGeometry(0.07, 32, 32);
-            const leftGlow = new THREE.Mesh(glowGeo, new THREE.MeshBasicMaterial({ color: 0x00c8ff, transparent: true, opacity: 0.3 }));
-            leftGlow.position.copy(leftEye.position);
-            headGroup.add(leftGlow);
-            
-            const rightGlow = new THREE.Mesh(glowGeo, new THREE.MeshBasicMaterial({ color: 0x00c8ff, transparent: true, opacity: 0.3 }));
-            rightGlow.position.copy(rightEye.position);
-            headGroup.add(rightGlow);
-            
-            // Neck
-            const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.1, 0.15, 32), jointMat);
-            neck.position.y = -0.3;
-            headGroup.add(neck);
-            
-            robot.add(headGroup);
-            robotHead = headGroup;
-            
-            // Torso with "e" logo
-            const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.25, 0.6, 64), bodyMat);
-            torso.position.y = 0.8;
-            torso.castShadow = true;
-            robot.add(torso);
-            
-            // Logo "e"
-            const logoGroup = new THREE.Group();
-            logoGroup.position.set(0, 0.9, 0.28);
-            const logoCircle = new THREE.Mesh(new THREE.TorusGeometry(0.06, 0.012, 16, 64, Math.PI * 1.7), glowMat);
-            logoCircle.rotation.z = Math.PI * 0.85;
-            logoGroup.add(logoCircle);
-            const logoLine = new THREE.Mesh(new THREE.BoxGeometry(0.015, 0.06, 0.005), glowMat);
-            logoLine.position.set(0.03, -0.015, 0);
-            logoLine.rotation.z = -Math.PI / 8;
-            logoGroup.add(logoLine);
-            robot.add(logoGroup);
-            
-            // Shoulders & Arms
-            const shoulderGeo = new THREE.SphereGeometry(0.15, 32, 32);
-            const armGeo = new THREE.CylinderGeometry(0.08, 0.06, 0.6, 32);
-            
-            [-1, 1].forEach(side => {
-                const shoulder = new THREE.Mesh(shoulderGeo, jointMat);
-                shoulder.position.set(side * 0.4, 1.1, 0);
-                robot.add(shoulder);
-                
-                const arm = new THREE.Mesh(armGeo, bodyMat);
-                arm.position.set(side * 0.45, 0.7, 0);
-                arm.rotation.z = side * -0.1;
-                robot.add(arm);
-                
-                const elbow = new THREE.Mesh(new THREE.SphereGeometry(0.09, 32, 32), jointMat);
-                elbow.position.set(side * 0.48, 0.4, 0);
-                robot.add(elbow);
-                
-                const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.05, 0.5, 32), bodyMat);
-                forearm.position.set(side * 0.5, 0.1, 0.05);
-                forearm.rotation.x = -0.2;
-                robot.add(forearm);
-            });
-            
-            // Hips & Legs
-            const hips = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.2, 0.3, 64), bodyMat);
-            hips.position.y = 0.35;
-            robot.add(hips);
-            
-            const legGeo = new THREE.CylinderGeometry(0.11, 0.09, 0.7, 32);
-            [-1, 1].forEach(side => {
-                const leg = new THREE.Mesh(legGeo, bodyMat);
-                leg.position.set(side * 0.14, -0.15, 0);
-                robot.add(leg);
-                
-                const knee = new THREE.Mesh(new THREE.SphereGeometry(0.12, 32, 32), jointMat);
-                knee.position.set(side * 0.14, -0.5, 0);
-                robot.add(knee);
-                
-                const shin = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.07, 0.6, 32), bodyMat);
-                shin.position.set(side * 0.14, -0.85, 0);
-                robot.add(shin);
-                
-                const foot = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.1, 0.25), jointMat);
-                foot.position.set(side * 0.14, -1.2, 0.05);
-                robot.add(foot);
-            });
-            
-            scene.add(robot);
-        }
-
-        function createParticles() {
-            const geo = new THREE.BufferGeometry();
-            const count = 200;
-            const positions = new Float32Array(count * 3);
-            for(let i = 0; i < count * 3; i++) positions[i] = (Math.random() - 0.5) * 12;
-            geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-            const mat = new THREE.PointsMaterial({ color: 0x00c8ff, size: 0.025, transparent: true, opacity: 0.6 });
-            const particles = new THREE.Points(geo, mat);
-            scene.add(particles);
-            
-            function animateParticles() {
-                particles.rotation.y += 0.001;
-                requestAnimationFrame(animateParticles);
-            }
-            animateParticles();
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            const time = Date.now() * 0.001;
-            
-            if(robot) {
-                robot.position.y = Math.sin(time * 0.8) * 0.01;
-                if(!isSpeaking) robot.rotation.y = Math.sin(time * 0.3) * 0.03;
-                
-                if(isSpeaking) {
-                    robotHead.rotation.y = Math.sin(time * 2.5) * 0.06;
-                    robotHead.rotation.x = Math.sin(time * 1.5) * 0.03;
-                    robotHead.position.y = 1.4 + Math.sin(time * 10) * 0.005;
-                    robotEyes.forEach((eye, i) => eye.material.emissiveIntensity = 0.8 + Math.sin(time * 8 + i) * 0.3);
-                } else {
-                    robotHead.rotation.y *= 0.95;
-                    robotHead.rotation.x *= 0.95;
-                    robotHead.position.y = THREE.MathUtils.lerp(robotHead.position.y, 1.4, 0.05);
-                    robotEyes.forEach(eye => eye.material.emissiveIntensity = THREE.MathUtils.lerp(eye.material.emissiveIntensity, 0.8, 0.05));
-                }
-            }
-            renderer.render(scene, camera);
-        }
-
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        }
-
-        function initSpeechRecognition() {
-            if(!('webkitSpeechRecognition' in window)) return alert('Use Chrome browser');
-            
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-            
-            recognition.onstart = () => {
-                isListening = true;
-                document.getElementById('start-button').classList.add('listening');
-                document.getElementById('start-button').textContent = 'STOP CONVERSATION';
-                document.getElementById('status').textContent = 'Listening...';
-                document.getElementById('speech-waves').style.opacity = '1';
-            };
-            
-            recognition.onresult = (event) => {
-                for(let i = event.resultIndex; i < event.results.length; i++) {
-                    if(event.results[i].isFinal) {
-                        processUserInput(event.results[i][0].transcript.trim());
-                    }
-                }
-            };
-            
-            recognition.onend = () => { if(isConversationActive) recognition.start(); };
-        }
-
-        function toggleConversation() {
-            if(!recognition) initSpeechRecognition();
-            
-            if(isConversationActive) {
-                isConversationActive = false;
-                recognition.stop();
-                document.getElementById('start-button').classList.remove('listening');
-                document.getElementById('start-button').textContent = 'START CONVERSATION';
-                document.getElementById('status').textContent = 'Ready';
-                document.getElementById('speech-waves').style.opacity = '0';
-                window.speechSynthesis.cancel();
+            if (role === 'teacher') {
+                document.getElementById('teacherDashboard').classList.remove('hidden');
+                updateTeacherStats();
+                renderAttendanceTable();
             } else {
-                isConversationActive = true;
-                recognition.start();
-                if(!window.hasStarted) {
-                    window.hasStarted = true;
-                    setTimeout(() => speakResponse(Hello ${userName}! I'm your AI assistant. How can I help you?), 1000);
-                }
+                document.getElementById('studentDashboard').classList.remove('hidden');
+                checkStudentRegistration();
             }
         }
 
-        async function processUserInput(text) {
-            showMessage(You: ${text});
-            document.getElementById('status').textContent = 'Thinking...';
-            document.getElementById('speech-waves').style.opacity = '0';
-            
-            try {
-                const res = await fetch(https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: [{ parts: [{ text }] }], generationConfig: { maxOutputTokens: 150 } })
-                });
-                const data = await res.json();
-                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I didn't understand that.";
-                speakResponse(reply);
-            } catch(err) {
-                speakResponse("Connection error. Please try again.");
+        function logout() {
+            if (html5QrCode) {
+                html5QrCode.stop();
+            }
+            localStorage.removeItem('currentUser');
+            location.reload();
+        }
+
+        // Teacher Functions
+        function showSection(section) {
+            if (section === 'addStudent') {
+                document.getElementById('addStudentSection').classList.toggle('hidden');
             }
         }
 
-        function speakResponse(text) {
-            showMessage(AI: ${text});
-            document.getElementById('status').textContent = 'Speaking...';
-            
-            const utter = new SpeechSynthesisUtterance(text);
-            utter.rate = 0.9; utter.pitch = 1;
-            const voices = window.speechSynthesis.getVoices();
-            const voice = voices.find(v => v.name.includes('Google') || v.name.includes('Samantha'));
-            if(voice) utter.voice = voice;
-            
-            utter.onstart = () => isSpeaking = true;
-            utter.onend = () => {
-                isSpeaking = false;
-                document.getElementById('status').textContent = 'Listening...';
-                document.getElementById('speech-waves').style.opacity = '1';
+        function addStudent() {
+            const name = document.getElementById('studentName').value;
+            const roll = document.getElementById('studentRoll').value;
+            const cls = document.getElementById('studentClass').value;
+
+            if (!name || !roll) {
+                showToast('❌ Please fill required fields', 'error');
+                return;
+            }
+
+            const student = {
+                id: Date.now(),
+                name,
+                roll,
+                class: cls,
+                qrCode: `STU-${roll}-${Date.now()}`
             };
-            window.speechSynthesis.speak(utter);
+
+            students.push(student);
+            localStorage.setItem('students', JSON.stringify(students));
+            
+            showToast('✅ Student added successfully!');
+            document.getElementById('studentName').value = '';
+            document.getElementById('studentRoll').value = '';
+            document.getElementById('studentClass').value = '';
+            document.getElementById('addStudentSection').classList.add('hidden');
+            updateTeacherStats();
         }
 
-        function showMessage(text) {
-            const el = document.getElementById('chat-display');
-            el.textContent = text;
-            el.style.opacity = '1';
-            setTimeout(() => el.style.opacity = '0', 6000);
+        function generateClassQR() {
+            document.getElementById('qrModal').classList.remove('hidden');
+            document.getElementById('classQR').innerHTML = '';
+            
+            const classData = {
+                type: 'class_attendance',
+                classId: 'CLASS-' + new Date().toISOString().split('T')[0],
+                date: new Date().toISOString(),
+                teacher: 'Teacher'
+            };
+            
+            new QRCode(document.getElementById('classQR'), {
+                text: JSON.stringify(classData),
+                width: 200,
+                height: 200,
+                colorDark: "#667eea",
+                colorLight: "#ffffff",
+            });
+        }
+
+        function closeQR() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+        function updateTeacherStats() {
+            const today = new Date().toDateString();
+            const todayRecords = attendance.filter(a => new Date(a.date).toDateString() === today);
+            
+            document.getElementById('totalStudents').textContent = students.length;
+            document.getElementById('presentToday').textContent = todayRecords.filter(r => r.status === 'Present').length;
+            document.getElementById('absentToday').textContent = students.length - todayRecords.length;
+            
+            // Calculate average time
+            const totalMinutes = todayRecords.reduce((acc, r) => {
+                if (r.checkIn && r.checkOut) {
+                    const diff = new Date(r.checkOut) - new Date(r.checkIn);
+                    return acc + (diff / (1000 * 60));
+                }
+                return acc;
+            }, 0);
+            
+            const avgHours = todayRecords.length ? Math.round(totalMinutes / todayRecords.length / 60 * 10) / 10 : 0;
+            document.getElementById('avgTime').textContent = avgHours + 'h';
+        }
+
+        function renderAttendanceTable() {
+            const tbody = document.getElementById('attendanceTable');
+            const dateFilter = document.getElementById('dateFilter').value;
+            const filterDate = dateFilter ? new Date(dateFilter).toDateString() : new Date().toDateString();
+            
+            tbody.innerHTML = '';
+            
+            const filteredRecords = attendance.filter(a => 
+                new Date(a.date).toDateString() === filterDate
+            );
+
+            if (filteredRecords.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+                
+                filteredRecords.forEach(record => {
+                    const student = students.find(s => s.id === record.studentId) || { name: 'Unknown', roll: '-' };
+                    const row = document.createElement('tr');
+                    row.className = 'hover:bg-gray-50 transition';
+                    
+                    const duration = record.checkIn && record.checkOut ? 
+                        Math.round((new Date(record.checkOut) - new Date(record.checkIn)) / (1000 * 60)) + ' min' : 
+                        (record.checkIn ? 'In Progress' : '--');
+                    
+                    row.innerHTML = `
+                        <td class="px-4 py-3">
+                            <div class="font-semibold text-gray-800">${student.name}</div>
+                            <div class="text-sm text-gray-500">Roll: ${student.roll}</div>
+                        </td>
+                        <td class="px-4 py-3">
+                            <span class="px-3 py-1 rounded-full text-xs font-bold ${record.status === 'Present' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}">
+                                ${record.status}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 font-mono text-sm">${record.checkIn ? new Date(record.checkIn).toLocaleTimeString() : '--'}</td>
+                        <td class="px-4 py-3 font-mono text-sm">${record.checkOut ? new Date(record.checkOut).toLocaleTimeString() : '--'}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">${duration}</td>
+                        <td class="px-4 py-3">
+                            <button onclick="deleteRecord(${record.id})" class="text-red-600 hover:text-red-800 text-sm font-semibold">Delete</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+
+        function filterByDate() {
+            renderAttendanceTable();
+        }
+
+        function deleteRecord(id) {
+            if (confirm('Delete this record?')) {
+                attendance = attendance.filter(a => a.id !== id);
+                localStorage.setItem('attendance', JSON.stringify(attendance));
+                renderAttendanceTable();
+                updateTeacherStats();
+                showToast('🗑️ Record deleted');
+            }
+        }
+
+        function exportData() {
+            let csv = 'Date,Student Name,Roll Number,Status,Check In,Check Out,Duration (minutes)\n';
+            
+            attendance.forEach(record => {
+                const student = students.find(s => s.id === record.studentId) || {};
+                const duration = record.checkIn && record.checkOut ? 
+                    Math.round((new Date(record.checkOut) - new Date(record.checkIn)) / (1000 * 60)) : '';
+                
+                csv += `${new Date(record.date).toLocaleDateString()},${student.name || ''},${student.roll || ''},${record.status},${record.checkIn ? new Date(record.checkIn).toLocaleTimeString() : ''},${record.checkOut ? new Date(record.checkOut).toLocaleTimeString() : ''},${duration}\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            showToast('📊 Excel file downloaded!');
+        }
+
+        function clearAllData() {
+            if (confirm('⚠️ WARNING: This will delete ALL students and attendance records. Are you sure?')) {
+                localStorage.removeItem('students');
+                localStorage.removeItem('attendance');
+                students = [];
+                attendance = [];
+                updateTeacherStats();
+                renderAttendanceTable();
+                showToast('🗑️ All data cleared');
+            }
+        }
+
+        // Student Functions
+        function checkStudentRegistration() {
+            const savedStudent = localStorage.getItem('myStudentProfile');
+            if (savedStudent) {
+                const profile = JSON.parse(savedStudent);
+                document.getElementById('studentDisplayName').textContent = profile.name;
+                document.getElementById('studentDisplayRoll').textContent = 'Roll: ' + profile.roll;
+                document.getElementById('studentRegisterForm').classList.add('hidden');
+                document.getElementById('scannerSection').classList.remove('hidden');
+                initScanner();
+                updateMyStatus();
+            }
+        }
+
+        function registerStudent() {
+            const name = document.getElementById('regName').value;
+            const roll = document.getElementById('regRoll').value;
+            
+            if (!name || !roll) {
+                showToast('❌ Please enter name and roll number', 'error');
+                return;
+            }
+            
+            const profile = { name, roll, id: Date.now() };
+            localStorage.setItem('myStudentProfile', JSON.stringify(profile));
+            checkStudentRegistration();
+            showToast('✅ Registration successful!');
+        }
+
+        function initScanner() {
+            if (html5QrCode) return;
+            
+            html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start(
+                { facingMode: "environment" },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                onScanSuccess,
+                onScanError
+            ).catch(err => {
+                console.error("Scanner error:", err);
+                showToast('⚠️ Camera access denied. Use manual code entry.', 'error');
+            });
+        }
+
+        function onScanSuccess(decodedText) {
+            try {
+                const data = JSON.parse(decodedText);
+                if (data.type === 'class_attendance') {
+                    markAttendance('check-in');
+                }
+            } catch (e) {
+                // If not JSON, treat as code
+                markAttendance('check-in');
+            }
+        }
+
+        function onScanError(error) {
+            // console.warn(error);
+        }
+
+        function manualCheckIn() {
+            const code = document.getElementById('manualCode').value;
+            if (code) {
+                markAttendance('check-in');
+                document.getElementById('manualCode').value = '';
+            }
+        }
+
+        function markAttendance(type) {
+            const profile = JSON.parse(localStorage.getItem('myStudentProfile'));
+            const today = new Date().toDateString();
+            
+            // Check if already checked in today
+            let record = attendance.find(a => 
+                a.studentId === profile.id && 
+                new Date(a.date).toDateString() === today
+            );
+            
+            const now = new Date().toISOString();
+            
+            if (!record) {
+                // New check-in
+                record = {
+                    id: Date.now(),
+                    studentId: profile.id,
+                    date: now,
+                    status: 'Present',
+                    checkIn: now,
+                    checkOut: null
+                };
+                attendance.push(record);
+                showToast('✅ Check-in successful!');
+            } else if (!record.checkOut) {
+                // Check-out
+                record.checkOut = now;
+                showToast('✅ Check-out successful!');
+            } else {
+                showToast('⚠️ Already checked out today!', 'error');
+                return;
+            }
+            
+            localStorage.setItem('attendance', JSON.stringify(attendance));
+            updateMyStatus();
+        }
+
+        function updateMyStatus() {
+            const profile = JSON.parse(localStorage.getItem('myStudentProfile'));
+            const today = new Date().toDateString();
+            
+            const record = attendance.find(a => 
+                a.studentId === profile.id && 
+                new Date(a.date).toDateString() === today
+            );
+            
+            if (record) {
+                const badge = document.getElementById('myStatusBadge');
+                if (record.checkOut) {
+                    badge.textContent = 'Completed';
+                    badge.className = 'px-3 py-1 rounded-full text-sm font-bold bg-blue-100 text-blue-700';
+                } else {
+                    badge.textContent = 'Present';
+                    badge.className = 'px-3 py-1 rounded-full text-sm font-bold bg-green-100 text-green-700';
+                }
+                
+                document.getElementById('myCheckIn').textContent = record.checkIn ? 
+                    new Date(record.checkIn).toLocaleTimeString() : '--:--';
+                document.getElementById('myCheckOut').textContent = record.checkOut ? 
+                    new Date(record.checkOut).toLocaleTimeString() : '--:--';
+            }
+        }
+
+        // Utility
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = message;
+            document.getElementById('toastIcon').textContent = type === 'error' ? '❌' : '✅';
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        // Check if already logged in
+        const savedUser = localStorage.getItem('currentUser');
+        if (savedUser) {
+            const user = JSON.parse(savedUser);
+            login(user.role);
         }
     </script>
 </body>
