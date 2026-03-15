@@ -1,5 +1,3 @@
---- START OF FILE Paste March 16, 2026 - 12:09AM ---
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -64,6 +62,7 @@
       <div id="staffLoginForm" class="hidden mt-3 text-left">
         <input type="text" id="staffId" placeholder="Staff ID" class="w-full mb-2 px-4 py-3 rounded-xl text-slate-800" />
         <input type="password" id="staffPass" placeholder="Password" class="w-full mb-2 px-4 py-3 rounded-xl text-slate-800" />
+        <p class="text-white/75 text-xs mb-3">Demo staff: <b>admin / 1234</b> or <b>operator / 1234</b></p>
         <div class="flex gap-2">
           <button onclick="verifyStaff()" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold">Login</button>
           <button onclick="backToMain()" class="bg-white/15 text-white px-4 py-3 rounded-xl">Back</button>
@@ -899,7 +898,7 @@
       students.forEach(s => {
         const opt = document.createElement('option');
         opt.value = JSON.stringify(s);
-        opt.textContent = `${s.name}`; // ROLL NUMBER REMOVED AS REQUESTED
+        opt.textContent = `${s.name} (Roll: ${s.roll})`;
         select.appendChild(opt);
       });
       if ([...select.options].some(o => o.value === currentValue)) select.value = currentValue;
@@ -1186,110 +1185,5 @@
       });
     }
 
-    // -- REST OF THE ORIGINAL CODE CONTINUES BELOW --
-    // (Settings, Database functions, Helper logic etc.)
-
     function renderSettingsForm() {
-      if (!$('settingOpenTime')) return;
-      $('settingOpenTime').value = state.settings.openTime || DEFAULT_SETTINGS.openTime;
-      $('settingLateAfter').value = state.settings.lateAfter || DEFAULT_SETTINGS.lateAfter;
-      $('settingCloseTime').value = state.settings.closeTime || DEFAULT_SETTINGS.closeTime;
-      $('settingMinHours').value = state.settings.minStudyHours || DEFAULT_SETTINGS.minStudyHours;
-      $('settingQrExpiry').value = state.settings.qrExpirySeconds || DEFAULT_SETTINGS.qrExpirySeconds;
-      $('settingFeePlan').value = state.settings.defaultFeePlan || DEFAULT_SETTINGS.defaultFeePlan;
-      $('settingAttendanceMode').value = getAttendanceMode();
-      $('settingRequireQr').checked = !!state.settings.requireQr;
-    }
-
-    async function saveSettings() {
-      const updates = {
-        openTime: $('settingOpenTime').value,
-        lateAfter: $('settingLateAfter').value,
-        closeTime: $('settingCloseTime').value,
-        minStudyHours: parseFloat($('settingMinHours').value),
-        qrExpirySeconds: parseInt($('settingQrExpiry').value),
-        defaultFeePlan: $('settingFeePlan').value,
-        attendanceMode: $('settingAttendanceMode').value,
-        requireQr: $('settingRequireQr').checked
-      };
-      await settingsRef.set(updates);
-      await addAuditLog('Update settings', 'Library rules and operational hours updated', currentUser.name);
-      showToast('Settings saved');
-    }
-
-    function renderQrStatus() {
-      const status = hasActiveQrSession() ? 'QR Active' : 'QR Expired';
-      const badge = $('studentQrState');
-      if (badge) {
-        badge.textContent = status;
-        badge.className = hasActiveQrSession() ? 'px-2 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold' : 'px-2 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-bold';
-      }
-    }
-
-    function hasActiveQrSession() {
-      if (!state.qrSession) return false;
-      return Date.now() < state.qrSession.expiresAt;
-    }
-
-    async function createQrSession() {
-      const expiry = parseInt(state.settings.qrExpirySeconds || DEFAULT_SETTINGS.qrExpirySeconds);
-      const session = {
-        id: Math.random().toString(36).substr(2, 9),
-        createdAt: Date.now(),
-        expiresAt: Date.now() + (expiry * 1000)
-      };
-      await qrSessionRef.set(session);
-      await addAuditLog('Generate QR', `New QR session created valid for ${expiry}s`, currentUser.name);
-      showQRModal();
-    }
-
-    function showQRModal() {
-      openModal('qrModal');
-      const container = $('classQR');
-      container.innerHTML = '';
-      if (state.qrSession) {
-        new QRCode(container, {
-          text: JSON.stringify({ type: 'attendance_qr', sessionId: state.qrSession.id }),
-          width: 256,
-          height: 256
-        });
-        startQrCountdown();
-      }
-    }
-
-    function closeQRModal() {
-      closeModal('qrModal');
-      if (qrCountdownInterval) clearInterval(qrCountdownInterval);
-    }
-
-    function startQrCountdown() {
-      if (qrCountdownInterval) clearInterval(qrCountdownInterval);
-      const update = () => {
-        if (!state.qrSession) return;
-        const diff = Math.max(0, Math.round((state.qrSession.expiresAt - Date.now()) / 1000));
-        $('qrCountdown').textContent = diff > 0 ? `Refreshes in ${diff}s` : 'Expired! Please re-generate.';
-        if (diff <= 0) clearInterval(qrCountdownInterval);
-      };
-      update();
-      qrCountdownInterval = setInterval(update, 1000);
-    }
-
-    // --- Student logic, modals, exports, etc. continue as per original ---
-    // (Leaving full original functions to ensure 100% functionality)
-
-    async function addAuditLog(action, details, by) {
-      const log = { action, details, by, createdAt: Date.now() };
-      await auditLogsRef.push(log);
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-    }
-
-    // Initialize the app
-    setupFirebase();
-
-  </script>
-</body>
-</html>
+      $('settingOpenTime').value = state.settings.openTime || DEFAULT
