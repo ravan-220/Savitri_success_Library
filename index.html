@@ -1,1189 +1,1073 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Savitri Success Library - Advanced Single File V5</title>
-  <meta name="theme-color" content="#6d28d9" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <style>
-    body { font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    .gradient-bg { background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%); }
-    .glass { background: rgba(255,255,255,0.10); backdrop-filter: blur(12px); }
-    .card { background: white; border-radius: 1rem; box-shadow: 0 12px 30px rgba(2, 6, 23, 0.08); }
-    .loading { display:inline-block; width:18px; height:18px; border:3px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:spin 1s linear infinite; }
-    .soft-loading { display:inline-block; width:18px; height:18px; border:3px solid rgba(99,102,241,.2); border-top-color:#4f46e5; border-radius:50%; animation:spin 1s linear infinite; }
-    .sync-pulse { animation: pulse 1.7s infinite; }
-    .modal-bg { background: rgba(15,23,42,.58); }
-    .tab-btn.active { background:#4f46e5; color:white; }
-    .seat-card.active { border-color:#10b981; background:#ecfdf5; }
-    .seat-card.empty { border-color:#cbd5e1; background:#f8fafc; }
-    .seat-card.offline { border-color:#f59e0b; background:#fff7ed; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.45; } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savitri Success Library - Attendance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+        .sync-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color: #fff; animation: spin 1s ease-in-out infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
 </head>
-<body class="bg-slate-100 min-h-screen text-slate-800">
-  <div id="connectionStatus" class="fixed top-3 right-3 z-50 flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow-lg text-xs font-bold">
-    <span id="statusDot" class="w-2 h-2 rounded-full bg-yellow-500 sync-pulse"></span>
-    <span id="statusText">Checking...</span>
-  </div>
+<body class="bg-gray-50 min-h-screen">
 
-  <div id="loginScreen" class="fixed inset-0 gradient-bg flex items-center justify-center z-40 p-4">
-    <div class="glass p-6 rounded-3xl w-full max-w-md text-center border border-white/15 shadow-2xl">
-      <div class="text-5xl mb-3">📚</div>
-      <h1 class="text-3xl font-bold text-white">Savitri Success Library</h1>
-      <p class="text-white/90 mt-1 mb-6">Attendance Single File Edition</p>
-
-      <div id="mainButtons" class="space-y-3">
-        <button onclick="showStaffLogin()" class="w-full bg-white text-purple-700 font-bold py-4 rounded-2xl shadow-lg flex items-center justify-center gap-3">
-          <span class="text-2xl">👨‍💼</span>
-          <div class="text-left">
-            <div class="text-sm opacity-70">Login as</div>
-            <div class="text-lg">Admin / Operator</div>
-          </div>
-        </button>
-        <button onclick="showStudentLogin()" class="w-full bg-white/15 text-white font-bold py-4 rounded-2xl border border-white/25 flex items-center justify-center gap-3">
-          <span class="text-2xl">🎓</span>
-          <div class="text-left">
-            <div class="text-sm opacity-70">Login as</div>
-            <div class="text-lg">Student</div>
-          </div>
-        </button>
-      </div>
-
-      <div id="staffLoginForm" class="hidden mt-3 text-left">
-        <input type="text" id="staffId" placeholder="Staff ID" class="w-full mb-2 px-4 py-3 rounded-xl text-slate-800" />
-        <input type="password" id="staffPass" placeholder="Password" class="w-full mb-2 px-4 py-3 rounded-xl text-slate-800" />
-        <p class="text-white/75 text-xs mb-3">Demo staff: <b>admin / 1234</b> or <b>operator / 1234</b></p>
-        <div class="flex gap-2">
-          <button onclick="verifyStaff()" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold">Login</button>
-          <button onclick="backToMain()" class="bg-white/15 text-white px-4 py-3 rounded-xl">Back</button>
-        </div>
-      </div>
-
-      <div id="studentLoginForm" class="hidden mt-3 text-left">
-        <div id="loadingStudents" class="text-white text-center mb-3 hidden"><span class="loading mr-2"></span>Loading students...</div>
-        <select id="studentSelect" class="w-full mb-2 px-4 py-3 rounded-xl text-slate-800 text-base">
-          <option value="">👤 Select Your Name</option>
-        </select>
-        <input type="password" id="studentPass" placeholder="🔑 Enter Roll Number" class="w-full mb-3 px-4 py-3 rounded-xl text-slate-800" />
-        <div class="flex gap-2">
-          <button onclick="verifyStudent()" class="flex-1 bg-emerald-600 text-white py-3 rounded-xl font-bold">Login</button>
-          <button onclick="backToMain()" class="bg-white/15 text-white px-4 py-3 rounded-xl">Back</button>
-        </div>
-      </div>
+    <!-- Connection Status -->
+    <div id="connectionStatus" class="fixed top-2 right-2 z-50 flex items-center gap-2 bg-white px-3 py-1 rounded-full shadow-lg text-xs font-bold">
+        <span id="statusDot" class="w-2 h-2 rounded-full bg-yellow-500"></span>
+        <span id="statusText">Checking...</span>
     </div>
-  </div>
 
-  <div id="adminDashboard" class="hidden min-h-screen">
-    <nav class="gradient-bg text-white p-4 sticky top-0 z-30 shadow-lg">
-      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-11 bg-white/15 rounded-full flex items-center justify-center text-xl">🛠️</div>
-          <div>
-            <h2 id="staffWelcome" class="font-bold text-lg">Staff Panel</h2>
-            <p class="text-xs opacity-85" id="currentDate"></p>
-          </div>
-        </div>
-        <div class="flex flex-wrap gap-2 items-center">
-          <button onclick="openStudentModal()" class="bg-white text-purple-700 px-4 py-2 rounded-xl text-sm font-bold shadow">➕ Add Student</button>
-          <button onclick="openImportModal()" class="bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold">📥 Bulk Import</button>
-          <button onclick="openQRModal()" class="bg-emerald-500 px-4 py-2 rounded-xl text-sm font-bold">📱 QR Session</button>
-          <button onclick="logout()" class="bg-white/15 px-4 py-2 rounded-xl text-sm font-semibold">Logout</button>
-        </div>
-      </div>
-    </nav>
+    <!-- Login Screen -->
+    <div id="loginScreen" class="fixed inset-0 gradient-bg flex items-center justify-center z-40">
+        <div class="glass p-6 rounded-2xl w-full max-w-md mx-4 text-center">
+            <div class="text-5xl mb-3">📚</div>
+            <h1 class="text-2xl font-bold text-white mb-1">Savitri Success Library</h1>
+            <p class="text-white/90 mb-6 text-lg">Attendance</p>
+            
+            <!-- Admin Login -->
+            <div id="adminLoginForm" class="hidden mb-4 text-left">
+                <input type="text" id="adminId" placeholder="Admin ID" class="w-full mb-2 px-4 py-3 rounded-lg text-gray-800">
+                <input type="password" id="adminPass" placeholder="Password" class="w-full mb-3 px-4 py-3 rounded-lg text-gray-800">
+                <div class="flex gap-2">
+                    <button onclick="verifyAdmin()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold">Login</button>
+                    <button onclick="backToMain()" class="bg-white/20 text-white px-4 py-3 rounded-lg">Back</button>
+                </div>
+            </div>
 
-    <main class="max-w-7xl mx-auto p-4 space-y-4">
-      <section class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        <div class="card p-4"><div class="text-sm text-slate-500">Active Students</div><div id="statStudents" class="text-3xl font-bold text-purple-700 mt-2">0</div></div>
-        <div class="card p-4"><div class="text-sm text-slate-500">Present Today</div><div id="statPresent" class="text-3xl font-bold text-emerald-600 mt-2">0</div></div>
-        <div class="card p-4"><div class="text-sm text-slate-500">Absent Today</div><div id="statAbsent" class="text-3xl font-bold text-rose-600 mt-2">0</div></div>
-        <div class="card p-4"><div class="text-sm text-slate-500">Late Today</div><div id="statLate" class="text-3xl font-bold text-amber-600 mt-2">0</div></div>
-        <div class="card p-4"><div class="text-sm text-slate-500">Avg Hours</div><div id="statAvgHours" class="text-3xl font-bold text-blue-600 mt-2">0h</div></div>
-        <div class="card p-4"><div class="text-sm text-slate-500">Open QR</div><div id="statQr" class="text-3xl font-bold text-indigo-600 mt-2">No</div></div>
-      </section>
-
-      <section class="card p-3">
-        <div class="flex flex-wrap gap-2">
-          <button class="tab-btn active px-4 py-2 rounded-xl font-semibold text-sm bg-slate-100" data-tab="overview" onclick="switchAdminTab('overview')">Overview</button>
-          <button class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm bg-slate-100" data-tab="students" onclick="switchAdminTab('students')">Students</button>
-          <button class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm bg-slate-100" data-tab="attendance" onclick="switchAdminTab('attendance')">Attendance</button>
-          <button class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm bg-slate-100" data-tab="corrections" onclick="switchAdminTab('corrections')">Corrections</button>
-          <button class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm bg-slate-100" data-tab="holidays" onclick="switchAdminTab('holidays')">Rules & Holidays</button>
-          <button class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm bg-slate-100" data-tab="fees" onclick="switchAdminTab('fees')">Fees & Seats</button>
-          <button class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm bg-slate-100" data-tab="tools" onclick="switchAdminTab('tools')">Tools & Audit</button>
-        </div>
-      </section>
-
-      <section id="tab-overview" class="admin-tab space-y-4">
-        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-          <div class="card p-4 xl:col-span-2">
-            <div class="flex items-center justify-between mb-3">
-              <div>
-                <h3 class="font-bold text-lg">Attendance Trend</h3>
-                <p class="text-sm text-slate-500">Last 7 days present count</p>
-              </div>
-            </div>
-            <canvas id="trendChart" height="120"></canvas>
-          </div>
-          <div class="card p-4">
-            <h3 class="font-bold text-lg mb-3">Today Snapshot</h3>
-            <div class="space-y-2 text-sm">
-              <div class="flex justify-between bg-slate-50 rounded-xl p-3"><span>Checked In</span><strong id="overviewCheckedIn">0</strong></div>
-              <div class="flex justify-between bg-slate-50 rounded-xl p-3"><span>Checked Out</span><strong id="overviewCheckedOut">0</strong></div>
-              <div class="flex justify-between bg-slate-50 rounded-xl p-3"><span>On Leave</span><strong id="overviewLeave">0</strong></div>
-              <div class="flex justify-between bg-slate-50 rounded-xl p-3"><span>Inside Now</span><strong id="overviewInside">0</strong></div>
-              <div class="flex justify-between bg-slate-50 rounded-xl p-3"><span>Holidays This Month</span><strong id="overviewHolidayCount">0</strong></div>
-            </div>
-            <div class="mt-4 text-xs text-slate-500">Use QR refresh to stop screenshot reuse and keep attendance cleaner.</div>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div class="card p-4">
-            <h3 class="font-bold text-lg mb-3">Study Hours by Class</h3>
-            <canvas id="classChart" height="130"></canvas>
-          </div>
-          <div class="card p-4">
-            <h3 class="font-bold text-lg mb-3">Top Students This Month</h3>
-            <canvas id="topChart" height="130"></canvas>
-          </div>
-        </div>
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div class="card p-4">
-            <div class="flex items-center justify-between mb-3">
-              <div>
-                <h3 class="font-bold text-lg">Broadcasts</h3>
-                <p class="text-sm text-slate-500">Latest in-app notifications</p>
-              </div>
-              <button onclick="switchAdminTab('tools')" class="text-sm font-semibold text-indigo-600">Send New</button>
-            </div>
-            <div id="adminNotificationsList" class="space-y-2 max-h-72 overflow-auto"></div>
-          </div>
-          <div class="card p-4">
-            <div class="flex items-center justify-between mb-3">
-              <div>
-                <h3 class="font-bold text-lg">Pending Corrections</h3>
-                <p class="text-sm text-slate-500">Quick action list</p>
-              </div>
-              <span id="pendingBadge" class="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">0 pending</span>
-            </div>
-            <div id="overviewRequests" class="space-y-3 max-h-72 overflow-auto"></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="tab-students" class="admin-tab hidden">
-        <div class="card p-4 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 class="font-bold text-lg">Student Management</h3>
-              <p class="text-sm text-slate-500">Profile, batch, parent, seat, fee and active/archive status</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <input id="studentSearch" oninput="renderStudentsTable()" type="text" placeholder="Search name / roll / class / seat" class="border rounded-xl px-3 py-2 text-sm w-64" />
-              <select id="studentStatusFilter" onchange="renderStudentsTable()" class="border rounded-xl px-3 py-2 text-sm">
-                <option value="active">Active</option>
-                <option value="archived">Archived</option>
-                <option value="all">All</option>
-              </select>
-              <select id="studentFeeFilter" onchange="renderStudentsTable()" class="border rounded-xl px-3 py-2 text-sm">
-                <option value="all">All Fee</option>
-                <option value="Paid">Paid</option>
-                <option value="Due">Due</option>
-                <option value="Overdue">Overdue</option>
-              </select>
-            </div>
-          </div>
-          <div class="overflow-auto rounded-2xl border border-slate-200">
-            <table class="w-full text-sm">
-              <thead class="bg-slate-50 sticky top-0">
-                <tr>
-                  <th class="px-3 py-3 text-left font-bold">Student</th>
-                  <th class="px-3 py-3 text-left font-bold">Batch</th>
-                  <th class="px-3 py-3 text-left font-bold">Seat</th>
-                  <th class="px-3 py-3 text-left font-bold">Phone</th>
-                  <th class="px-3 py-3 text-left font-bold">Fee</th>
-                  <th class="px-3 py-3 text-left font-bold">Status</th>
-                  <th class="px-3 py-3 text-left font-bold">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="studentsTable" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-          <div id="studentsEmptyState" class="hidden text-center text-slate-500 py-8"><div class="text-4xl mb-2">👥</div><p>No students found.</p></div>
-        </div>
-      </section>
-
-      <section id="tab-attendance" class="admin-tab hidden">
-        <div class="card p-4 space-y-4">
-          <div class="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h3 class="font-bold text-lg">Attendance Records</h3>
-              <p class="text-sm text-slate-500">Filter by date, status, late, class, and export CSV</p>
-            </div>
-            <div class="flex flex-wrap gap-2">
-              <input id="attendanceStartDate" type="date" class="border rounded-xl px-3 py-2 text-sm" />
-              <input id="attendanceEndDate" type="date" class="border rounded-xl px-3 py-2 text-sm" />
-              <input id="attendanceSearch" type="text" oninput="renderAttendanceTable()" placeholder="Search student" class="border rounded-xl px-3 py-2 text-sm w-44" />
-              <select id="attendanceStatusFilter" onchange="renderAttendanceTable()" class="border rounded-xl px-3 py-2 text-sm">
-                <option value="all">All Status</option>
-                <option value="Checked In">Checked In</option>
-                <option value="Checked Out">Checked Out</option>
-                <option value="Leave">Leave</option>
-                <option value="Holiday">Holiday</option>
-              </select>
-              <select id="attendanceLateFilter" onchange="renderAttendanceTable()" class="border rounded-xl px-3 py-2 text-sm">
-                <option value="all">Late Filter</option>
-                <option value="late">Late Only</option>
-                <option value="ontime">On Time</option>
-              </select>
-              <button onclick="setTodayRange()" class="bg-slate-200 px-3 py-2 rounded-xl text-sm font-semibold">Today</button>
-              <button onclick="exportAttendanceCsv()" class="bg-emerald-600 text-white px-3 py-2 rounded-xl text-sm font-bold">Export CSV</button>
-            </div>
-          </div>
-          <div class="overflow-auto rounded-2xl border border-slate-200 max-h-[560px]">
-            <table class="w-full text-sm">
-              <thead class="bg-slate-50 sticky top-0">
-                <tr>
-                  <th class="px-3 py-3 text-left font-bold">Date</th>
-                  <th class="px-3 py-3 text-left font-bold">Student</th>
-                  <th class="px-3 py-3 text-left font-bold">Status</th>
-                  <th class="px-3 py-3 text-left font-bold">In</th>
-                  <th class="px-3 py-3 text-left font-bold">Out</th>
-                  <th class="px-3 py-3 text-left font-bold">Duration</th>
-                  <th class="px-3 py-3 text-left font-bold">Flags</th>
-                  <th class="px-3 py-3 text-left font-bold">Remark</th>
-                </tr>
-              </thead>
-              <tbody id="attendanceTable" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-          <div id="attendanceEmptyState" class="hidden text-center text-slate-500 py-8"><div class="text-4xl mb-2">📋</div><p>No attendance records found.</p></div>
-        </div>
-      </section>
-
-      <section id="tab-corrections" class="admin-tab hidden">
-        <div class="card p-4">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h3 class="font-bold text-lg">Correction & Leave Requests</h3>
-              <p class="text-sm text-slate-500">Students can request checkout fixes or leave approvals</p>
-            </div>
-          </div>
-          <div id="correctionsList" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
-          <div id="correctionsEmptyState" class="hidden text-center text-slate-500 py-8"><div class="text-4xl mb-2">📝</div><p>No correction requests yet.</p></div>
-        </div>
-      </section>
-
-      <section id="tab-holidays" class="admin-tab hidden space-y-4">
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div class="card p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <div>
-                <h3 class="font-bold text-lg">Library Rules</h3>
-                <p class="text-sm text-slate-500">Late, QR expiry, open-close and minimum hours</p>
-              </div>
-              <button onclick="saveSettings()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Save Rules</button>
-            </div>
-            <div class="grid grid-cols-2 gap-3">
-              <label class="text-sm">Open Time<input id="settingOpenTime" type="time" class="border rounded-xl px-3 py-2 w-full mt-1" /></label>
-              <label class="text-sm">Late After<input id="settingLateAfter" type="time" class="border rounded-xl px-3 py-2 w-full mt-1" /></label>
-              <label class="text-sm">Close Time<input id="settingCloseTime" type="time" class="border rounded-xl px-3 py-2 w-full mt-1" /></label>
-              <label class="text-sm">Min Study Hours<input id="settingMinHours" type="number" min="1" step="0.5" class="border rounded-xl px-3 py-2 w-full mt-1" /></label>
-              <label class="text-sm">QR Expiry (sec)<input id="settingQrExpiry" type="number" min="10" class="border rounded-xl px-3 py-2 w-full mt-1" /></label>
-              <label class="text-sm">Default Fee Plan<input id="settingFeePlan" type="text" class="border rounded-xl px-3 py-2 w-full mt-1" /></label>
-              <label class="text-sm col-span-2">Attendance Mode
-                <select id="settingAttendanceMode" class="border rounded-xl px-3 py-2 w-full mt-1">
-                  <option value="button">Direct Button Only</option>
-                  <option value="hybrid">Button + QR (Hybrid)</option>
-                  <option value="qr">QR Only</option>
+            <!-- Student Login -->
+            <div id="studentLoginForm" class="hidden mb-4 text-left">
+                <div id="loadingStudents" class="text-white text-center mb-2 hidden">
+                    <span class="loading mr-2"></span>Loading students...
+                </div>
+                <select id="studentSelect" class="w-full mb-2 px-4 py-3 rounded-lg text-gray-800 text-lg">
+                    <option value="">👤 Select Your Name</option>
                 </select>
-              </label>
+                <input type="password" id="studentPass" placeholder="🔑 Enter Roll Number" class="w-full mb-3 px-4 py-3 rounded-lg text-gray-800">
+                
+                <div class="flex gap-2">
+                    <button onclick="verifyStudent()" class="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold text-lg">Login</button>
+                    <button onclick="backToMain()" class="bg-white/20 text-white px-4 py-3 rounded-lg">Back</button>
+                </div>
             </div>
-            <label class="flex items-center gap-2 text-sm"><input id="settingRequireQr" type="checkbox" class="w-4 h-4" /> Legacy QR lock (kept for old data compatibility)</label>
-            <p class="text-xs text-slate-500">Direct Button mode is easiest for daily use. Hybrid allows both manual buttons and active QR. QR Only forces scan-based attendance.</p>
-          </div>
 
-          <div class="card p-4">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h3 class="font-bold text-lg">Holiday Calendar</h3>
-                <p class="text-sm text-slate-500">Block attendance on holidays and show reasons</p>
-              </div>
-              <button onclick="openHolidayModal()" class="bg-amber-500 text-white px-4 py-2 rounded-xl text-sm font-bold">➕ Add Holiday</button>
+            <div id="mainButtons" class="space-y-3">
+                <button onclick="showAdminLogin()" class="w-full bg-white text-purple-600 font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2">
+                    <span class="text-2xl">👨‍💼</span>
+                    <div class="text-left"><div class="text-sm opacity-70">Login as</div><div class="text-lg">Admin</div></div>
+                </button>
+                <button onclick="showStudentLogin()" class="w-full bg-white/20 text-white font-bold py-4 rounded-xl border border-white/30 flex items-center justify-center gap-2">
+                    <span class="text-2xl">🎓</span>
+                    <div class="text-left"><div class="text-sm opacity-70">Login as</div><div class="text-lg">Student</div></div>
+                </button>
             </div>
-            <div id="holidayList" class="space-y-3 max-h-80 overflow-auto"></div>
-            <div id="holidayEmptyState" class="hidden text-center text-slate-500 py-8">No holidays added.</div>
-          </div>
         </div>
-      </section>
+    </div>
 
-      <section id="tab-fees" class="admin-tab hidden space-y-4">
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div class="card p-4">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h3 class="font-bold text-lg">Fee Tracker</h3>
-                <p class="text-sm text-slate-500">Due, overdue and mark paid</p>
-              </div>
+    <!-- Admin Dashboard -->
+    <div id="adminDashboard" class="hidden min-h-screen bg-gray-50">
+        <nav class="gradient-bg text-white p-4 sticky top-0 z-30 shadow-lg">
+            <div class="max-w-6xl mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">👨‍💼</div>
+                    <div>
+                        <h2 class="font-bold text-lg">Rahul Chauhan</h2>
+                        <p class="text-xs opacity-80" id="currentDate"></p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="bg-white/20 px-4 py-2 rounded-lg text-sm font-semibold">Logout</button>
             </div>
-            <div class="overflow-auto rounded-2xl border border-slate-200 max-h-[430px]">
-              <table class="w-full text-sm">
-                <thead class="bg-slate-50 sticky top-0">
-                  <tr>
-                    <th class="px-3 py-3 text-left font-bold">Student</th>
-                    <th class="px-3 py-3 text-left font-bold">Plan</th>
-                    <th class="px-3 py-3 text-left font-bold">Due Date</th>
-                    <th class="px-3 py-3 text-left font-bold">Status</th>
-                    <th class="px-3 py-3 text-left font-bold">Action</th>
-                  </tr>
-                </thead>
-                <tbody id="feeTable" class="divide-y divide-slate-100"></tbody>
-              </table>
-            </div>
-          </div>
-          <div class="card p-4">
-            <div class="flex items-center justify-between mb-4">
-              <div>
-                <h3 class="font-bold text-lg">Seat Occupancy</h3>
-                <p class="text-sm text-slate-500">Assigned seats and live occupancy</p>
-              </div>
-            </div>
-            <div id="seatGrid" class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[430px] overflow-auto pr-1"></div>
-          </div>
-        </div>
-      </section>
+        </nav>
 
-      <section id="tab-tools" class="admin-tab hidden space-y-4">
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div class="card p-4 space-y-4">
-            <div>
-              <h3 class="font-bold text-lg">Backup & Restore</h3>
-              <p class="text-sm text-slate-500">Download full database JSON or restore it back</p>
+        <div class="max-w-6xl mx-auto p-4 space-y-4">
+            <!-- Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="bg-white p-3 rounded-xl shadow-sm text-center">
+                    <div class="text-2xl font-bold text-purple-600" id="totalStudents">0</div>
+                    <div class="text-xs text-gray-600">Total Students</div>
+                </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm text-center">
+                    <div class="text-2xl font-bold text-green-600" id="presentToday">0</div>
+                    <div class="text-xs text-gray-600">Present</div>
+                </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm text-center">
+                    <div class="text-2xl font-bold text-red-600" id="absentToday">0</div>
+                    <div class="text-xs text-gray-600">Absent</div>
+                </div>
+                <div class="bg-white p-3 rounded-xl shadow-sm text-center">
+                    <div class="text-2xl font-bold text-blue-600" id="avgTime">0h</div>
+                    <div class="text-xs text-gray-600">Avg Time</div>
+                </div>
             </div>
+
+            <!-- Actions -->
             <div class="flex flex-wrap gap-2">
-              <button onclick="backupDatabase()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold">📦 Backup JSON</button>
-              <button onclick="document.getElementById('restoreFile').click()" class="bg-slate-200 px-4 py-2 rounded-xl text-sm font-semibold">♻️ Restore JSON</button>
-              <button onclick="clearAllData()" class="bg-rose-600 text-white px-4 py-2 rounded-xl text-sm font-bold">🗑️ Clear All</button>
-              <input id="restoreFile" type="file" accept="application/json" class="hidden" onchange="restoreDatabase(event)" />
+                <button onclick="showSection('addStudent')" class="bg-purple-600 text-white px-4 py-2 rounded-lg shadow text-sm font-bold">➕ Add Student</button>
+                <button onclick="showSection('studentList')" class="bg-indigo-600 text-white px-4 py-2 rounded-lg shadow text-sm font-bold">👥 View Students</button>
+                <button onclick="generateClassQR()" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow text-sm font-bold">📱 Class QR</button>
+                <button onclick="exportData()" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow text-sm font-bold">📊 Export</button>
+                <button onclick="clearAllData()" class="bg-red-600 text-white px-4 py-2 rounded-lg shadow text-sm font-bold">🗑️ Clear</button>
             </div>
-            <div class="text-xs text-slate-500">Restore replaces the current database, so keep a backup first.</div>
-          </div>
-          <div class="card p-4 space-y-3">
-            <div>
-              <h3 class="font-bold text-lg">Broadcast Notification</h3>
-              <p class="text-sm text-slate-500">Send in-app notice to students or all users</p>
+
+            <!-- Add Student Section -->
+            <div id="addStudentSection" class="hidden bg-white rounded-xl shadow-lg p-4 border-2 border-purple-100">
+                <h3 class="text-lg font-bold mb-3 text-purple-800">➕ Add New Student</h3>
+                
+                <div class="grid gap-3">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 mb-1 block">Student Name *</label>
+                        <input type="text" id="studentName" placeholder="Enter full name" 
+                            class="border-2 border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 mb-1 block">Roll Number * (This will be password)</label>
+                        <input type="text" id="studentRoll" placeholder="e.g., 101, 102" 
+                            class="border-2 border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                    </div>
+                    
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 mb-1 block">Class (Optional)</label>
+                        <input type="text" id="studentClass" placeholder="e.g., Class 10, Science"
+                            class="border-2 border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200">
+                    </div>
+                </div>
+                
+                <div class="flex gap-2 mt-4">
+                    <button onclick="addStudent()" id="saveStudentBtn" class="flex-1 bg-purple-600 text-white py-3 rounded-lg font-bold hover:bg-purple-700 transition flex items-center justify-center gap-2">
+                        <span>💾</span> Save Student
+                    </button>
+                    <button onclick="hideSection('addStudent')" class="bg-gray-300 px-4 py-3 rounded-lg hover:bg-gray-400 transition font-bold">Cancel</button>
+                </div>
+                
+                <div id="addStudentError" class="hidden mt-3 p-3 bg-red-100 text-red-700 rounded-lg text-sm"></div>
+                <div id="addStudentSuccess" class="hidden mt-3 p-3 bg-green-100 text-green-700 rounded-lg text-sm"></div>
             </div>
-            <input id="notificationTitle" type="text" placeholder="Title" class="border rounded-xl px-3 py-2 w-full text-sm" />
-            <textarea id="notificationMessage" rows="4" placeholder="Message" class="border rounded-xl px-3 py-2 w-full text-sm"></textarea>
-            <div class="flex items-center gap-2">
-              <select id="notificationTarget" class="border rounded-xl px-3 py-2 text-sm">
-                <option value="student">Students</option>
-                <option value="all">All Users</option>
-              </select>
-              <button onclick="sendNotification()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Send Notice</button>
+
+            <!-- Student List -->
+            <div id="studentListSection" class="hidden bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="p-3 border-b flex justify-between items-center bg-gray-50">
+                    <h3 class="font-bold text-purple-800">👥 All Students</h3>
+                    <button onclick="hideSection('studentList')" class="text-gray-500 text-xl hover:text-gray-700">✕</button>
+                </div>
+                <div class="max-h-64 overflow-y-auto">
+                    <table class="w-full text-sm">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="px-3 py-2 text-left font-bold">Name</th>
+                                <th class="px-3 py-2 text-left font-bold">Roll</th>
+                                <th class="px-3 py-2 text-left font-bold">Class</th>
+                                <th class="px-3 py-2 text-left font-bold">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentTable" class="divide-y"></tbody>
+                    </table>
+                </div>
+                <div id="noStudents" class="hidden p-8 text-center text-gray-500">
+                    <div class="text-4xl mb-2">👥</div>
+                    <p>No students added yet</p>
+                </div>
             </div>
-          </div>
-        </div>
-        <div class="card p-4">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h3 class="font-bold text-lg">Audit Logs</h3>
-              <p class="text-sm text-slate-500">Critical actions across the app</p>
+
+            <!-- Class QR Modal -->
+            <div id="qrModal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div class="bg-white rounded-xl p-4 max-w-sm w-full text-center">
+                    <h3 class="text-lg font-bold mb-2">📱 Scan for Attendance</h3>
+                    <div id="classQR" class="flex justify-center mb-2"></div>
+                    <button onclick="closeQR()" class="bg-gray-600 text-white px-4 py-2 rounded-lg w-full font-bold">Close</button>
+                </div>
             </div>
-          </div>
-          <div id="auditList" class="space-y-2 max-h-[400px] overflow-auto"></div>
-          <div id="auditEmptyState" class="hidden text-center text-slate-500 py-8">No audit logs yet.</div>
+
+            <!-- Live Attendance Table -->
+            <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="p-3 border-b bg-gray-50 flex justify-between items-center">
+                    <h3 class="font-bold text-sm flex items-center gap-2">
+                        <span class="w-2 h-2 bg-green-500 rounded-full sync-pulse"></span>
+                        Live Attendance
+                    </h3>
+                    <div class="flex items-center gap-2">
+                        <input type="date" id="dateFilter" onchange="renderAttendanceTable()" class="border rounded px-2 py-1 text-xs">
+                        <button onclick="renderAttendanceTable()" class="bg-blue-600 text-white px-2 py-1 rounded text-xs font-bold">Refresh</button>
+                    </div>
+                </div>
+                <div class="max-h-96 overflow-y-auto">
+                    <table class="w-full text-xs">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="px-2 py-2 text-left font-bold">Student</th>
+                                <th class="px-2 py-2 text-left font-bold">Status</th>
+                                <th class="px-2 py-2 text-left font-bold">In</th>
+                                <th class="px-2 py-2 text-left font-bold">Out</th>
+                                <th class="px-2 py-2 text-left font-bold">Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendanceTable" class="divide-y"></tbody>
+                    </table>
+                </div>
+                <div id="emptyState" class="hidden p-8 text-center text-gray-500">
+                    <div class="text-4xl mb-2">📋</div>
+                    <p>No attendance yet</p>
+                </div>
+            </div>
         </div>
-      </section>
-    </main>
-  </div>
-
-  <div id="studentDashboard" class="hidden min-h-screen">
-    <nav class="gradient-bg text-white p-4 sticky top-0 z-30 shadow-lg">
-      <div class="max-w-md mx-auto flex justify-between items-center gap-3">
-        <div class="flex items-center gap-3">
-          <div class="w-11 h-11 bg-white/15 rounded-full flex items-center justify-center text-xl">🎓</div>
-          <div>
-            <h2 class="font-bold">Student Panel</h2>
-            <p class="text-xs opacity-80" id="studentNavName">Welcome</p>
-          </div>
-        </div>
-        <button onclick="logout()" class="bg-white/15 px-3 py-2 rounded-xl text-sm font-semibold">Logout</button>
-      </div>
-    </nav>
-
-    <main class="max-w-md mx-auto p-4 space-y-4">
-      <section class="card p-4 text-center">
-        <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center text-3xl mx-auto mb-2">👤</div>
-        <h3 id="studentDisplayName" class="text-xl font-bold">Name</h3>
-        <p id="studentDisplayMeta" class="text-sm text-slate-500 mt-1">Roll - | Batch -</p>
-        <div class="grid grid-cols-2 gap-3 mt-4 text-sm">
-          <div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500">Seat</div><div id="studentSeatNo" class="font-bold text-lg">-</div></div>
-          <div class="bg-slate-50 rounded-xl p-3"><div class="text-slate-500">Fee</div><div id="studentFeeStatus" class="font-bold text-lg">-</div></div>
-        </div>
-      </section>
-
-      <section class="card p-4">
-        <div class="flex items-center justify-between mb-3">
-          <div>
-            <h3 class="font-bold text-lg">Today Attendance</h3>
-            <p id="studentAttendanceHint" class="text-sm text-slate-500">Choose how you want to mark attendance</p>
-          </div>
-          <span id="studentQrState" class="px-2 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">QR Unknown</span>
-        </div>
-        <div class="space-y-2 text-sm mb-4">
-          <div class="flex justify-between p-3 bg-slate-50 rounded-xl"><span>Status</span><span id="myStatusBadge" class="px-2 py-1 rounded text-xs font-bold bg-slate-200">Not Marked</span></div>
-          <div class="flex justify-between p-3 bg-slate-50 rounded-xl"><span>Mode</span><span id="attendanceModeBadge" class="px-2 py-1 rounded text-xs font-bold bg-indigo-100 text-indigo-700">Hybrid</span></div>
-          <div class="flex justify-between p-3 bg-slate-50 rounded-xl"><span>Check In</span><span id="myCheckIn" class="font-mono">--:--</span></div>
-          <div class="flex justify-between p-3 bg-slate-50 rounded-xl"><span>Check Out</span><span id="myCheckOut" class="font-mono">--:--</span></div>
-          <div class="flex justify-between p-3 bg-slate-50 rounded-xl"><span>Study Hours</span><span id="myDuration">--</span></div>
-        </div>
-        <div class="space-y-3">
-          <div class="grid grid-cols-2 gap-2">
-            <button id="checkInBtn" onclick="handleAttendanceAction(null, 'checkin', 'button')" class="w-full py-4 rounded-2xl font-bold text-base bg-emerald-600 text-white shadow-lg">🟢 Check In</button>
-            <button id="checkOutBtn" onclick="handleAttendanceAction(null, 'checkout', 'button')" class="w-full py-4 rounded-2xl font-bold text-base bg-rose-600 text-white shadow-lg">🔴 Check Out</button>
-          </div>
-          <div id="attendanceModeNote" class="text-xs text-slate-500 bg-slate-50 rounded-xl px-3 py-2">Manual and QR both available.</div>
-          <div class="grid grid-cols-2 gap-2">
-            <button onclick="openStudentRequestModal('correction')" class="bg-amber-500 text-white py-3 rounded-xl font-bold text-sm">📝 Correction Request</button>
-            <button onclick="openStudentRequestModal('leave')" class="bg-indigo-600 text-white py-3 rounded-xl font-bold text-sm">🌴 Leave Request</button>
-          </div>
-        </div>
-      </section>
-
-      <section class="grid grid-cols-2 gap-3">
-        <div class="card p-4"><div class="text-sm text-slate-500">Month Present</div><div id="studentMonthPresent" class="text-3xl font-bold text-emerald-600 mt-1">0</div></div>
-        <div class="card p-4"><div class="text-sm text-slate-500">Month Hours</div><div id="studentMonthHours" class="text-3xl font-bold text-blue-600 mt-1">0h</div></div>
-        <div class="card p-4"><div class="text-sm text-slate-500">Streak</div><div id="studentStreak" class="text-3xl font-bold text-orange-600 mt-1">0</div></div>
-        <div class="card p-4"><div class="text-sm text-slate-500">Attendance %</div><div id="studentPercent" class="text-3xl font-bold text-purple-700 mt-1">0%</div></div>
-      </section>
-
-      <section class="card p-4">
-        <h3 class="font-bold mb-3">📷 Scan QR Code</h3>
-        <p class="text-xs text-slate-500 mb-3">Use this when admin has enabled Hybrid or QR Only attendance mode.</p>
-        <div id="reader" class="rounded-xl overflow-hidden mb-3"></div>
-        <button onclick="toggleScanner()" id="scannerBtn" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm">Start Camera</button>
-      </section>
-
-      <section class="card p-4">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="font-bold">My Requests</h3>
-          <span id="studentPendingCount" class="text-xs font-bold text-amber-600">0 pending</span>
-        </div>
-        <div id="myRequestsList" class="space-y-2 max-h-52 overflow-auto"></div>
-      </section>
-
-      <section class="card p-4">
-        <h3 class="font-bold mb-3">My Attendance History</h3>
-        <div class="overflow-auto max-h-72">
-          <table class="w-full text-xs">
-            <thead class="bg-slate-50 sticky top-0">
-              <tr>
-                <th class="px-2 py-2 text-left font-bold">Date</th>
-                <th class="px-2 py-2 text-left font-bold">Status</th>
-                <th class="px-2 py-2 text-left font-bold">Hours</th>
-              </tr>
-            </thead>
-            <tbody id="myHistoryTable" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="card p-4">
-        <h3 class="font-bold mb-3">Notices</h3>
-        <div id="studentNotificationsList" class="space-y-2"></div>
-      </section>
-    </main>
-  </div>
-
-  <div id="studentModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h3 id="studentModalTitle" class="text-xl font-bold">Add Student</h3>
-        <button onclick="closeModal('studentModal')" class="text-2xl text-slate-500">×</button>
-      </div>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <input id="formStudentName" type="text" placeholder="Student Name *" class="border rounded-xl px-3 py-3" />
-        <input id="formStudentRoll" type="text" placeholder="Roll Number *" class="border rounded-xl px-3 py-3" />
-        <input id="formStudentClass" type="text" placeholder="Class" class="border rounded-xl px-3 py-3" />
-        <input id="formStudentBatch" type="text" placeholder="Batch / Timing" class="border rounded-xl px-3 py-3" />
-        <input id="formStudentPhone" type="text" placeholder="Student Phone" class="border rounded-xl px-3 py-3" />
-        <input id="formParentPhone" type="text" placeholder="Parent Phone" class="border rounded-xl px-3 py-3" />
-        <input id="formJoiningDate" type="date" class="border rounded-xl px-3 py-3" />
-        <input id="formSeatNo" type="text" placeholder="Seat No" class="border rounded-xl px-3 py-3" />
-        <input id="formFeePlan" type="text" placeholder="Fee Plan" class="border rounded-xl px-3 py-3" />
-        <input id="formFeeDueDate" type="date" class="border rounded-xl px-3 py-3" />
-        <select id="formFeeStatus" class="border rounded-xl px-3 py-3">
-          <option value="Paid">Paid</option>
-          <option value="Due">Due</option>
-          <option value="Overdue">Overdue</option>
-        </select>
-        <input id="formPhotoUrl" type="text" placeholder="Photo URL (optional)" class="border rounded-xl px-3 py-3" />
-      </div>
-      <div id="studentFormError" class="hidden mt-3 p-3 bg-rose-100 text-rose-700 rounded-xl text-sm"></div>
-      <div class="flex gap-2 mt-4">
-        <button onclick="saveStudent()" id="saveStudentBtn" class="flex-1 bg-indigo-600 text-white py-3 rounded-xl font-bold">Save Student</button>
-        <button onclick="closeModal('studentModal')" class="bg-slate-200 px-4 py-3 rounded-xl font-semibold">Cancel</button>
-      </div>
     </div>
-  </div>
 
-  <div id="importModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-2xl p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xl font-bold">Bulk Import Students</h3>
-        <button onclick="closeModal('importModal')" class="text-2xl text-slate-500">×</button>
-      </div>
-      <div class="space-y-3">
-        <input id="importFile" type="file" accept=".csv" class="border rounded-xl px-3 py-3 w-full" />
-        <div class="text-sm text-slate-500">CSV headers: name, roll, className, batch, phone, parentPhone, joiningDate, seatNo, feePlan, feeDueDate, feeStatus</div>
-        <textarea id="importPreview" rows="6" class="border rounded-xl px-3 py-3 w-full text-sm" placeholder="Or paste CSV data here"></textarea>
-        <button onclick="processBulkImport()" class="bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold">Import Students</button>
-      </div>
-    </div>
-  </div>
+    <!-- Student Dashboard -->
+    <div id="studentDashboard" class="hidden min-h-screen bg-gray-50">
+        <nav class="gradient-bg text-white p-4 sticky top-0 z-30 shadow-lg">
+            <div class="max-w-md mx-auto flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center text-xl">🎓</div>
+                    <div>
+                        <h2 class="font-bold">Student</h2>
+                        <p class="text-xs opacity-80" id="studentNavName">Welcome</p>
+                    </div>
+                </div>
+                <button onclick="logout()" class="bg-white/20 px-3 py-2 rounded-lg text-sm font-semibold">Logout</button>
+            </div>
+        </nav>
 
-  <div id="qrModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-5 text-center">
-      <div class="flex items-center justify-between mb-3">
-        <h3 class="text-xl font-bold">Secure QR Session</h3>
-        <button onclick="closeQRModal()" class="text-2xl text-slate-500">×</button>
-      </div>
-      <p class="text-sm text-slate-500 mb-3">QR refreshes using an expiry timer to reduce screenshot misuse.</p>
-      <div id="classQR" class="flex justify-center mb-3"></div>
-      <div id="qrCountdown" class="text-sm font-bold text-indigo-600 mb-3">No active session</div>
-      <div class="grid grid-cols-2 gap-2">
-        <button onclick="createQrSession()" class="bg-emerald-600 text-white py-3 rounded-xl font-bold">Generate</button>
-        <button onclick="closeQRModal()" class="bg-slate-200 py-3 rounded-xl font-semibold">Close</button>
-      </div>
-    </div>
-  </div>
+        <div class="max-w-md mx-auto p-4 space-y-4">
+            <!-- Profile -->
+            <div class="bg-white rounded-xl shadow-lg p-4 text-center">
+                <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center text-3xl mx-auto mb-2">👤</div>
+                <h3 class="text-lg font-bold" id="studentDisplayName">Name</h3>
+                <p class="text-sm text-gray-600" id="studentDisplayRoll">Roll: -</p>
+                <p class="text-xs text-purple-600" id="studentDisplayClass">Class: -</p>
+            </div>
 
-  <div id="holidayModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="text-xl font-bold">Add Holiday</h3>
-        <button onclick="closeModal('holidayModal')" class="text-2xl text-slate-500">×</button>
-      </div>
-      <div class="space-y-3">
-        <input id="holidayDate" type="date" class="border rounded-xl px-3 py-3 w-full" />
-        <input id="holidayTitle" type="text" placeholder="Holiday title" class="border rounded-xl px-3 py-3 w-full" />
-        <button onclick="saveHoliday()" class="bg-amber-500 text-white w-full py-3 rounded-xl font-bold">Save Holiday</button>
-      </div>
-    </div>
-  </div>
+            <!-- Date Selection for Attendance -->
+            <div class="bg-white rounded-xl shadow-lg p-4">
+                <h3 class="font-bold mb-3 text-blue-800">📅 Select Date for Attendance</h3>
+                <input type="date" id="attendanceDate" class="w-full border-2 border-gray-300 rounded-lg px-4 py-3 mb-3 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200" onchange="updateSelectedDate()">
+                <p class="text-sm text-gray-600 mb-3" id="selectedDateText">Selected: Today</p>
+                
+                <div class="space-y-2 text-sm mb-4">
+                    <div class="flex justify-between p-2 bg-gray-50 rounded">
+                        <span>Status</span>
+                        <span id="myStatusBadge" class="px-2 py-1 rounded text-xs font-bold bg-gray-200">Not Marked</span>
+                    </div>
+                    <div class="flex justify-between p-2 bg-gray-50 rounded">
+                        <span>Check In</span>
+                        <span id="myCheckIn" class="font-mono">--:--</span>
+                    </div>
+                    <div class="flex justify-between p-2 bg-gray-50 rounded">
+                        <span>Check Out</span>
+                        <span id="myCheckOut" class="font-mono">--:--</span>
+                    </div>
+                </div>
+                
+                <button id="actionBtn" onclick="handleAttendanceAction()" class="w-full py-4 rounded-xl font-bold text-lg bg-green-600 text-white shadow-lg active:scale-95 transition">
+                    🟢 Log In
+                </button>
+            </div>
 
-  <div id="studentRequestModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h3 id="studentRequestTitle" class="text-xl font-bold">Request</h3>
-        <button onclick="closeModal('studentRequestModal')" class="text-2xl text-slate-500">×</button>
-      </div>
-      <div class="space-y-3">
-        <input id="requestDate" type="date" class="border rounded-xl px-3 py-3 w-full" />
-        <div id="requestTimeFields" class="grid grid-cols-2 gap-3">
-          <input id="requestCheckIn" type="time" class="border rounded-xl px-3 py-3 w-full" />
-          <input id="requestCheckOut" type="time" class="border rounded-xl px-3 py-3 w-full" />
+            <!-- My Attendance History -->
+            <div class="bg-white rounded-xl shadow-lg p-4">
+                <h3 class="font-bold mb-3">📋 My Attendance History</h3>
+                <div class="max-h-48 overflow-y-auto">
+                    <table class="w-full text-xs">
+                        <thead class="bg-gray-50 sticky top-0">
+                            <tr>
+                                <th class="px-2 py-2 text-left font-bold">Date</th>
+                                <th class="px-2 py-2 text-left font-bold">Status</th>
+                                <th class="px-2 py-2 text-left font-bold">Duration</th>
+                            </tr>
+                        </thead>
+                        <tbody id="myHistoryTable" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Scanner -->
+            <div class="bg-white rounded-xl shadow-lg p-4">
+                <h3 class="font-bold mb-2 text-sm">📷 Scan QR Code</h3>
+                <div id="reader" class="rounded-lg overflow-hidden mb-2"></div>
+                <button onclick="toggleScanner()" id="scannerBtn" class="w-full bg-blue-600 text-white py-2 rounded-lg font-bold text-sm">
+                    Start Camera
+                </button>
+            </div>
         </div>
-        <textarea id="requestReason" rows="4" placeholder="Reason" class="border rounded-xl px-3 py-3 w-full"></textarea>
-        <button onclick="submitStudentRequest()" class="bg-indigo-600 text-white w-full py-3 rounded-xl font-bold">Submit Request</button>
-      </div>
     </div>
-  </div>
 
-  <div id="toast" class="fixed bottom-4 right-4 bg-slate-900 text-white px-4 py-3 rounded-2xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 text-sm">
-    <span id="toastIcon">✅</span>
-    <span id="toastMessage">Success</span>
-  </div>
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 text-sm">
+        <span id="toastIcon">✅</span> <span id="toastMessage">Success!</span>
+    </div>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyD6K4XYLzmvUF-qfm_6YM4vATwKfQQ5ZVA",
-      authDomain: "savitri-library.firebaseapp.com",
-      databaseURL: "https://savitri-library-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "savitri-library",
-      storageBucket: "savitri-library.firebasestorage.app",
-      messagingSenderId: "77666381914",
-      appId: "1:77666381914:web:3fcedc130fc706c6416863"
-    };
+    <script>
+        // ==========================================
+        // FIREBASE CONFIG - AAPKA DATABASE URL
+        // ==========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyD6K4XYLzmvUF-qfm_6YM4vATwKfQQ5ZVA",
+            authDomain: "savitri-library.firebaseapp.com",
+            databaseURL: "https://savitri-library-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "savitri-library",
+            storageBucket: "savitri-library.firebasestorage.app",
+            messagingSenderId: "77666381914",
+            appId: "1:77666381914:web:3fcedc130fc706c6416863"
+        };
 
-    const STAFF_USERS = {
-      admin: { password: '1234', role: 'admin', name: 'Rahul Chauhan' },
-      operator: { password: '1234', role: 'operator', name: 'Library Operator' }
-    };
-    const USER_KEY = 'savitri_complete_v3_user';
-    const DEFAULT_SETTINGS = {
-      openTime: '08:00',
-      lateAfter: '09:00',
-      closeTime: '22:00',
-      minStudyHours: 8,
-      qrExpirySeconds: 30,
-      requireQr: false,
-      attendanceMode: 'hybrid',
-      defaultFeePlan: 'Monthly'
-    };
+        // Initialize Firebase
+        let app, db, auth;
+        let isConnected = false;
+        let isAuthenticated = false;
 
-    let app, db, auth;
-    let studentsRef, attendanceRef, correctionsRef, settingsRef, holidaysRef, qrSessionRef, auditLogsRef, notificationsRef;
-    let isConnected = false;
-    let isAuthenticated = false;
-    let currentUser = null;
-    let state = {
-      students: {},
-      attendance: {},
-      corrections: {},
-      settings: { ...DEFAULT_SETTINGS },
-      holidays: {},
-      qrSession: null,
-      auditLogs: {},
-      notifications: {}
-    };
-    let activeStudentId = null;
-    let currentAdminTab = 'overview';
-    let html5QrCode = null;
-    let isScannerRunning = false;
-    let requestMode = 'correction';
-    let qrCountdownInterval = null;
-    let charts = { trend: null, classHours: null, topStudents: null };
-
-    function $(id) { return document.getElementById(id); }
-    function todayKey() { return new Date().toISOString().split('T')[0]; }
-    function dateKey(value) { return new Date(value).toISOString().split('T')[0]; }
-    function fmtDate(value) { return new Date(value).toLocaleDateString(); }
-    function fmtTime(value) { return value ? new Date(value).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'; }
-    function byCreatedDesc(a, b) { return (b.createdAt || b.timestamp || 0) - (a.createdAt || a.timestamp || 0); }
-    function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
-
-    function updateConnectionStatus(connected) {
-      const dot = $('statusDot');
-      const text = $('statusText');
-      if (connected) {
-        dot.className = 'w-2 h-2 rounded-full bg-emerald-500 sync-pulse';
-        text.textContent = 'Live';
-        text.className = 'text-emerald-600';
-      } else {
-        dot.className = 'w-2 h-2 rounded-full bg-rose-500';
-        text.textContent = 'Offline';
-        text.className = 'text-rose-600';
-      }
-    }
-
-    function showToast(msg, type = 'success') {
-      const toast = $('toast');
-      $('toastMessage').textContent = msg;
-      $('toastIcon').textContent = type === 'error' ? '❌' : '✅';
-      toast.classList.remove('translate-y-20', 'opacity-0');
-      setTimeout(() => toast.classList.add('translate-y-20', 'opacity-0'), 3000);
-    }
-
-    function closeModal(id) { $(id).classList.add('hidden'); }
-    function openModal(id) { $(id).classList.remove('hidden'); }
-    function canManageAll() { return currentUser && currentUser.role === 'admin'; }
-    function canManageStaffPanel() { return currentUser && (currentUser.role === 'admin' || currentUser.role === 'operator'); }
-    function isHoliday(key) { return Object.values(state.holidays).find(h => h.dateKey === key); }
-
-    function getAttendanceMode() {
-      if (state.settings.attendanceMode) return state.settings.attendanceMode;
-      return state.settings.requireQr ? 'hybrid' : 'button';
-    }
-
-    function isManualButtonMode() {
-      return ['button', 'hybrid'].includes(getAttendanceMode());
-    }
-
-    function isQrModeEnabled() {
-      return ['qr', 'hybrid'].includes(getAttendanceMode());
-    }
-
-    function setupFirebase() {
-      try {
-        app = firebase.initializeApp(firebaseConfig);
-        db = firebase.database();
-        auth = firebase.auth();
-        isConnected = true;
-        updateConnectionStatus(true);
-        auth.signInAnonymously().then(() => {
-          isAuthenticated = true;
-          bindRefs();
-          startListeners();
-          initUiDefaults();
-          restoreSavedLogin();
-        }).catch((error) => {
-          console.error(error);
-          updateConnectionStatus(false);
-          showToast('Firebase auth failed', 'error');
-        });
-      } catch (error) {
-        console.error(error);
-        updateConnectionStatus(false);
-      }
-    }
-
-    function bindRefs() {
-      studentsRef = db.ref('students');
-      attendanceRef = db.ref('attendance');
-      correctionsRef = db.ref('correctionRequests');
-      settingsRef = db.ref('settings');
-      holidaysRef = db.ref('holidays');
-      qrSessionRef = db.ref('qrSession/current');
-      auditLogsRef = db.ref('auditLogs');
-      notificationsRef = db.ref('notifications');
-    }
-
-    function startListeners() {
-      studentsRef.on('value', snap => { state.students = snap.val() || {}; renderAll(); });
-      attendanceRef.on('value', snap => { state.attendance = snap.val() || {}; renderAll(); });
-      correctionsRef.on('value', snap => { state.corrections = snap.val() || {}; renderAll(); });
-      settingsRef.on('value', snap => { state.settings = { ...DEFAULT_SETTINGS, ...(snap.val() || {}) }; renderSettingsForm(); renderAll(); });
-      holidaysRef.on('value', snap => { state.holidays = snap.val() || {}; renderAll(); });
-      qrSessionRef.on('value', snap => { state.qrSession = snap.val() || null; renderQrStatus(); renderAll(); });
-      auditLogsRef.limitToLast(200).on('value', snap => { state.auditLogs = snap.val() || {}; renderAuditLogs(); });
-      notificationsRef.limitToLast(100).on('value', snap => { state.notifications = snap.val() || {}; renderNotifications(); });
-    }
-
-    function initUiDefaults() {
-      $('currentDate').textContent = new Date().toLocaleString();
-      setTodayRange();
-      $('requestDate').value = todayKey();
-      const today = todayKey();
-      $('formJoiningDate').value = today;
-      $('formFeeDueDate').value = today;
-      $('holidayDate').value = today;
-    }
-
-    function restoreSavedLogin() {
-      const raw = localStorage.getItem(USER_KEY);
-      if (!raw) return;
-      try {
-        const user = JSON.parse(raw);
-        if (user.role === 'student') {
-          currentUser = user;
-          openStudentDashboard();
-        } else {
-          currentUser = user;
-          openStaffDashboard();
+        try {
+            app = firebase.initializeApp(firebaseConfig);
+            db = firebase.database();
+            auth = firebase.auth();
+            isConnected = true;
+            console.log("✅ Firebase connected!");
+            
+            // Anonymous auth for database access
+            auth.signInAnonymously().then(() => {
+                isAuthenticated = true;
+                console.log("✅ Anonymous auth successful!");
+            }).catch((error) => {
+                console.error("❌ Auth error:", error);
+            });
+            
+        } catch(e) {
+            console.error("❌ Firebase error:", e);
+            isConnected = false;
         }
-      } catch (error) {
-        console.error(error);
-      }
-    }
 
-    function renderAll() {
-      renderStudentDropdown();
-      renderQrStatus();
-      if (canManageStaffPanel()) {
-        renderDashboardStats();
-        renderStudentsTable();
-        renderAttendanceTable();
-        renderCorrections();
-        renderHolidays();
-        renderFeesTable();
-        renderSeats();
-        renderCharts();
-      }
-      if (currentUser && currentUser.role === 'student') {
-        refreshStudentDashboard();
-      }
-    }
+        // ==========================================
+        // GLOBAL VARIABLES
+        // ==========================================
+        const ADMIN_ID = 'admin';
+        const ADMIN_PASS = '1234';
+        const USER_KEY = 'savitri_user_v10';
+        
+        let currentUser = null;
+        let html5QrCode = null;
+        let isScannerRunning = false;
+        let selectedDate = new Date();
+        let studentsRef, attendanceRef;
 
-    function showStaffLogin() {
-      $('mainButtons').classList.add('hidden');
-      $('staffLoginForm').classList.remove('hidden');
-    }
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        window.onload = function() {
+            updateConnectionStatus(isConnected);
+            
+            if (isConnected) {
+                studentsRef = db.ref('students');
+                attendanceRef = db.ref('attendance');
+            }
+            
+            document.getElementById('currentDate').textContent = new Date().toLocaleDateString();
+            
+            // Set default date
+            const today = new Date().toISOString().split('T')[0];
+            const dateInput = document.getElementById('attendanceDate');
+            if (dateInput) {
+                dateInput.value = today;
+                dateInput.max = today;
+            }
+            
+            const filter = document.getElementById('dateFilter');
+            if (filter) filter.valueAsDate = new Date();
+            
+            // Check saved login
+            const saved = localStorage.getItem(USER_KEY);
+            if (saved) {
+                const user = JSON.parse(saved);
+                if (user.role === 'admin') {
+                    openAdminDashboard();
+                } else {
+                    loginStudent(user);
+                }
+            }
+        };
 
-    function showStudentLogin() {
-      $('loadingStudents').classList.remove('hidden');
-      $('mainButtons').classList.add('hidden');
-      $('studentLoginForm').classList.remove('hidden');
-      setTimeout(() => $('loadingStudents').classList.add('hidden'), 700);
-    }
-
-    function backToMain() {
-      $('mainButtons').classList.remove('hidden');
-      $('staffLoginForm').classList.add('hidden');
-      $('studentLoginForm').classList.add('hidden');
-    }
-
-    async function verifyStaff() {
-      const id = $('staffId').value.trim().toLowerCase();
-      const pass = $('staffPass').value.trim();
-      const staff = STAFF_USERS[id];
-      if (!staff || staff.password !== pass) {
-        showToast('Wrong staff ID or password', 'error');
-        return;
-      }
-      currentUser = { id, role: staff.role, name: staff.name };
-      localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
-      if (isAuthenticated) await addAuditLog('Staff login', `${currentUser.name} logged into staff panel`, currentUser.name);
-      openStaffDashboard();
-    }
-
-    async function verifyStudent() {
-      if (!$('studentSelect').value) {
-        showToast('Select your name first', 'error');
-        return;
-      }
-      const student = JSON.parse($('studentSelect').value);
-      if (($('studentPass').value || '').trim() !== String(student.roll || '')) {
-        showToast('Wrong roll number password', 'error');
-        return;
-      }
-      currentUser = { ...student, role: 'student' };
-      localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
-      if (isAuthenticated) await addAuditLog('Student login', `${currentUser.name} logged into student panel`, currentUser.name);
-      openStudentDashboard();
-    }
-
-    function openStaffDashboard() {
-      $('loginScreen').classList.add('hidden');
-      $('studentDashboard').classList.add('hidden');
-      $('adminDashboard').classList.remove('hidden');
-      $('staffWelcome').textContent = `${currentUser.name} • ${currentUser.role.toUpperCase()}`;
-      switchAdminTab(currentAdminTab);
-      renderAll();
-    }
-
-    function openStudentDashboard() {
-      $('loginScreen').classList.add('hidden');
-      $('adminDashboard').classList.add('hidden');
-      $('studentDashboard').classList.remove('hidden');
-      refreshStudentDashboard();
-    }
-
-    async function logout() {
-      if (html5QrCode && isScannerRunning) {
-        html5QrCode.stop().catch(() => {});
-        isScannerRunning = false;
-      }
-      const leavingUser = currentUser;
-      currentUser = null;
-      localStorage.removeItem(USER_KEY);
-      $('loginScreen').classList.remove('hidden');
-      $('adminDashboard').classList.add('hidden');
-      $('studentDashboard').classList.add('hidden');
-      $('staffId').value = '';
-      $('staffPass').value = '';
-      $('studentPass').value = '';
-      $('studentSelect').value = '';
-      backToMain();
-      if (leavingUser && isAuthenticated) await addAuditLog('App logout', `${leavingUser.name || leavingUser.id || 'User'} logged out`, leavingUser.name || leavingUser.id || 'User');
-      showToast('Logged out');
-    }
-
-    function switchAdminTab(tab) {
-      currentAdminTab = tab;
-      document.querySelectorAll('.admin-tab').forEach(el => el.classList.add('hidden'));
-      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-      $(`tab-${tab}`).classList.remove('hidden');
-      document.querySelector(`.tab-btn[data-tab="${tab}"]`)?.classList.add('active');
-    }
-
-    function renderStudentDropdown() {
-      const select = $('studentSelect');
-      const students = Object.values(state.students)
-        .filter(s => s.isActive !== false)
-        .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-      const currentValue = select.value;
-      select.innerHTML = '<option value="">👤 Select Your Name</option>';
-      students.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = JSON.stringify(s);
-        opt.textContent = `${s.name} (Roll: ${s.roll})`;
-        select.appendChild(opt);
-      });
-      if ([...select.options].some(o => o.value === currentValue)) select.value = currentValue;
-    }
-
-    function getStudentsArray() {
-      return Object.values(state.students).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    }
-    function getAttendanceArray() {
-      return Object.values(state.attendance).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
-    }
-    function getCorrectionsArray() {
-      return Object.values(state.corrections).sort(byCreatedDesc);
-    }
-    function getNotificationsArray() {
-      return Object.values(state.notifications).sort(byCreatedDesc);
-    }
-    function getAuditArray() {
-      return Object.values(state.auditLogs).sort(byCreatedDesc);
-    }
-
-    function getAttendanceRecord(studentId, targetKey) {
-      return getAttendanceArray().find(r => r.studentId === studentId && r.dateKey === targetKey) || null;
-    }
-
-    function calculateDurationMinutes(record) {
-      if (typeof record.studyMinutes === 'number') return record.studyMinutes;
-      if (record.checkIn && record.checkOut) return Math.max(0, Math.round((new Date(record.checkOut) - new Date(record.checkIn)) / 60000));
-      return 0;
-    }
-
-    function flagBadge(text, cls) {
-      return `<span class="px-2 py-1 rounded-full text-xs font-bold ${cls}">${text}</span>`;
-    }
-
-    function renderDashboardStats() {
-      const students = getStudentsArray().filter(s => s.isActive !== false);
-      const today = todayKey();
-      const todayRecords = getAttendanceArray().filter(r => r.dateKey === today);
-      const presentIds = new Set(todayRecords.filter(r => ['Checked In', 'Checked Out'].includes(r.status)).map(r => r.studentId));
-      const lateCount = todayRecords.filter(r => r.isLate).length;
-      const checkedOut = todayRecords.filter(r => r.status === 'Checked Out').length;
-      const checkedIn = todayRecords.filter(r => r.status === 'Checked In').length;
-      const leaves = todayRecords.filter(r => r.status === 'Leave').length;
-      const inside = checkedIn;
-      const hoursArray = todayRecords.filter(r => calculateDurationMinutes(r) > 0).map(r => calculateDurationMinutes(r) / 60);
-      const avgHours = hoursArray.length ? (hoursArray.reduce((a, b) => a + b, 0) / hoursArray.length).toFixed(1) : '0.0';
-      $('statStudents').textContent = students.length;
-      $('statPresent').textContent = presentIds.size;
-      $('statAbsent').textContent = Math.max(0, students.length - presentIds.size - leaves);
-      $('statLate').textContent = lateCount;
-      $('statAvgHours').textContent = `${avgHours}h`;
-      $('statQr').textContent = hasActiveQrSession() ? 'Yes' : 'No';
-      $('overviewCheckedIn').textContent = checkedIn;
-      $('overviewCheckedOut').textContent = checkedOut;
-      $('overviewLeave').textContent = leaves;
-      $('overviewInside').textContent = inside;
-      $('overviewHolidayCount').textContent = Object.values(state.holidays).filter(h => h.dateKey?.startsWith(today.slice(0, 7))).length;
-      $('pendingBadge').textContent = `${getCorrectionsArray().filter(r => r.status === 'pending').length} pending`;
-    }
-
-    function renderStudentsTable() {
-      const tbody = $('studentsTable');
-      const search = ($('studentSearch').value || '').toLowerCase();
-      const statusFilter = $('studentStatusFilter').value;
-      const feeFilter = $('studentFeeFilter').value;
-      let rows = getStudentsArray().filter(s => {
-        const active = s.isActive !== false;
-        if (statusFilter === 'active' && !active) return false;
-        if (statusFilter === 'archived' && active) return false;
-        if (feeFilter !== 'all' && (s.feeStatus || 'Paid') !== feeFilter) return false;
-        const hay = `${s.name || ''} ${s.roll || ''} ${s.className || ''} ${s.batch || ''} ${s.seatNo || ''}`.toLowerCase();
-        return hay.includes(search);
-      });
-      tbody.innerHTML = '';
-      $('studentsEmptyState').classList.toggle('hidden', rows.length > 0);
-      rows.forEach(s => {
-        const feeStatus = s.feeStatus || 'Paid';
-        const statusBadge = s.isActive === false
-          ? flagBadge('Archived', 'bg-slate-200 text-slate-700')
-          : flagBadge('Active', 'bg-emerald-100 text-emerald-700');
-        const feeBadge = feeStatus === 'Paid'
-          ? flagBadge('Paid', 'bg-emerald-100 text-emerald-700')
-          : feeStatus === 'Overdue'
-            ? flagBadge('Overdue', 'bg-rose-100 text-rose-700')
-            : flagBadge('Due', 'bg-amber-100 text-amber-700');
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="px-3 py-3">
-            <div class="font-semibold">${escapeHtml(s.name || '')}</div>
-            <div class="text-xs text-slate-500">Roll: ${escapeHtml(String(s.roll || ''))} • ${escapeHtml(s.className || '-')}</div>
-          </td>
-          <td class="px-3 py-3">${escapeHtml(s.batch || '-')}</td>
-          <td class="px-3 py-3">${escapeHtml(s.seatNo || '-')}</td>
-          <td class="px-3 py-3 text-xs">${escapeHtml(s.phone || '-')}<br><span class="text-slate-500">${escapeHtml(s.parentPhone || '')}</span></td>
-          <td class="px-3 py-3">${feeBadge}<div class="text-xs text-slate-500 mt-1">${escapeHtml(s.feeDueDate || '-')}</div></td>
-          <td class="px-3 py-3">${statusBadge}</td>
-          <td class="px-3 py-3">
-            <div class="flex flex-wrap gap-2">
-              <button onclick="editStudent('${s.id}')" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-lg text-xs font-bold">Edit</button>
-              <button onclick="toggleStudentArchive('${s.id}')" class="bg-slate-200 text-slate-700 px-3 py-1 rounded-lg text-xs font-bold">${s.isActive === false ? 'Activate' : 'Archive'}</button>
-              <button onclick="markFeePaid('${s.id}')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold">Paid</button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function renderAttendanceTable() {
-      const tbody = $('attendanceTable');
-      const start = $('attendanceStartDate').value || todayKey();
-      const end = $('attendanceEndDate').value || todayKey();
-      const search = ($('attendanceSearch').value || '').toLowerCase();
-      const statusFilter = $('attendanceStatusFilter').value;
-      const lateFilter = $('attendanceLateFilter').value;
-      const rows = getAttendanceArray().filter(r => {
-        if (r.dateKey < start || r.dateKey > end) return false;
-        if (statusFilter !== 'all' && r.status !== statusFilter) return false;
-        if (lateFilter === 'late' && !r.isLate) return false;
-        if (lateFilter === 'ontime' && r.isLate) return false;
-        const hay = `${r.studentName || ''} ${r.studentRoll || ''} ${r.studentClass || ''} ${r.remark || ''}`.toLowerCase();
-        return hay.includes(search);
-      });
-      tbody.innerHTML = '';
-      $('attendanceEmptyState').classList.toggle('hidden', rows.length > 0);
-      rows.forEach(r => {
-        const durationMin = calculateDurationMinutes(r);
-        const flags = [];
-        if (r.isLate) flags.push(flagBadge('Late', 'bg-amber-100 text-amber-700'));
-        if (r.isEarlyExit) flags.push(flagBadge('Early Exit', 'bg-rose-100 text-rose-700'));
-        if (r.corrected) flags.push(flagBadge('Corrected', 'bg-indigo-100 text-indigo-700'));
-        const statusBadge = r.status === 'Checked Out'
-          ? flagBadge('Checked Out', 'bg-blue-100 text-blue-700')
-          : r.status === 'Checked In'
-            ? flagBadge('Checked In', 'bg-emerald-100 text-emerald-700')
-            : r.status === 'Leave'
-              ? flagBadge('Leave', 'bg-amber-100 text-amber-700')
-              : flagBadge(r.status || 'Other', 'bg-slate-200 text-slate-700');
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="px-3 py-3">${escapeHtml(r.dateKey || '')}</td>
-          <td class="px-3 py-3"><div class="font-semibold">${escapeHtml(r.studentName || '')}</div><div class="text-xs text-slate-500">${escapeHtml(r.studentRoll || '')}</div></td>
-          <td class="px-3 py-3">${statusBadge}</td>
-          <td class="px-3 py-3">${fmtTime(r.checkIn)}</td>
-          <td class="px-3 py-3">${fmtTime(r.checkOut)}</td>
-          <td class="px-3 py-3">${durationMin ? (durationMin / 60).toFixed(1) + 'h' : '--'}</td>
-          <td class="px-3 py-3">${flags.join(' ') || '-'}</td>
-          <td class="px-3 py-3">${escapeHtml(r.remark || '-')}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function renderCorrections() {
-      const container = $('correctionsList');
-      const quick = $('overviewRequests');
-      const list = getCorrectionsArray();
-      container.innerHTML = '';
-      quick.innerHTML = '';
-      $('correctionsEmptyState').classList.toggle('hidden', list.length > 0);
-      const renderCard = (r) => {
-        const statusCls = r.status === 'approved' ? 'bg-emerald-100 text-emerald-700' : r.status === 'rejected' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700';
-        const body = `
-          <div class="card p-4 border border-slate-200">
-            <div class="flex items-start justify-between gap-3">
-              <div>
-                <div class="font-bold">${escapeHtml(r.studentName || '-')}</div>
-                <div class="text-xs text-slate-500">${escapeHtml(r.requestType || 'correction')} • ${escapeHtml(r.dateKey || '-')}</div>
-              </div>
-              <span class="px-2 py-1 rounded-full text-xs font-bold ${statusCls}">${escapeHtml(r.status || 'pending')}</span>
-            </div>
-            <div class="text-sm mt-3 space-y-1">
-              ${r.requestType !== 'leave' ? `<div>Requested In: <b>${escapeHtml(r.requestedCheckIn || '--')}</b></div><div>Requested Out: <b>${escapeHtml(r.requestedCheckOut || '--')}</b></div>` : ''}
-              <div>Reason: ${escapeHtml(r.reason || '-')}</div>
-            </div>
-            ${r.status === 'pending' ? `<div class="flex gap-2 mt-4"><button onclick="handleCorrectionDecision('${r.id}','approve')" class="flex-1 bg-emerald-600 text-white py-2 rounded-xl text-sm font-bold">Approve</button><button onclick="handleCorrectionDecision('${r.id}','reject')" class="flex-1 bg-rose-600 text-white py-2 rounded-xl text-sm font-bold">Reject</button></div>` : ''}
-          </div>
-        `;
-        return body;
-      };
-      list.forEach(r => {
-        container.insertAdjacentHTML('beforeend', renderCard(r));
-      });
-      list.slice(0, 6).forEach(r => quick.insertAdjacentHTML('beforeend', renderCard(r)));
-    }
-
-    function renderHolidays() {
-      const list = Object.values(state.holidays).sort((a, b) => (a.dateKey || '').localeCompare(b.dateKey || ''));
-      const container = $('holidayList');
-      container.innerHTML = '';
-      $('holidayEmptyState').classList.toggle('hidden', list.length > 0);
-      list.forEach(h => {
-        container.insertAdjacentHTML('beforeend', `
-          <div class="flex items-center justify-between gap-3 bg-slate-50 rounded-2xl p-3">
-            <div>
-              <div class="font-semibold">${escapeHtml(h.title || '')}</div>
-              <div class="text-xs text-slate-500">${escapeHtml(h.dateKey || '')}</div>
-            </div>
-            <button onclick="deleteHoliday('${h.id}')" class="bg-rose-100 text-rose-700 px-3 py-1 rounded-lg text-xs font-bold">Delete</button>
-          </div>
-        `);
-      });
-    }
-
-    function renderFeesTable() {
-      const tbody = $('feeTable');
-      const students = getStudentsArray().filter(s => s.isActive !== false);
-      tbody.innerHTML = '';
-      students.forEach(s => {
-        const feeStatus = deriveFeeStatus(s);
-        const badgeCls = feeStatus === 'Paid' ? 'bg-emerald-100 text-emerald-700' : feeStatus === 'Overdue' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700';
-        tbody.insertAdjacentHTML('beforeend', `
-          <tr>
-            <td class="px-3 py-3"><div class="font-semibold">${escapeHtml(s.name || '')}</div><div class="text-xs text-slate-500">${escapeHtml(String(s.roll || ''))}</div></td>
-            <td class="px-3 py-3">${escapeHtml(s.feePlan || state.settings.defaultFeePlan || '-')}</td>
-            <td class="px-3 py-3">${escapeHtml(s.feeDueDate || '-')}</td>
-            <td class="px-3 py-3"><span class="px-2 py-1 rounded-full text-xs font-bold ${badgeCls}">${feeStatus}</span></td>
-            <td class="px-3 py-3"><button onclick="markFeePaid('${s.id}')" class="bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg text-xs font-bold">Mark Paid</button></td>
-          </tr>
-        `);
-      });
-    }
-
-    function renderSeats() {
-      const grid = $('seatGrid');
-      grid.innerHTML = '';
-      const students = getStudentsArray().filter(s => s.isActive !== false && s.seatNo);
-      const today = todayKey();
-      if (!students.length) {
-        grid.innerHTML = '<div class="text-sm text-slate-500">No seats assigned yet.</div>';
-        return;
-      }
-      students.sort((a, b) => String(a.seatNo).localeCompare(String(b.seatNo), undefined, { numeric: true }));
-      students.forEach(s => {
-        const rec = getAttendanceRecord(s.id, today);
-        const cls = rec?.status === 'Checked In' ? 'active' : rec?.status === 'Checked Out' ? 'offline' : 'empty';
-        grid.insertAdjacentHTML('beforeend', `
-          <div class="seat-card ${cls} border rounded-2xl p-3">
-            <div class="text-xs text-slate-500">Seat</div>
-            <div class="text-2xl font-bold">${escapeHtml(String(s.seatNo || '-'))}</div>
-            <div class="font-semibold mt-1">${escapeHtml(s.name || '')}</div>
-            <div class="text-xs text-slate-500">${rec ? (rec.status === 'Checked In' ? 'Inside now' : rec.status) : 'Not marked today'}</div>
-          </div>
-        `);
-      });
-    }
-
-    function renderAuditLogs() {
-      const list = getAuditArray();
-      const container = $('auditList');
-      container.innerHTML = '';
-      $('auditEmptyState').classList.toggle('hidden', list.length > 0);
-      list.forEach(item => {
-        container.insertAdjacentHTML('beforeend', `
-          <div class="bg-slate-50 rounded-2xl p-3">
-            <div class="flex justify-between gap-3 text-sm"><strong>${escapeHtml(item.action || '-')}</strong><span class="text-slate-500">${item.createdAt ? new Date(item.createdAt).toLocaleString() : '-'}</span></div>
-            <div class="text-sm text-slate-600 mt-1">${escapeHtml(item.details || '-')}</div>
-            <div class="text-xs text-slate-400 mt-1">By: ${escapeHtml(item.by || '-')}</div>
-          </div>
-        `);
-      });
-    }
-
-    function renderNotifications() {
-      const list = getNotificationsArray();
-      const adminContainer = $('adminNotificationsList');
-      const studentContainer = $('studentNotificationsList');
-      adminContainer.innerHTML = '';
-      studentContainer.innerHTML = '';
-      const latest = list.slice(0, 12);
-      latest.forEach(n => {
-        const html = `
-          <div class="bg-slate-50 rounded-2xl p-3">
-            <div class="font-semibold">${escapeHtml(n.title || '')}</div>
-            <div class="text-sm text-slate-600 mt-1">${escapeHtml(n.message || '')}</div>
-            <div class="text-xs text-slate-400 mt-1">${n.createdAt ? new Date(n.createdAt).toLocaleString() : '-'}</div>
-          </div>
-        `;
-        adminContainer.insertAdjacentHTML('beforeend', html);
-        if (!currentUser || currentUser.role === 'student') {
-          if ((n.target || 'student') === 'student' || (n.target || 'student') === 'all') studentContainer.insertAdjacentHTML('beforeend', html);
+        function updateConnectionStatus(connected) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            if (connected) {
+                dot.className = 'w-2 h-2 rounded-full bg-green-500 sync-pulse';
+                text.textContent = 'Live';
+                text.className = 'text-green-600';
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-red-500';
+                text.textContent = 'Offline';
+                text.className = 'text-red-600';
+            }
         }
-      });
-    }
 
-    function renderSettingsForm() {
-      $('settingOpenTime').value = state.settings.openTime || DEFAULT
+        // ==========================================
+        // REAL-TIME LISTENERS
+        // ==========================================
+        function listenToStudents() {
+            if (!isConnected || !studentsRef) {
+                showToast('❌ Database not connected', 'error');
+                return;
+            }
+            
+            studentsRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                const students = data ? Object.values(data) : [];
+                
+                // Update dropdown
+                const select = document.getElementById('studentSelect');
+                select.innerHTML = '<option value="">👤 Select Your Name</option>';
+                
+                students.sort((a, b) => a.name.localeCompare(b.name));
+                
+                students.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = JSON.stringify(s);
+                    opt.textContent = `${s.name} (Roll: ${s.roll})`;
+                    select.appendChild(opt);
+                });
+                
+                // Update admin table
+                if (!document.getElementById('adminDashboard').classList.contains('hidden')) {
+                    renderStudentTable(students);
+                    document.getElementById('totalStudents').textContent = students.length;
+                }
+            });
+        }
+
+        function listenToAttendance() {
+            if (!isConnected || !attendanceRef) return;
+            
+            attendanceRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                const records = data ? Object.values(data) : [];
+                
+                renderAttendanceTable(records);
+                updateStats(records);
+                
+                if (currentUser && currentUser.role === 'student') {
+                    updateMyHistory(records);
+                }
+            });
+        }
+
+        function renderStudentTable(students) {
+            const tbody = document.getElementById('studentTable');
+            const noStudents = document.getElementById('noStudents');
+            
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            if (students.length === 0) {
+                noStudents?.classList.remove('hidden');
+                return;
+            }
+            noStudents?.classList.add('hidden');
+            
+            students.forEach(s => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-3 py-2 font-medium">${s.name}</td>
+                    <td class="px-3 py-2 font-mono text-xs font-bold">${s.roll}</td>
+                    <td class="px-3 py-2 text-xs">${s.class || '-'}</td>
+                    <td class="px-3 py-2">
+                        <button onclick="deleteStudent('${s.id}')" class="text-red-600 text-xs font-bold bg-red-100 px-2 py-1 rounded hover:bg-red-200">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function renderAttendanceTable(records) {
+            const tbody = document.getElementById('attendanceTable');
+            const filter = document.getElementById('dateFilter')?.value;
+            const filterDate = filter ? new Date(filter).toDateString() : new Date().toDateString();
+            
+            if (!tbody) return;
+            tbody.innerHTML = '';
+            
+            const recs = records
+                .filter(a => new Date(a.date).toDateString() === filterDate)
+                .sort((a, b) => b.timestamp - a.timestamp);
+
+            const emptyState = document.getElementById('emptyState');
+            if (recs.length === 0) {
+                emptyState?.classList.remove('hidden');
+            } else {
+                emptyState?.classList.add('hidden');
+            }
+
+            recs.forEach(r => {
+                const dur = r.checkIn && r.checkOut ? 
+                    Math.round((new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60)) + ' min' : 
+                    (r.checkIn ? 'In Progress' : '--');
+                
+                let badge = 'bg-gray-200';
+                let statusText = r.status;
+                if (r.status === 'Checked In') {
+                    badge = 'bg-green-200 text-green-800';
+                    statusText = 'In';
+                }
+                if (r.status === 'Checked Out') {
+                    badge = 'bg-blue-200 text-blue-800';
+                    statusText = 'Out';
+                }
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50';
+                row.innerHTML = `
+                    <td class="px-2 py-2">
+                        <div class="font-medium text-xs">${r.studentName}</div>
+                        <div class="text-xs text-gray-500">${r.studentRoll}</div>
+                    </td>
+                    <td class="px-2 py-2">
+                        <span class="px-2 py-1 rounded text-xs font-bold ${badge}">${statusText}</span>
+                    </td>
+                    <td class="px-2 py-2 font-mono text-xs">${r.checkIn ? new Date(r.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}</td>
+                    <td class="px-2 py-2 font-mono text-xs">${r.checkOut ? new Date(r.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--'}</td>
+                    <td class="px-2 py-2 text-xs font-medium">${dur}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updateStats(records) {
+            const today = new Date().toDateString();
+            const todayRec = records.filter(a => new Date(a.date).toDateString() === today);
+            
+            const unique = new Set(todayRec.map(r => r.studentId)).size;
+            const presentEl = document.getElementById('presentToday');
+            if (presentEl) presentEl.textContent = unique;
+            
+            const totalEl = document.getElementById('totalStudents');
+            const total = totalEl ? parseInt(totalEl.textContent) : 0;
+            
+            const absentEl = document.getElementById('absentToday');
+            if (absentEl) absentEl.textContent = Math.max(0, total - unique);
+            
+            let totalMin = 0, count = 0;
+            todayRec.forEach(r => {
+                if (r.checkIn && r.checkOut) {
+                    totalMin += (new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60);
+                    count++;
+                }
+            });
+            const avg = count ? Math.round(totalMin / count / 60 * 10) / 10 : 0;
+            
+            const avgEl = document.getElementById('avgTime');
+            if (avgEl) avgEl.textContent = avg + 'h';
+        }
+
+        // ==========================================
+        // LOGIN FUNCTIONS
+        // ==========================================
+        function showAdminLogin() {
+            document.getElementById('mainButtons').classList.add('hidden');
+            document.getElementById('adminLoginForm').classList.remove('hidden');
+        }
+
+        function showStudentLogin() {
+            document.getElementById('loadingStudents').classList.remove('hidden');
+            listenToStudents();
+            document.getElementById('mainButtons').classList.add('hidden');
+            document.getElementById('studentLoginForm').classList.remove('hidden');
+            setTimeout(() => {
+                document.getElementById('loadingStudents').classList.add('hidden');
+            }, 1000);
+        }
+
+        function backToMain() {
+            document.getElementById('adminLoginForm').classList.add('hidden');
+            document.getElementById('studentLoginForm').classList.add('hidden');
+            document.getElementById('mainButtons').classList.remove('hidden');
+            
+            if (studentsRef) studentsRef.off();
+        }
+
+        function verifyAdmin() {
+            const id = document.getElementById('adminId').value.trim();
+            const pass = document.getElementById('adminPass').value.trim();
+            
+            if (id === ADMIN_ID && pass === ADMIN_PASS) {
+                currentUser = { role: 'admin' };
+                localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+                openAdminDashboard();
+            } else {
+                showToast('❌ Wrong ID/Password', 'error');
+            }
+        }
+
+        function verifyStudent() {
+            const select = document.getElementById('studentSelect');
+            const pass = document.getElementById('studentPass').value.trim();
+            
+            if (!select.value) {
+                showToast('❌ Select your name', 'error');
+                return;
+            }
+            
+            const student = JSON.parse(select.value);
+            if (pass !== student.roll) {
+                showToast('❌ Wrong password (Use Roll Number)', 'error');
+                return;
+            }
+            
+            loginStudent(student);
+        }
+
+        function loginStudent(student) {
+            currentUser = { role: 'student', ...student };
+            localStorage.setItem(USER_KEY, JSON.stringify(currentUser));
+            
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('studentDashboard').classList.remove('hidden');
+            
+            document.getElementById('studentDisplayName').textContent = student.name;
+            document.getElementById('studentDisplayRoll').textContent = 'Roll: ' + student.roll;
+            document.getElementById('studentDisplayClass').textContent = student.class || '';
+            document.getElementById('studentNavName').textContent = 'Hi, ' + student.name.split(' ')[0];
+            
+            listenToMyAttendance(student.id);
+        }
+
+        function listenToMyAttendance(studentId) {
+            if (!isConnected || !attendanceRef) return;
+            
+            attendanceRef.orderByChild('studentId').equalTo(studentId).on('value', (snapshot) => {
+                const data = snapshot.val();
+                const records = data ? Object.values(data) : [];
+                updateMyStatus(records);
+                updateMyHistory(records);
+            });
+        }
+
+        function openAdminDashboard() {
+            document.getElementById('loginScreen').classList.add('hidden');
+            document.getElementById('adminDashboard').classList.remove('hidden');
+            
+            listenToStudents();
+            listenToAttendance();
+        }
+
+        function logout() {
+            if (html5QrCode && isScannerRunning) {
+                html5QrCode.stop().catch(() => {});
+                isScannerRunning = false;
+            }
+            
+            if (studentsRef) studentsRef.off();
+            if (attendanceRef) attendanceRef.off();
+            
+            currentUser = null;
+            localStorage.removeItem(USER_KEY);
+            
+            document.getElementById('adminDashboard').classList.add('hidden');
+            document.getElementById('studentDashboard').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            
+            document.getElementById('adminId').value = '';
+            document.getElementById('adminPass').value = '';
+            document.getElementById('studentSelect').value = '';
+            document.getElementById('studentPass').value = '';
+            backToMain();
+            
+            showToast('👋 Logged out');
+        }
+
+        // ==========================================
+        // ADMIN FUNCTIONS - FIXED ADD STUDENT
+        // ==========================================
+        function showSection(section) {
+            document.getElementById('addStudentSection').classList.add('hidden');
+            document.getElementById('studentListSection').classList.add('hidden');
+            
+            // Hide error/success messages
+            document.getElementById('addStudentError').classList.add('hidden');
+            document.getElementById('addStudentSuccess').classList.add('hidden');
+            
+            if (section === 'addStudent') {
+                document.getElementById('addStudentSection').classList.remove('hidden');
+            } else if (section === 'studentList') {
+                document.getElementById('studentListSection').classList.remove('hidden');
+            }
+        }
+
+        function hideSection(section) {
+            document.getElementById(section + 'Section').classList.add('hidden');
+        }
+
+        // FIXED ADD STUDENT FUNCTION
+        async function addStudent() {
+            const errorDiv = document.getElementById('addStudentError');
+            const successDiv = document.getElementById('addStudentSuccess');
+            const btn = document.getElementById('saveStudentBtn');
+            
+            // Hide previous messages
+            errorDiv.classList.add('hidden');
+            successDiv.classList.add('hidden');
+            
+            // Check database connection
+            if (!isConnected || !db) {
+                errorDiv.textContent = '❌ Database not connected. Please check internet.';
+                errorDiv.classList.remove('hidden');
+                showToast('❌ Database not connected', 'error');
+                return;
+            }
+            
+            // Check authentication
+            if (!isAuthenticated) {
+                errorDiv.textContent = '❌ Not authenticated. Please wait...';
+                errorDiv.classList.remove('hidden');
+                showToast('❌ Please wait, authenticating...', 'error');
+                return;
+            }
+            
+            // Get values
+            const name = document.getElementById('studentName').value.trim();
+            const roll = document.getElementById('studentRoll').value.trim();
+            const cls = document.getElementById('studentClass').value.trim();
+            
+            // Validation
+            if (!name) {
+                errorDiv.textContent = '❌ Please enter student name';
+                errorDiv.classList.remove('hidden');
+                document.getElementById('studentName').focus();
+                return;
+            }
+            
+            if (!roll) {
+                errorDiv.textContent = '❌ Please enter roll number';
+                errorDiv.classList.remove('hidden');
+                document.getElementById('studentRoll').focus();
+                return;
+            }
+            
+            // Show loading
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading mr-2"></span> Saving...';
+            
+            try {
+                // Check if roll number already exists
+                const snapshot = await studentsRef.orderByChild('roll').equalTo(roll).once('value');
+                
+                if (snapshot.exists()) {
+                    errorDiv.textContent = '❌ Roll number "' + roll + '" already exists!';
+                    errorDiv.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerHTML = '<span>💾</span> Save Student';
+                    return;
+                }
+                
+                // Create new student
+                const newStudentRef = studentsRef.push();
+                const studentData = {
+                    id: newStudentRef.key,
+                    name: name,
+                    roll: roll,
+                    class: cls || '',
+                    createdAt: firebase.database.ServerValue.TIMESTAMP
+                };
+                
+                await newStudentRef.set(studentData);
+                
+                // Success
+                successDiv.textContent = '✅ Student "' + name + '" added successfully! Password: ' + roll;
+                successDiv.classList.remove('hidden');
+                showToast('✅ Student added! Password: ' + roll);
+                
+                // Clear form
+                document.getElementById('studentName').value = '';
+                document.getElementById('studentRoll').value = '';
+                document.getElementById('studentClass').value = '';
+                
+                // Hide form after 2 seconds
+                setTimeout(() => {
+                    hideSection('addStudent');
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error adding student:', error);
+                errorDiv.textContent = '❌ Error: ' + error.message;
+                errorDiv.classList.remove('hidden');
+                showToast('❌ Error adding student', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<span>💾</span> Save Student';
+            }
+        }
+
+        async function deleteStudent(id) {
+            if (!confirm('Are you sure you want to delete this student?')) return;
+            
+            if (!isConnected || !db) {
+                showToast('❌ Database not connected', 'error');
+                return;
+            }
+            
+            try {
+                await studentsRef.child(id).remove();
+                showToast('🗑️ Student deleted');
+            } catch (error) {
+                showToast('❌ Error deleting: ' + error.message, 'error');
+            }
+        }
+
+        function generateClassQR() {
+            document.getElementById('qrModal').classList.remove('hidden');
+            document.getElementById('classQR').innerHTML = '';
+            
+            new QRCode(document.getElementById('classQR'), {
+                text: JSON.stringify({t: 'att', d: Date.now()}),
+                width: 200,
+                height: 200
+            });
+        }
+
+        function closeQR() {
+            document.getElementById('qrModal').classList.add('hidden');
+        }
+
+        async function exportData() {
+            if (!isConnected || !db) {
+                showToast('❌ Database not connected', 'error');
+                return;
+            }
+            
+            try {
+                const snapshot = await attendanceRef.once('value');
+                const data = snapshot.val();
+                const records = data ? Object.values(data) : [];
+                
+                let csv = 'Date,Name,Roll,Class,Status,In,Out,Duration\n';
+                records.forEach(r => {
+                    const dur = r.checkIn && r.checkOut ? 
+                        Math.round((new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60)) : '';
+                    csv += `${new Date(r.date).toLocaleDateString()},${r.studentName},${r.studentRoll},${r.studentClass || ''},${r.status},${r.checkIn || ''},${r.checkOut || ''},${dur}\n`;
+                });
+                
+                const blob = new Blob([csv], {type: 'text/csv'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;
+                a.click();
+                showToast('📊 Excel downloaded!');
+            } catch (error) {
+                showToast('❌ Export failed: ' + error.message, 'error');
+            }
+        }
+
+        async function clearAllData() {
+            if (!confirm('⚠️ WARNING: Delete ALL students and attendance?')) return;
+            
+            if (!isConnected || !db) {
+                showToast('❌ Database not connected', 'error');
+                return;
+            }
+            
+            try {
+                await studentsRef.remove();
+                await attendanceRef.remove();
+                showToast('🗑️ All data cleared');
+            } catch (error) {
+                showToast('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // ==========================================
+        // STUDENT FUNCTIONS
+        // ==========================================
+        function updateSelectedDate() {
+            const dateInput = document.getElementById('attendanceDate');
+            if (dateInput) {
+                selectedDate = new Date(dateInput.value);
+                document.getElementById('selectedDateText').textContent = 'Selected: ' + selectedDate.toLocaleDateString();
+                
+                // Refresh status
+                if (currentUser && currentUser.role === 'student') {
+                    attendanceRef.orderByChild('studentId').equalTo(currentUser.id).once('value', (snapshot) => {
+                        const data = snapshot.val();
+                        const records = data ? Object.values(data) : [];
+                        updateMyStatus(records);
+                    });
+                }
+            }
+        }
+
+        function updateMyHistory(records) {
+            const tbody = document.getElementById('myHistoryTable');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            const sorted = records.sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sorted.forEach(r => {
+                const dur = r.checkIn && r.checkOut ? 
+                    Math.round((new Date(r.checkOut) - new Date(r.checkIn)) / (1000 * 60)) + 'm' : 
+                    (r.checkIn ? '...' : '--');
+                
+                let badge = 'bg-gray-200';
+                if (r.status === 'Checked In') badge = 'bg-green-200 text-green-800';
+                if (r.status === 'Checked Out') badge = 'bg-blue-200 text-blue-800';
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-2 py-2 text-xs">${new Date(r.date).toLocaleDateString()}</td>
+                    <td class="px-2 py-2"><span class="px-2 py-1 rounded text-xs font-bold ${badge}">${r.status}</span></td>
+                    <td class="px-2 py-2 text-xs">${dur}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function toggleScanner() {
+            const btn = document.getElementById('scannerBtn');
+            
+            if (!isScannerRunning) {
+                if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+                
+                html5QrCode.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 200, height: 200 } },
+                    (text) => {
+                        try {
+                            const data = JSON.parse(text);
+                            if (data.t === 'att') handleAttendanceAction();
+                        } catch(e) { handleAttendanceAction(); }
+                    },
+                    () => {}
+                ).then(() => {
+                    isScannerRunning = true;
+                    btn.textContent = '⏹️ Stop Camera';
+                    btn.classList.replace('bg-blue-600', 'bg-red-600');
+                }).catch(() => showToast('⚠️ Camera error', 'error'));
+            } else {
+                html5QrCode.stop().then(() => {
+                    isScannerRunning = false;
+                    btn.textContent = '📷 Start Camera';
+                    btn.classList.replace('bg-red-600', 'bg-blue-600');
+                });
+            }
+        }
+
+        async function handleAttendanceAction() {
+            if (!isConnected || !db) {
+                showToast('❌ Database not connected', 'error');
+                return;
+            }
+            
+            const btn = document.getElementById('actionBtn');
+            if (btn.disabled) return;
+            
+            const sid = currentUser.id;
+            const selectedDateStr = selectedDate.toDateString();
+            
+            try {
+                // Check existing
+                const snapshot = await attendanceRef.orderByChild('studentId').equalTo(sid).once('value');
+                const data = snapshot.val();
+                const records = data ? Object.values(data) : [];
+                
+                const existingRec = records.find(r => {
+                    const recDate = new Date(r.date);
+                    return recDate.toDateString() === selectedDateStr;
+                });
+                
+                const now = new Date().toISOString();
+                const timestamp = Date.now();
+                
+                if (!existingRec) {
+                    // New attendance
+                    const newRef = attendanceRef.push();
+                    await newRef.set({
+                        id: newRef.key,
+                        studentId: sid,
+                        studentName: currentUser.name,
+                        studentRoll: currentUser.roll,
+                        studentClass: currentUser.class || '',
+                        date: selectedDate.toISOString(),
+                        timestamp: timestamp,
+                        status: 'Checked In',
+                        checkIn: now,
+                        checkOut: null
+                    });
+                    showToast(`✅ Logged In for ${selectedDate.toLocaleDateString()}!`);
+                    
+                } else if (!existingRec.checkOut) {
+                    // Logout
+                    await attendanceRef.child(existingRec.id).update({
+                        checkOut: now,
+                        status: 'Checked Out'
+                    });
+                    showToast(`✅ Logged Out for ${selectedDate.toLocaleDateString()}!`);
+                    
+                } else {
+                    showToast('⚠️ Already completed for this date!', 'error');
+                }
+            } catch (error) {
+                showToast('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        function updateMyStatus(records) {
+            const selectedDateStr = selectedDate.toDateString();
+            const rec = records.find(r => {
+                const recDate = new Date(r.date);
+                return recDate.toDateString() === selectedDateStr;
+            });
+            
+            const btn = document.getElementById('actionBtn');
+            btn.disabled = false;
+            
+            if (!rec) {
+                document.getElementById('myStatusBadge').textContent = 'Not Marked';
+                document.getElementById('myStatusBadge').className = 'px-2 py-1 rounded text-xs font-bold bg-gray-200';
+                document.getElementById('myCheckIn').textContent = '--:--';
+                document.getElementById('myCheckOut').textContent = '--:--';
+                btn.textContent = '🟢 Log In';
+                btn.className = 'w-full py-4 rounded-xl font-bold text-lg bg-green-600 text-white shadow-lg active:scale-95 transition';
+                
+            } else if (!rec.checkOut) {
+                document.getElementById('myStatusBadge').textContent = 'Checked In';
+                document.getElementById('myStatusBadge').className = 'px-2 py-1 rounded text-xs font-bold bg-green-200 text-green-800';
+                document.getElementById('myCheckIn').textContent = new Date(rec.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                document.getElementById('myCheckOut').textContent = '--:--';
+                btn.textContent = '🔴 Log Out';
+                btn.className = 'w-full py-4 rounded-xl font-bold text-lg bg-red-600 text-white shadow-lg active:scale-95 transition';
+                
+            } else {
+                document.getElementById('myStatusBadge').textContent = 'Completed';
+                document.getElementById('myStatusBadge').className = 'px-2 py-1 rounded text-xs font-bold bg-blue-200 text-blue-800';
+                document.getElementById('myCheckIn').textContent = new Date(rec.checkIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                document.getElementById('myCheckOut').textContent = new Date(rec.checkOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                btn.textContent = '✓ Completed';
+                btn.className = 'w-full py-4 rounded-xl font-bold text-lg bg-gray-400 text-white';
+                btn.disabled = true;
+            }
+        }
+
+        function showToast(msg, type='success') {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMessage').textContent = msg;
+            document.getElementById('toastIcon').textContent = type === 'error' ? '❌' : '✅';
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        window.onbeforeunload = () => {
+            if (html5QrCode && isScannerRunning) html5QrCode.stop().catch(() => {});
+        };
+    </script>
+</body>
+</html>
