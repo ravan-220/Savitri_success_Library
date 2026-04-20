@@ -3,299 +3,174 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Savitri Success Library - Pro Edition</title>
-  <meta name="theme-color" content="#6d28d9" />
+  <title>Savitri Success Library - Pro V5.1</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
   <style>
     body { font-family: 'Inter', sans-serif; }
     .gradient-bg { background: linear-gradient(135deg, #6366f1 0%, #7c3aed 100%); }
-    .glass { background: rgba(255,255,255,0.10); backdrop-filter: blur(12px); }
-    .card { background: white; border-radius: 1rem; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-    .seat-box { transition: all 0.2s; cursor: pointer; border: 2px solid #e2e8f0; }
-    .seat-occupied { border-color: #10b981; background: #ecfdf5; }
-    .seat-vacant { border-color: #cbd5e1; background: #f8fafc; }
-    #reader { width: 100%; max-width: 400px; margin: auto; }
-    .hide-id .student-id { display: none; } /* Requirement: Hide ID in list */
+    .glass { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); }
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; align-items: center; justify-content: center; }
+    .modal.active { display: flex; }
+    .seat-box { border: 2px solid #e2e8f0; transition: 0.3s; cursor: pointer; }
+    .occupied { background: #ecfdf5; border-color: #10b981; }
   </style>
 </head>
-<body class="bg-slate-50 min-h-screen">
+<body class="bg-slate-50">
 
-  <div id="loginScreen" class="fixed inset-0 gradient-bg flex items-center justify-center z-50 p-4">
-    <div class="glass p-8 rounded-3xl w-full max-w-md text-center border border-white/20 shadow-2xl">
-      <h1 class="text-3xl font-bold text-white mb-2">Savitri Success Library</h1>
-      <p class="text-white/80 mb-8">Management Portal</p>
-      
-      <div id="loginOptions" class="space-y-4">
-        <button onclick="showPanel('staff')" class="w-full bg-white text-indigo-700 font-bold py-4 rounded-2xl shadow-xl flex items-center justify-center gap-3">
-          <span>👨‍💼 Admin Login</span>
-        </button>
-        <button onclick="showPanel('student')" class="w-full bg-indigo-500/30 text-white font-bold py-4 rounded-2xl border border-white/30 flex items-center justify-center gap-3">
-          <span>🎓 Student Login</span>
-        </button>
-      </div>
-
-      <div id="staffForm" class="hidden mt-6 space-y-3">
-        <input type="text" id="adminUser" placeholder="Admin ID" class="w-full p-3 rounded-xl border-none outline-none">
-        <input type="password" id="adminPass" placeholder="Password" class="w-full p-3 rounded-xl border-none outline-none">
-        <button onclick="loginAdmin()" class="w-full bg-emerald-500 text-white font-bold py-3 rounded-xl">Verify & Enter</button>
-      </div>
-
-      <div id="studentForm" class="hidden mt-6 space-y-3">
-        <select id="studentSelect" class="w-full p-3 rounded-xl border-none outline-none hide-id">
-          <option value="">Select Your Name</option>
-        </select>
-        <input type="password" id="studentPin" placeholder="Enter PIN" class="w-full p-3 rounded-xl border-none outline-none">
-        <button onclick="loginStudent()" class="w-full bg-emerald-500 text-white font-bold py-3 rounded-xl">Login</button>
-      </div>
+  <div id="loginScreen" class="fixed inset-0 gradient-bg flex items-center justify-center z-50">
+    <div class="glass p-8 rounded-3xl w-80 text-center text-white">
+      <h1 class="text-2xl font-bold mb-6">SSL Admin Login</h1>
+      <input type="text" id="admUser" placeholder="Admin ID" class="w-full p-2 mb-3 rounded text-black outline-none">
+      <input type="password" id="admPass" placeholder="Password" class="w-full p-2 mb-4 rounded text-black outline-none">
+      <button onclick="loginAdmin()" class="w-full bg-emerald-500 py-2 rounded font-bold">Login</button>
+      <p class="mt-4 text-xs opacity-70">Use admin / 7023</p>
     </div>
   </div>
 
-  <div id="adminDashboard" class="hidden">
-    <nav class="gradient-bg p-4 text-white flex justify-between items-center sticky top-0 z-40">
-      <h2 class="font-bold">SSL Admin</h2>
-      <div class="flex gap-2">
-        <button onclick="openModal('addStudent')" class="bg-white/20 px-3 py-1 rounded-lg text-sm">Add Student</button>
-        <button onclick="location.reload()" class="bg-rose-500 px-3 py-1 rounded-lg text-sm">Logout</button>
-      </div>
+  <div id="adminPanel" class="hidden">
+    <nav class="gradient-bg p-4 text-white flex justify-between items-center shadow-lg">
+      <h2 class="font-bold">Savitri Admin Portal</h2>
+      <button onclick="openAddModal()" class="bg-white text-indigo-700 px-4 py-1 rounded-lg font-bold text-sm">+ Add Student</button>
     </nav>
 
-    <div class="p-4 grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="card p-4 text-center">
-        <p class="text-slate-500 text-sm">Active Students</p>
-        <h3 id="countActive" class="text-2xl font-bold">0</h3>
-      </div>
-      <div class="card p-4 text-center">
-        <p class="text-slate-500 text-sm">Present Today</p>
-        <h3 id="countPresent" class="text-2xl font-bold text-emerald-600">0</h3>
-      </div>
-      
-      <div class="md:col-span-4 card p-6">
-        <h3 class="font-bold mb-4 flex items-center gap-2">🪑 Live Seat Mapping</h3>
-        <div id="seatGrid" class="grid grid-cols-4 sm:grid-cols-8 md:grid-cols-12 gap-2">
-          </div>
+    <div class="p-4 space-y-6">
+      <div class="bg-white p-4 rounded-xl shadow">
+        <h3 class="font-bold mb-3">Live Seat View</h3>
+        <div id="seatGrid" class="grid grid-cols-5 md:grid-cols-10 gap-2"></div>
       </div>
 
-      <div class="md:col-span-4 card overflow-hidden">
-        <div class="p-4 bg-slate-50 border-b flex justify-between items-center">
-          <h3 class="font-bold">Student Management</h3>
-          <input type="text" oninput="filterTable(this.value)" placeholder="Search Name..." class="border rounded-lg px-3 py-1 text-sm">
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm text-left">
-            <thead class="bg-slate-100 uppercase text-xs">
-              <tr>
-                <th class="p-4">Name</th>
-                <th class="p-4">Seat</th>
-                <th class="p-4">Fee Status</th>
-                <th class="p-4">Last Payment</th>
-                <th class="p-4">Action</th>
-              </tr>
-            </thead>
-            <tbody id="studentTableBody"></tbody>
-          </table>
-        </div>
+      <div class="bg-white rounded-xl shadow overflow-hidden">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-100">
+            <tr>
+              <th class="p-3">Student Name</th>
+              <th class="p-3">Seat</th>
+              <th class="p-3">Phone</th>
+              <th class="p-3">Action</th>
+            </tr>
+          </thead>
+          <tbody id="studentTable"></tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <div id="studentDashboard" class="hidden">
-    <div class="gradient-bg p-6 text-white text-center">
-      <h2 id="stWelcomeName" class="text-2xl font-bold">Welcome!</h2>
-      <p id="stMeta" class="opacity-80">Seat: -- | Status: --</p>
-    </div>
-
-    <div class="p-4 max-w-md mx-auto space-y-4">
-      <div class="card p-6 text-center space-y-4">
-        <div class="flex justify-around">
-          <button onclick="markAttendance('Check-In')" class="bg-emerald-600 text-white px-6 py-3 rounded-2xl font-bold">Check-In</button>
-          <button onclick="markAttendance('Check-Out')" class="bg-rose-600 text-white px-6 py-3 rounded-2xl font-bold">Check-Out</button>
-        </div>
-      </div>
-
-      <div class="card p-6">
-        <h3 class="font-bold mb-4">📅 Attendance History (Month-wise)</h3>
-        <div id="monthHistory" class="space-y-2 text-sm overflow-y-auto max-h-60">
-          </div>
-      </div>
-
-      <div class="card p-6">
-        <h3 class="font-bold mb-2">💰 Fee History</h3>
-        <div id="stFeeLogs" class="text-sm space-y-2"></div>
+  <div id="addModal" class="modal">
+    <div class="bg-white p-6 rounded-2xl w-80 space-y-3">
+      <h3 class="font-bold text-lg">Add New Student</h3>
+      <input type="text" id="stName" placeholder="Full Name" class="w-full border p-2 rounded">
+      <input type="number" id="stSeat" placeholder="Seat Number" class="w-full border p-2 rounded">
+      <input type="text" id="stPhone" placeholder="Phone (Parent)" class="w-full border p-2 rounded">
+      <input type="password" id="stPin" placeholder="Set Login PIN" class="w-full border p-2 rounded">
+      <div class="flex gap-2">
+        <button onclick="saveStudent()" class="flex-1 bg-indigo-600 text-white py-2 rounded font-bold">Save</button>
+        <button onclick="closeAddModal()" class="flex-1 bg-slate-200 py-2 rounded">Cancel</button>
       </div>
     </div>
   </div>
 
   <script>
-    // --- FIREBASE CONFIG ---
+    // 1. Firebase Config (APNI DETAILS YAHAN DALEIN)
     const firebaseConfig = {
-      // PASTE YOUR FIREBASE DETAILS HERE
-      apiKey: "...",
-      authDomain: "...",
-      databaseURL: "...",
-      projectId: "...",
-      storageBucket: "...",
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT.firebaseio.com",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
       messagingSenderId: "...",
       appId: "..."
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // --- STATE MANAGEMENT ---
-    let currentUser = null;
-    let studentsData = {};
-
-    // --- UI LOGIC ---
-    function showPanel(type) {
-      document.getElementById('loginOptions').classList.add('hidden');
-      if(type === 'staff') document.getElementById('staffForm').classList.remove('hidden');
-      else {
-        document.getElementById('studentForm').classList.remove('hidden');
-        loadStudentList();
-      }
-    }
-
-    function loadStudentList() {
-      db.ref('students').on('value', snap => {
-        const data = snap.val() || {};
-        studentsData = data;
-        const select = document.getElementById('studentSelect');
-        select.innerHTML = '<option value="">Select Your Name</option>';
-        Object.keys(data).forEach(id => {
-          const opt = document.createElement('option');
-          opt.value = id;
-          opt.innerText = data[id].name; // Hidden ID as per request
-          select.appendChild(opt);
-        });
-        renderAdminData();
-      });
-    }
-
-    // --- ATTENDANCE & WHATSAPP ALERT ---
-    function sendWhatsAppAlert(name, action) {
-      const phone = "7023909061";
-      const time = new Date().toLocaleTimeString();
-      const msg = `Savitri Library Alert: ${name} has marked ${action} at ${time}.`;
-      // This opens a tiny popup or window to trigger the alert
-      console.log("Alert Sent to " + phone + ": " + msg);
-      // Optional: window.open(`https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(msg)}`, '_blank');
-    }
-
-    function markAttendance(status) {
-      if(!currentUser) return;
-      const dateKey = new Date().toISOString().split('T')[0];
-      const time = new Date().toLocaleTimeString();
-      
-      db.ref(`attendance/${dateKey}/${currentUser.id}`).set({
-        name: currentUser.name,
-        time: time,
-        type: status
-      }).then(() => {
-        alert(`${status} successful at ${time}`);
-        sendWhatsAppAlert(currentUser.name, status);
-        loadStudentHistory();
-      });
-    }
-
-    // --- ADMIN: SEAT MAPPING ---
-    function renderAdminData() {
-      const grid = document.getElementById('seatGrid');
-      grid.innerHTML = '';
-      const tbody = document.getElementById('studentTableBody');
-      tbody.innerHTML = '';
-
-      for(let i=1; i<=50; i++) {
-        const seatOwner = Object.values(studentsData).find(s => s.seat == i);
-        const div = document.createElement('div');
-        div.className = `seat-box p-2 text-center rounded-lg text-xs font-bold ${seatOwner ? 'seat-occupied' : 'seat-vacant'}`;
-        div.innerHTML = `${i}<br><span class="text-[10px] font-normal">${seatOwner ? seatOwner.name : 'Empty'}</span>`;
-        if(seatOwner) div.onclick = () => alert(`Student: ${seatOwner.name}\nPhone: ${seatOwner.phone}`);
-        grid.appendChild(div);
-      }
-
-      Object.keys(studentsData).forEach(id => {
-        const s = studentsData[id];
-        tbody.innerHTML += `
-          <tr class="border-b">
-            <td class="p-4 font-medium">${s.name}</td>
-            <td class="p-4">${s.seat}</td>
-            <td class="p-4"><span class="px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs">${s.feeStatus || 'Pending'}</span></td>
-            <td class="p-4 text-slate-500">${s.lastPaid || 'No Record'}</td>
-            <td class="p-4 flex gap-2">
-              <button onclick="editStudent('${id}')" class="text-blue-600">Edit</button>
-              <button onclick="deleteStudent('${id}')" class="text-rose-600">Del</button>
-            </td>
-          </tr>
-        `;
-      });
-    }
-
-    // --- STUDENT: HISTORY ---
-    function loadStudentHistory() {
-      const historyDiv = document.getElementById('monthHistory');
-      historyDiv.innerHTML = 'Loading records...';
-      
-      db.ref('attendance').limitToLast(30).once('value', snap => {
-        historyDiv.innerHTML = '';
-        const days = snap.val() || {};
-        Object.keys(days).sort().reverse().forEach(date => {
-          if(days[date][currentUser.id]) {
-            const rec = days[date][currentUser.id];
-            historyDiv.innerHTML += `
-              <div class="flex justify-between p-2 bg-slate-100 rounded">
-                <span>${date}</span>
-                <span class="font-bold">${rec.type} (${rec.time})</span>
-              </div>
-            `;
-          }
-        });
-      });
-    }
-
-    // --- LOGIN FUNCTIONS ---
-    function loginStudent() {
-      const id = document.getElementById('studentSelect').value;
-      const pin = document.getElementById('studentPin').value;
-      if(!id || !pin) return alert("Select Name & Enter PIN");
-
-      const user = studentsData[id];
-      if(user.pin === pin) {
-        currentUser = { id, ...user };
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('studentDashboard').classList.remove('hidden');
-        document.getElementById('stWelcomeName').innerText = "Hello, " + user.name;
-        document.getElementById('stMeta').innerText = `Seat No: ${user.seat} | Batch: ${user.batch}`;
-        loadStudentHistory();
-      } else {
-        alert("Wrong PIN!");
-      }
-    }
-
+    // 2. Admin Login
     function loginAdmin() {
-      const user = document.getElementById('adminUser').value;
-      const pass = document.getElementById('adminPass').value;
-      if(user === "admin" && pass === "7023") { // Change as needed
+      const u = document.getElementById('admUser').value;
+      const p = document.getElementById('admPass').value;
+      if(u === "admin" && p === "7023") {
         document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('adminDashboard').classList.remove('hidden');
+        document.getElementById('adminPanel').classList.remove('hidden');
+        loadData();
       } else {
-        alert("Invalid Admin Credentials");
+        alert("Invalid Login!");
       }
     }
 
+    // 3. Modal Controls
+    function openAddModal() { document.getElementById('addModal').classList.add('active'); }
+    function closeAddModal() { document.getElementById('addModal').classList.remove('active'); }
+
+    // 4. SAVE STUDENT TO FIREBASE
+    function saveStudent() {
+      const name = document.getElementById('stName').value;
+      const seat = document.getElementById('stSeat').value;
+      const phone = document.getElementById('stPhone').value;
+      const pin = document.getElementById('stPin').value;
+
+      if(!name || !seat || !pin) return alert("Please fill all fields!");
+
+      const newRef = db.ref('students').push();
+      newRef.set({
+        name: name,
+        seat: seat,
+        phone: phone,
+        pin: pin,
+        feeStatus: "Paid",
+        addedOn: new Date().toLocaleDateString()
+      }).then(() => {
+        alert("Student Added Successfully!");
+        closeAddModal();
+        // Clear Inputs
+        document.getElementById('stName').value = '';
+        document.getElementById('stSeat').value = '';
+        document.getElementById('stPhone').value = '';
+        document.getElementById('stPin').value = '';
+      });
+    }
+
+    // 5. LOAD & DISPLAY DATA
+    function loadData() {
+      db.ref('students').on('value', snap => {
+        const students = snap.val() || {};
+        const table = document.getElementById('studentTable');
+        const grid = document.getElementById('seatGrid');
+        
+        table.innerHTML = '';
+        grid.innerHTML = '';
+
+        // Render Seats (1 to 50)
+        for(let i=1; i<=50; i++) {
+          const owner = Object.values(students).find(s => s.seat == i);
+          grid.innerHTML += `
+            <div class="seat-box p-2 text-center rounded text-xs ${owner ? 'occupied' : ''}">
+              ${i}<br><span class="text-[9px]">${owner ? owner.name.split(' ')[0] : 'Empty'}</span>
+            </div>
+          `;
+        }
+
+        // Render List
+        Object.keys(students).forEach(id => {
+          const s = students[id];
+          table.innerHTML += `
+            <tr class="border-b">
+              <td class="p-3 font-medium">${s.name}</td>
+              <td class="p-3">${s.seat}</td>
+              <td class="p-3">${s.phone || '-'}</td>
+              <td class="p-3 text-rose-500 font-bold cursor-pointer" onclick="deleteStudent('${id}')">Delete</td>
+            </tr>
+          `;
+        });
+      });
+    }
+
+    // 6. DELETE STUDENT
     function deleteStudent(id) {
-      if(confirm("Are you sure you want to delete this student?")) {
+      if(confirm("Are you sure?")) {
         db.ref(`students/${id}`).remove();
       }
     }
-
-    // Initialization
-    loadStudentList();
   </script>
 </body>
 </html>
