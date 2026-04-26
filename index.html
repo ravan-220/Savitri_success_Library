@@ -37,6 +37,21 @@
     <span id="statusDot" class="w-2 h-2 rounded-full bg-yellow-500 sync-pulse"></span>
     <span id="statusText">Checking...</span>
   </div>
+  <!-- Login/Logout Notification Popup -->
+  <div id="loginPopup" class="fixed top-16 right-3 z-50 transform translate-x-full transition-transform duration-500 ease-out">
+    <div class="bg-white rounded-2xl shadow-2xl border-l-4 border-indigo-500 p-4 max-w-sm min-w-[300px]">
+      <div class="flex items-start gap-3">
+        <div id="popupIcon" class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-xl flex-shrink-0">🎓</div>
+        <div class="flex-1">
+          <div id="popupTitle" class="font-bold text-slate-800">Student Login</div>
+          <div id="popupMessage" class="text-sm text-slate-600 mt-1">--</div>
+          <div id="popupTime" class="text-xs text-slate-400 mt-1">Just now</div>
+        </div>
+        <button onclick="hideLoginPopup()" class="text-slate-400 hover:text-slate-600">✕</button>
+      </div>
+    </div>
+  </div>
+
 
   <div id="loginScreen" class="fixed inset-0 gradient-bg flex items-center justify-center z-40 p-4">
     <div class="glass p-6 rounded-3xl w-full max-w-md text-center border border-white/15 shadow-2xl">
@@ -410,7 +425,43 @@
 
 <section id="tab-tools" class="admin-tab hidden space-y-4">
         <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          <div class="card p-4 space-y-4">
+          
+        <div class="card p-4 space-y-4">
+          <div>
+            <h3 class="font-bold text-lg">🧾 Invoice Generator</h3>
+            <p class="text-sm text-slate-500">Generate and manage fee invoices for students</p>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <select id="invoiceStudentSelect" class="border rounded-xl px-3 py-2 text-sm">
+              <option value="">Select Student</option>
+            </select>
+            <input type="text" id="invoiceMonth" placeholder="Month (e.g. April 2026)" class="border rounded-xl px-3 py-2 text-sm" />
+            <input type="number" id="invoiceAmount" placeholder="Amount (₹)" class="border rounded-xl px-3 py-2 text-sm" />
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <input type="text" id="invoiceDescription" placeholder="Description (e.g. Monthly Library Fee)" class="border rounded-xl px-3 py-2 text-sm" />
+            <input type="date" id="invoiceDueDate" class="border rounded-xl px-3 py-2 text-sm" />
+          </div>
+          <button onclick="generateInvoice()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold">Generate Invoice</button>
+
+          <div class="overflow-auto rounded-2xl border border-slate-200 max-h-[400px]">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 sticky top-0">
+                <tr>
+                  <th class="px-3 py-2 text-left font-bold">Invoice #</th>
+                  <th class="px-3 py-2 text-left font-bold">Student</th>
+                  <th class="px-3 py-2 text-left font-bold">Month</th>
+                  <th class="px-3 py-2 text-left font-bold">Amount</th>
+                  <th class="px-3 py-2 text-left font-bold">Status</th>
+                  <th class="px-3 py-2 text-left font-bold">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="invoiceTable" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card p-4 space-y-4">
             <div>
               <h3 class="font-bold text-lg">Backup & Restore</h3>
               <p class="text-sm text-slate-500">Download full database JSON or restore it back</p>
@@ -522,7 +573,78 @@
         <button onclick="toggleScanner()" id="scannerBtn" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold text-sm">Start Camera</button>
       </section>
 
+      
       <section class="card p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="font-bold text-lg">💳 Fee Payment</h3>
+            <p class="text-sm text-slate-500">Pay your library fees online</p>
+          </div>
+          <span id="studentPaymentStatus" class="px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold">Check Status</span>
+        </div>
+
+        <div id="paymentDetails" class="space-y-3 text-sm mb-4">
+          <div class="flex justify-between p-3 bg-slate-50 rounded-xl">
+            <span>Fee Plan</span>
+            <span id="payFeePlan" class="font-bold">--</span>
+          </div>
+          <div class="flex justify-between p-3 bg-slate-50 rounded-xl">
+            <span>Amount Due</span>
+            <span id="payAmountDue" class="font-bold text-rose-600">₹0</span>
+          </div>
+          <div class="flex justify-between p-3 bg-slate-50 rounded-xl">
+            <span>Due Date</span>
+            <span id="payDueDate" class="font-bold">--</span>
+          </div>
+          <div class="flex justify-between p-3 bg-slate-50 rounded-xl">
+            <span>Last Paid</span>
+            <span id="payLastPaid" class="font-bold">--</span>
+          </div>
+        </div>
+
+        <div id="paymentForm" class="space-y-3">
+          <div>
+            <label class="text-xs text-slate-500">Payment Amount (₹)</label>
+            <input type="number" id="paymentAmount" placeholder="Enter amount" class="w-full border rounded-xl px-3 py-3 mt-1" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500">Payment Method</label>
+            <select id="paymentMethod" class="w-full border rounded-xl px-3 py-3 mt-1">
+              <option value="cash">Cash</option>
+              <option value="upi">UPI / Google Pay / PhonePe</option>
+              <option value="card">Credit/Debit Card</option>
+              <option value="bank">Bank Transfer</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs text-slate-500">Transaction ID / Reference</label>
+            <input type="text" id="paymentTransactionId" placeholder="Enter transaction reference" class="w-full border rounded-xl px-3 py-3 mt-1" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500">Payment Screenshot (Optional)</label>
+            <input type="file" id="paymentScreenshot" accept="image/*" class="w-full border rounded-xl px-3 py-3 mt-1" />
+          </div>
+          <button onclick="submitStudentPayment()" class="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold">Submit Payment</button>
+        </div>
+
+        <div id="paymentHistory" class="mt-4">
+          <h4 class="font-semibold text-sm mb-2">Payment History</h4>
+          <div id="studentPaymentHistoryList" class="space-y-2 max-h-40 overflow-auto"></div>
+        </div>
+      </section>
+
+
+      <section class="card p-4">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="font-bold text-lg">🧾 My Invoices</h3>
+            <p class="text-sm text-slate-500">Download your fee invoices</p>
+          </div>
+        </div>
+        <div id="studentInvoiceList" class="space-y-2 max-h-60 overflow-auto"></div>
+      </section>
+
+<section class="card p-4">
         <div class="flex items-center justify-between mb-3">
           <h3 class="font-bold">My Requests</h3>
           <span id="studentPendingCount" class="text-xs font-bold text-amber-600">0 pending</span>
@@ -694,7 +816,9 @@
       holidays: {},
       qrSession: null,
       auditLogs: {},
-      notifications: {}
+      notifications: {},
+      payments: {},
+      invoices: {}
     };
     let activeStudentId = null;
     let currentAdminTab = 'overview';
@@ -764,6 +888,7 @@
           isAuthenticated = true;
           bindRefs();
           startListeners();
+      setupLoginListeners();
           initUiDefaults();
           restoreSavedLogin();
         }).catch((error) => {
@@ -786,6 +911,8 @@
       qrSessionRef = db.ref('qrSession/current');
       auditLogsRef = db.ref('auditLogs');
       notificationsRef = db.ref('notifications');
+      paymentsRef = db.ref('payments');
+      invoicesRef = db.ref('invoices');
     }
 
     function startListeners() {
@@ -797,6 +924,8 @@
       qrSessionRef.on('value', snap => { state.qrSession = snap.val() || null; renderQrStatus(); renderAll(); });
       auditLogsRef.limitToLast(200).on('value', snap => { state.auditLogs = snap.val() || {}; renderAuditLogs(); });
       notificationsRef.limitToLast(100).on('value', snap => { state.notifications = snap.val() || {}; renderNotifications(); });
+      paymentsRef.limitToLast(200).on('value', snap => { state.payments = snap.val() || {}; renderAll(); });
+      invoicesRef.limitToLast(200).on('value', snap => { state.invoices = snap.val() || {}; renderAll(); });
     }
 
     function initUiDefaults() {
@@ -967,6 +1096,448 @@
       await studentsRef.child(studentId).child('archiveHistory').child(monthPrefix).set(snapshot);
     }
 
+    
+    // Login/Logout Popup Functions
+    function showLoginPopup(title, message, icon = '🎓', type = 'login') {
+      const popup = $('loginPopup');
+      const popupIcon = $('popupIcon');
+      const popupTitle = $('popupTitle');
+      const popupMessage = $('popupMessage');
+      const popupTime = $('popupTime');
+
+      popupIcon.textContent = icon;
+      popupTitle.textContent = title;
+      popupMessage.textContent = message;
+      popupTime.textContent = new Date().toLocaleTimeString();
+
+      // Set border color based on type
+      popup.querySelector('.border-l-4').className = `bg-white rounded-2xl shadow-2xl border-l-4 ${type === 'login' ? 'border-emerald-500' : type === 'logout' ? 'border-rose-500' : 'border-indigo-500'} p-4 max-w-sm min-w-[300px]`;
+
+      // Show popup
+      popup.classList.remove('translate-x-full');
+
+      // Auto hide after 5 seconds
+      setTimeout(() => hideLoginPopup(), 5000);
+    }
+
+    function hideLoginPopup() {
+      $('loginPopup').classList.add('translate-x-full');
+    }
+
+    // Listen for student logins in real-time
+    function setupLoginListeners() {
+      if (!db) return;
+
+      // Listen for audit logs (login events)
+      auditLogsRef.limitToLast(1).on('child_added', (snap) => {
+        const log = snap.val();
+        if (!log) return;
+
+        // Check if it's a login/logout event
+        if (log.action === 'Student login') {
+          const studentName = log.by || 'Unknown';
+          showLoginPopup('🟢 Student Login', `${studentName} just logged in`, '🎓', 'login');
+        } else if (log.action === 'App logout') {
+          const userName = log.by || 'Unknown';
+          showLoginPopup('🔴 Student Logout', `${userName} just logged out`, '👋', 'logout');
+        }
+      });
+    }
+
+    
+    // Student Payment Functions
+    function refreshStudentPaymentPanel() {
+      if (!currentUser || currentUser.role !== 'student') return;
+      const s = state.students[currentUser.id] || currentUser;
+      const feeStatus = deriveFeeStatus(s);
+
+      // Update status badge
+      const statusBadge = $('studentPaymentStatus');
+      if (feeStatus === 'Paid') {
+        statusBadge.textContent = 'Paid';
+        statusBadge.className = 'px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold';
+      } else if (feeStatus === 'Overdue') {
+        statusBadge.textContent = 'Overdue';
+        statusBadge.className = 'px-3 py-1 rounded-full bg-rose-100 text-rose-700 text-xs font-bold';
+      } else {
+        statusBadge.textContent = 'Due';
+        statusBadge.className = 'px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold';
+      }
+
+      // Update details
+      $('payFeePlan').textContent = s.feePlan || state.settings.defaultFeePlan || 'Monthly';
+      $('payAmountDue').textContent = feeStatus === 'Paid' ? '₹0 (Paid)' : '₹' + (s.feeAmount || '500');
+      $('payDueDate').textContent = s.feeDueDate || '--';
+      $('payLastPaid').textContent = s.lastPaidDate || 'Never';
+
+      // Render payment history
+      renderStudentPaymentHistory();
+    }
+
+    async function submitStudentPayment() {
+      if (!currentUser || currentUser.role !== 'student') return;
+
+      const amount = $('paymentAmount').value;
+      const method = $('paymentMethod').value;
+      const transactionId = $('paymentTransactionId').value.trim();
+
+      if (!amount || amount <= 0) {
+        showToast('Please enter valid amount', 'error');
+        return;
+      }
+      if (!transactionId) {
+        showToast('Please enter transaction reference', 'error');
+        return;
+      }
+
+      const s = state.students[currentUser.id] || currentUser;
+      const paymentId = db.ref('payments').push().key;
+
+      const paymentData = {
+        id: paymentId,
+        studentId: currentUser.id,
+        studentName: s.name,
+        studentRoll: s.roll,
+        amount: Number(amount),
+        method: method,
+        transactionId: transactionId,
+        status: 'pending', // Admin needs to verify
+        month: todayKey().slice(0, 7),
+        createdAt: Date.now(),
+        screenshot: null
+      };
+
+      // Handle screenshot if uploaded
+      const fileInput = $('paymentScreenshot');
+      if (fileInput.files && fileInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          paymentData.screenshot = e.target.result;
+          await db.ref('payments/' + paymentId).set(paymentData);
+          finishPaymentSubmission(paymentId, amount);
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        await db.ref('payments/' + paymentId).set(paymentData);
+        finishPaymentSubmission(paymentId, amount);
+      }
+    }
+
+    async function finishPaymentSubmission(paymentId, amount) {
+      await addAuditLog('Payment submitted', `${currentUser.name} submitted ₹${amount} payment (ID: ${paymentId})`, currentUser.name);
+
+      // Clear form
+      $('paymentAmount').value = '';
+      $('paymentTransactionId').value = '';
+      $('paymentScreenshot').value = '';
+
+      showToast('Payment submitted! Admin will verify shortly.');
+      renderStudentPaymentHistory();
+    }
+
+    function renderStudentPaymentHistory() {
+      const container = $('studentPaymentHistoryList');
+      if (!container) return;
+
+      // Get payments from state
+      const payments = Object.values(state.payments || {})
+        .filter(p => p.studentId === currentUser.id)
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+        .slice(0, 10);
+
+      container.innerHTML = '';
+      if (payments.length === 0) {
+        container.innerHTML = '<div class="text-sm text-slate-500">No payments yet.</div>';
+        return;
+      }
+
+      payments.forEach(p => {
+        const statusClass = p.status === 'approved' ? 'text-emerald-600' : p.status === 'rejected' ? 'text-rose-600' : 'text-amber-600';
+        const statusBg = p.status === 'approved' ? 'bg-emerald-50' : p.status === 'rejected' ? 'bg-rose-50' : 'bg-amber-50';
+
+        container.insertAdjacentHTML('beforeend', `
+          <div class="${statusBg} rounded-xl p-3">
+            <div class="flex justify-between items-center">
+              <div>
+                <div class="font-semibold text-sm">₹${p.amount}</div>
+                <div class="text-xs text-slate-500">${p.method} • ${p.transactionId}</div>
+              </div>
+              <span class="text-xs font-bold ${statusClass} capitalize">${p.status}</span>
+            </div>
+            <div class="text-xs text-slate-400 mt-1">${new Date(p.createdAt).toLocaleDateString()}</div>
+          </div>
+        `);
+      });
+    }
+
+    
+    // Invoice Generator Functions
+    function renderInvoiceStudentDropdown() {
+      const select = $('invoiceStudentSelect');
+      if (!select) return;
+      const students = getStudentsArray().filter(s => s.isActive !== false).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      select.innerHTML = '<option value="">Select Student</option>';
+      students.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${s.name}`;
+        select.appendChild(opt);
+      });
+    }
+
+    async function generateInvoice() {
+      if (!canManageStaffPanel()) return;
+
+      const studentId = $('invoiceStudentSelect').value;
+      const month = $('invoiceMonth').value.trim();
+      const amount = $('invoiceAmount').value;
+      const description = $('invoiceDescription').value.trim();
+      const dueDate = $('invoiceDueDate').value;
+
+      if (!studentId || !month || !amount || !description) {
+        showToast('Please fill all required fields', 'error');
+        return;
+      }
+
+      const student = state.students[studentId];
+      if (!student) {
+        showToast('Student not found', 'error');
+        return;
+      }
+
+      const invoiceId = 'INV-' + Date.now();
+      const invoiceData = {
+        id: invoiceId,
+        studentId: studentId,
+        studentName: student.name,
+        studentRoll: student.roll,
+        studentClass: student.className || '',
+        month: month,
+        amount: Number(amount),
+        description: description,
+        dueDate: dueDate || todayKey(),
+        status: 'unpaid',
+        createdAt: Date.now(),
+        createdBy: currentUser.name,
+        paidAt: null,
+        paidAmount: 0
+      };
+
+      await db.ref('invoices/' + invoiceId).set(invoiceData);
+      await addAuditLog('Invoice generated', `Invoice ${invoiceId} for ${student.name} - ₹${amount}`, currentUser.name);
+
+      // Clear form
+      $('invoiceStudentSelect').value = '';
+      $('invoiceMonth').value = '';
+      $('invoiceAmount').value = '';
+      $('invoiceDescription').value = '';
+      $('invoiceDueDate').value = '';
+
+      showToast('Invoice generated successfully!');
+      renderInvoiceTable();
+    }
+
+    function renderInvoiceTable() {
+      const tbody = $('invoiceTable');
+      if (!tbody) return;
+
+      const invoices = Object.values(state.invoices || {})
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+      tbody.innerHTML = '';
+      if (invoices.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-3 text-slate-500 text-center">No invoices yet.</td></tr>';
+        return;
+      }
+
+      invoices.forEach(inv => {
+        const statusBadge = inv.status === 'paid' 
+          ? flagBadge('Paid', 'bg-emerald-100 text-emerald-700')
+          : inv.status === 'partial'
+            ? flagBadge('Partial', 'bg-amber-100 text-amber-700')
+            : flagBadge('Unpaid', 'bg-rose-100 text-rose-700');
+
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td class="px-3 py-3 font-mono text-xs">${escapeHtml(inv.id)}</td>
+            <td class="px-3 py-3"><div class="font-semibold">${escapeHtml(inv.studentName)}</div><div class="text-xs text-slate-500">Roll: ${escapeHtml(String(inv.studentRoll || ''))}</div></td>
+            <td class="px-3 py-3">${escapeHtml(inv.month)}</td>
+            <td class="px-3 py-3 font-bold">₹${inv.amount}</td>
+            <td class="px-3 py-3">${statusBadge}</td>
+            <td class="px-3 py-3">
+              <div class="flex gap-2">
+                <button onclick="viewInvoice('${inv.id}')" class="bg-indigo-100 text-indigo-700 px-2 py-1 rounded text-xs font-bold">View</button>
+                <button onclick="downloadInvoice('${inv.id}')" class="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold">Download</button>
+                <button onclick="markInvoicePaid('${inv.id}')" class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">Mark Paid</button>
+              </div>
+            </td>
+          </tr>
+        `);
+      });
+    }
+
+    function viewInvoice(invoiceId) {
+      const inv = state.invoices[invoiceId];
+      if (!inv) return;
+
+      const printWindow = window.open('', '_blank');
+      printWindow.document.write(generateInvoiceHTML(inv));
+      printWindow.document.close();
+    }
+
+    function downloadInvoice(invoiceId) {
+      const inv = state.invoices[invoiceId];
+      if (!inv) return;
+
+      const htmlContent = generateInvoiceHTML(inv);
+      const blob = new Blob([htmlContent], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Invoice_${inv.id}_${inv.studentName.replace(/\s+/g, '_')}.html`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      showToast('Invoice downloaded!');
+    }
+
+    async function markInvoicePaid(invoiceId) {
+      if (!canManageStaffPanel()) return;
+      const inv = state.invoices[invoiceId];
+      if (!inv) return;
+
+      await db.ref('invoices/' + invoiceId).update({
+        status: 'paid',
+        paidAt: Date.now(),
+        paidAmount: inv.amount
+      });
+
+      await addAuditLog('Invoice paid', `Invoice ${invoiceId} marked as paid`, currentUser.name);
+      showToast('Invoice marked as paid');
+      renderInvoiceTable();
+    }
+
+    function generateInvoiceHTML(inv) {
+      const libraryName = "Savitri Success Library";
+      const libraryAddress = "Main Branch";
+      const date = new Date(inv.createdAt).toLocaleDateString();
+
+      return `<!DOCTYPE html>
+<html>
+<head>
+  <title>Invoice ${inv.id}</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+    .header { text-align: center; border-bottom: 3px solid #6366f1; padding-bottom: 20px; margin-bottom: 30px; }
+    .header h1 { color: #6366f1; margin: 0; }
+    .invoice-details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+    .box { background: #f8fafc; padding: 15px; border-radius: 8px; }
+    .box h3 { margin: 0 0 10px 0; color: #475569; font-size: 14px; text-transform: uppercase; }
+    .box p { margin: 5px 0; font-size: 16px; }
+    .amount-box { background: linear-gradient(135deg, #6366f1, #7c3aed); color: white; padding: 20px; border-radius: 12px; text-align: center; margin: 30px 0; }
+    .amount-box h2 { margin: 0; font-size: 36px; }
+    .footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; color: #64748b; }
+    .status { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; text-transform: uppercase; font-size: 12px; }
+    .status-paid { background: #dcfce7; color: #166534; }
+    .status-unpaid { background: #fee2e2; color: #991b1b; }
+    @media print { body { margin: 0; } }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🧾 ${libraryName}</h1>
+    <p>Fee Invoice</p>
+  </div>
+
+  <div style="text-align: right; margin-bottom: 20px;">
+    <span class="status status-${inv.status}">${inv.status}</span>
+  </div>
+
+  <div class="invoice-details">
+    <div class="box">
+      <h3>Bill To</h3>
+      <p><strong>${inv.studentName}</strong></p>
+      <p>Roll: ${inv.studentRoll}</p>
+      <p>Class: ${inv.studentClass || 'N/A'}</p>
+    </div>
+    <div class="box">
+      <h3>Invoice Details</h3>
+      <p><strong>Invoice #:</strong> ${inv.id}</p>
+      <p><strong>Date:</strong> ${date}</p>
+      <p><strong>Month:</strong> ${inv.month}</p>
+      <p><strong>Due Date:</strong> ${inv.dueDate}</p>
+    </div>
+  </div>
+
+  <div class="amount-box">
+    <p style="margin: 0; font-size: 14px; opacity: 0.9;">Total Amount Due</p>
+    <h2>₹${inv.amount}</h2>
+  </div>
+
+  <div style="background: #f8fafc; padding: 20px; border-radius: 8px;">
+    <h3 style="margin: 0 0 15px 0; color: #475569;">Description</h3>
+    <p style="margin: 0; font-size: 16px;">${inv.description}</p>
+  </div>
+
+  ${inv.paidAt ? `
+  <div style="background: #dcfce7; padding: 15px; border-radius: 8px; margin-top: 20px;">
+    <p style="margin: 0; color: #166534;"><strong>✅ Paid on:</strong> ${new Date(inv.paidAt).toLocaleDateString()}</p>
+    <p style="margin: 5px 0 0 0; color: #166534;"><strong>Amount Paid:</strong> ₹${inv.paidAmount}</p>
+  </div>
+  ` : ''}
+
+  <div class="footer">
+    <p><strong>${libraryName}</strong></p>
+    <p>${libraryAddress}</p>
+    <p style="margin-top: 10px; font-size: 12px;">This is a computer generated invoice.</p>
+  </div>
+
+  <div style="text-align: center; margin-top: 30px;">
+    <button onclick="window.print()" style="background: #6366f1; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px;">🖨️ Print Invoice</button>
+  </div>
+</body>
+</html>`;
+    }
+
+    // Student Invoice Functions
+    function renderStudentInvoices() {
+      const container = $('studentInvoiceList');
+      if (!container || !currentUser || currentUser.role !== 'student') return;
+
+      const invoices = Object.values(state.invoices || {})
+        .filter(inv => inv.studentId === currentUser.id)
+        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+      container.innerHTML = '';
+      if (invoices.length === 0) {
+        container.innerHTML = '<div class="text-sm text-slate-500">No invoices yet.</div>';
+        return;
+      }
+
+      invoices.forEach(inv => {
+        const statusClass = inv.status === 'paid' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700';
+        container.insertAdjacentHTML('beforeend', `
+          <div class="${statusClass} rounded-xl p-3">
+            <div class="flex justify-between items-center">
+              <div>
+                <div class="font-semibold text-sm">${escapeHtml(inv.month)}</div>
+                <div class="text-xs text-slate-500">${escapeHtml(inv.description)}</div>
+                <div class="text-xs font-mono mt-1">${escapeHtml(inv.id)}</div>
+              </div>
+              <div class="text-right">
+                <div class="font-bold">₹${inv.amount}</div>
+                <span class="text-xs font-bold capitalize">${inv.status}</span>
+              </div>
+            </div>
+            <div class="flex gap-2 mt-2">
+              <button onclick="downloadInvoice('${inv.id}')" class="flex-1 bg-white border border-slate-200 text-slate-700 py-2 rounded-lg text-xs font-bold">📥 Download</button>
+              <button onclick="viewInvoice('${inv.id}')" class="flex-1 bg-indigo-100 text-indigo-700 py-2 rounded-lg text-xs font-bold">👁️ View</button>
+            </div>
+          </div>
+        `);
+      });
+    }
+
     function renderAll() {
       renderStudentDropdown();
       renderQrStatus();
@@ -979,9 +1550,12 @@
         renderFeesTable();
         renderSeats();
         renderCharts();
+        renderInvoiceTable();
+        renderInvoiceStudentDropdown();
       }
       if (currentUser && currentUser.role === 'student') {
         refreshStudentDashboard();
+      refreshStudentPaymentPanel();
       }
     }
 
@@ -1054,6 +1628,7 @@
       $('adminDashboard').classList.add('hidden');
       $('studentDashboard').classList.remove('hidden');
       refreshStudentDashboard();
+      refreshStudentPaymentPanel();
     }
 
     async function logout() {
