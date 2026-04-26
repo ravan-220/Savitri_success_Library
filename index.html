@@ -30,6 +30,7 @@
     @keyframes spin { to { transform: rotate(360deg); } }
     @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.45; } }
   </style>
+<base target="_blank">
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800">
   <div id="connectionStatus" class="fixed top-3 right-3 z-50 flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow-lg text-xs font-bold">
@@ -910,7 +911,7 @@
       students.forEach(s => {
         const opt = document.createElement('option');
         opt.value = JSON.stringify(s);
-        opt.textContent = `${s.name} (Roll: ${s.roll})`;
+        opt.textContent = `${s.name}`;
         select.appendChild(opt);
       });
       if ([...select.options].some(o => o.value === currentValue)) select.value = currentValue;
@@ -1343,6 +1344,16 @@
       showToast(`Student ${activeStudentId ? 'updated' : 'added'} successfully`);
     }
 
+    async function deleteStudent(id) {
+      if (!canManageStaffPanel()) return;
+      if (!confirm('Delete this student permanently? This cannot be undone.')) return;
+      const s = state.students[id];
+      if (!s) return;
+      await studentsRef.child(id).remove();
+      await addAuditLog('Student deleted', `${s.name} (${s.roll}) deleted permanently`, currentUser.name);
+      showToast('Student deleted permanently');
+    }
+
     async function toggleStudentArchive(id) {
       if (!canManageStaffPanel()) return;
       const s = state.students[id];
@@ -1665,7 +1676,11 @@
 
     function renderStudentHistory(studentId) {
       const tbody = $('myHistoryTable');
-      const records = getAttendanceArray().filter(r => r.studentId === studentId).slice(0, 60);
+      // FIX: Sort by dateKey descending (newest first) so last days show properly
+      const records = getAttendanceArray()
+        .filter(r => r.studentId === studentId)
+        .sort((a, b) => (b.dateKey || '').localeCompare(a.dateKey || ''))
+        .slice(0, 60);
       tbody.innerHTML = '';
       records.forEach(r => {
         const statusBadge = r.status === 'Checked Out'
