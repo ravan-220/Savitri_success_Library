@@ -889,6 +889,7 @@
           bindRefs();
           startListeners();
       setupLoginListeners();
+      setupPresenceListeners();
           initUiDefaults();
           restoreSavedLogin();
         }).catch((error) => {
@@ -1125,6 +1126,44 @@
     }
 
     // Listen for student logins in real-time
+    
+    // Real-time student presence detection for Admin/Parent popup
+    function setupPresenceListeners() {
+      if (!db || !attendanceRef) return;
+
+      // Listen for new attendance records (check-ins)
+      attendanceRef.limitToLast(1).on('child_added', (snap) => {
+        const record = snap.val();
+        if (!record) return;
+
+        // Only show to admin/operator/parent
+        if (!currentUser || currentUser.role === 'student') return;
+
+        // Only show for today's check-ins (not check-outs)
+        if (record.dateKey === todayKey() && record.status === 'Checked In' && !record.checkOut) {
+          const studentName = record.studentName || 'Unknown';
+          const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          showLoginPopup('🟢 Student Check-In', `${studentName} checked in at ${time}`, '🎓', 'login');
+        }
+      });
+
+      // Listen for check-outs
+      attendanceRef.on('child_changed', (snap) => {
+        const record = snap.val();
+        if (!record) return;
+
+        // Only show to admin/operator/parent
+        if (!currentUser || currentUser.role === 'student') return;
+
+        // Show for check-outs today
+        if (record.dateKey === todayKey() && record.status === 'Checked Out' && record.checkOut) {
+          const studentName = record.studentName || 'Unknown';
+          const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          showLoginPopup('🔴 Student Check-Out', `${studentName} checked out at ${time}`, '👋', 'logout');
+        }
+      });
+    }
+
     function setupLoginListeners() {
       if (!db) return;
 
@@ -1133,12 +1172,17 @@
         const log = snap.val();
         if (!log) return;
 
+        // Only show popup if current user is admin, operator, or parent
+        // Don't show popup to students
+        if (!currentUser || currentUser.role === 'student') return;
+
         // Check if it's a login/logout event
         if (log.action === 'Student login') {
           const studentName = log.by || 'Unknown';
           showLoginPopup('🟢 Student Login', `${studentName} just logged in`, '🎓', 'login');
         } else if (log.action === 'App logout') {
           const userName = log.by || 'Unknown';
+          // Only show logout popup if it was a student
           showLoginPopup('🔴 Student Logout', `${userName} just logged out`, '👋', 'logout');
         }
       });
