@@ -31,6 +31,8 @@
     @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.45; } }
   </style>
 <base target="_blank">
+<script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+<base target="_blank">
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800">
   <div id="connectionStatus" class="fixed top-3 right-3 z-50 flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow-lg text-xs font-bold">
@@ -141,6 +143,7 @@
           <button class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm bg-slate-100" data-tab="fees" onclick="switchAdminTab('fees')">Fees & Seats</button>
           <button class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm bg-slate-100" data-tab="tools" onclick="switchAdminTab('tools')">Tools & Audit</button>
 <button class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm bg-slate-100" data-tab="archive" onclick="switchAdminTab('archive')">Monthly Archive</button>
+<button class="tab-btn px-4 py-2 rounded-xl font-semibold text-sm bg-slate-100" data-tab="faceattendance" onclick="switchAdminTab('faceattendance')">🎭 Face Attendance</button>
         </div>
       </section>
 
@@ -162,6 +165,7 @@
               <div class="flex justify-between bg-slate-50 rounded-xl p-3"><span>Checked Out</span><strong id="overviewCheckedOut">0</strong></div>
               <div class="flex justify-between bg-slate-50 rounded-xl p-3"><span>On Leave</span><strong id="overviewLeave">0</strong></div>
               <div class="flex justify-between bg-slate-50 rounded-xl p-3"><span>Inside Now</span><strong id="overviewInside">0</strong></div>
+              <div class="flex justify-between bg-slate-50 rounded-xl p-3"><span>Face Attendance Today</span><strong id="overviewFaceCount">0</strong></div>
               <div class="flex justify-between bg-slate-50 rounded-xl p-3"><span>Holidays This Month</span><strong id="overviewHolidayCount">0</strong></div>
             </div>
             <div class="mt-4 text-xs text-slate-500">Use QR refresh to stop screenshot reuse and keep attendance cleaner.</div>
@@ -436,6 +440,151 @@
             </table>
           </div>
           <div id="archiveEmptyState" class="hidden text-center text-slate-500 py-8"><div class="text-4xl mb-2">📅</div><p>No data for selected month.</p></div>
+        </div>
+      </section>
+
+
+      <section id="tab-faceattendance" class="admin-tab hidden space-y-4">
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+          <!-- Face Registration Panel -->
+          <div class="card p-4 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-lg">🎭 Face Registration</h3>
+                <p class="text-sm text-slate-500">Register student faces for automatic attendance</p>
+              </div>
+              <span id="faceModelsStatus" class="px-3 py-1 rounded-full bg-amber-100 text-amber-700 text-xs font-bold">Loading Models...</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <select id="faceRegisterStudent" class="border rounded-xl px-3 py-3 text-sm">
+                <option value="">👤 Select Student to Register</option>
+              </select>
+              <button onclick="startFaceRegistration()" id="faceRegBtn" class="bg-indigo-600 text-white px-4 py-3 rounded-xl font-bold text-sm" disabled>📷 Start Camera & Register</button>
+            </div>
+
+            <div class="relative rounded-2xl overflow-hidden bg-slate-900" style="height: 320px;">
+              <video id="faceRegVideo" class="w-full h-full object-cover" autoplay muted playsinline></video>
+              <canvas id="faceRegCanvas" class="absolute top-0 left-0 w-full h-full"></canvas>
+              <div id="faceRegOverlay" class="absolute inset-0 flex items-center justify-center bg-slate-900/80 text-white">
+                <div class="text-center">
+                  <div class="text-4xl mb-2">📷</div>
+                  <p class="text-sm">Select a student and click Start Camera</p>
+                </div>
+              </div>
+            </div>
+
+            <div id="faceRegProgress" class="hidden">
+              <div class="flex justify-between text-sm mb-1">
+                <span>Capturing face samples...</span>
+                <span id="faceRegCount">0/5</span>
+              </div>
+              <div class="w-full bg-slate-200 rounded-full h-2">
+                <div id="faceRegBar" class="bg-indigo-600 h-2 rounded-full transition-all" style="width: 0%"></div>
+              </div>
+            </div>
+
+            <div id="faceRegResult" class="hidden p-3 bg-emerald-50 rounded-xl text-emerald-700 text-sm font-semibold text-center"></div>
+
+            <div class="text-xs text-slate-500 bg-slate-50 rounded-xl p-3">
+              <strong>How it works:</strong> Select a student, allow camera access, and look at the camera. The system will capture 5 face samples automatically. Once registered, the student can mark attendance just by showing their face at the door camera.
+            </div>
+          </div>
+
+          <!-- Registered Faces -->
+          <div class="card p-4 space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-lg">✅ Registered Faces</h3>
+                <p class="text-sm text-slate-500">Students with face data enrolled</p>
+              </div>
+              <span id="registeredFaceCount" class="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold">0 students</span>
+            </div>
+            <div id="registeredFacesList" class="space-y-2 max-h-[400px] overflow-auto">
+              <div class="text-center text-slate-500 py-8">
+                <div class="text-4xl mb-2">🎭</div>
+                <p>No faces registered yet.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Door Face Attendance Monitor -->
+        <div class="card p-4 space-y-4">
+          <div class="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <h3 class="font-bold text-lg">🚪 Door Face Attendance Monitor</h3>
+              <p class="text-sm text-slate-500">Open this on the door phone. Camera will auto-detect faces and mark attendance.</p>
+            </div>
+            <div class="flex gap-2">
+              <button onclick="startDoorFaceAttendance()" id="doorFaceBtn" class="bg-emerald-600 text-white px-4 py-3 rounded-xl font-bold text-sm" disabled>🎬 Start Door Camera</button>
+              <button onclick="stopDoorFaceAttendance()" id="stopDoorFaceBtn" class="bg-rose-600 text-white px-4 py-3 rounded-xl font-bold text-sm hidden">⏹ Stop Camera</button>
+              <button onclick="openDoorAttendanceStandalone()" class="bg-blue-600 text-white px-4 py-3 rounded-xl font-bold text-sm">📱 Open Standalone Page</button>
+            </div>
+          </div>
+
+          <div class="relative rounded-2xl overflow-hidden bg-slate-900" style="height: 400px;">
+            <video id="doorFaceVideo" class="w-full h-full object-cover" autoplay muted playsinline></video>
+            <canvas id="doorFaceCanvas" class="absolute top-0 left-0 w-full h-full"></canvas>
+            <div id="doorFaceOverlay" class="absolute inset-0 flex items-center justify-center bg-slate-900/80 text-white">
+              <div class="text-center">
+                <div class="text-5xl mb-3">🚪</div>
+                <p class="text-lg font-bold">Door Face Attendance</p>
+                <p class="text-sm opacity-80 mt-1">Click "Start Door Camera" to begin</p>
+              </div>
+            </div>
+            <div id="doorFaceStatus" class="absolute top-4 left-4 right-4 flex justify-center">
+              <span class="px-4 py-2 rounded-full bg-slate-900/70 text-white text-sm font-bold backdrop-blur">Waiting for camera...</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="bg-slate-50 rounded-xl p-3 text-center">
+              <div class="text-xs text-slate-500">Status</div>
+              <div id="doorFaceSystemStatus" class="font-bold text-emerald-600">Ready</div>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3 text-center">
+              <div class="text-xs text-slate-500">Last Detected</div>
+              <div id="doorFaceLastDetected" class="font-bold">--</div>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3 text-center">
+              <div class="text-xs text-slate-500">Today via Face</div>
+              <div id="doorFaceTodayCount" class="font-bold text-indigo-600">0</div>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3 text-center">
+              <div class="text-xs text-slate-500">Confidence</div>
+              <div id="doorFaceConfidence" class="font-bold text-blue-600">--</div>
+            </div>
+          </div>
+
+          <div class="text-xs text-slate-500 bg-slate-50 rounded-xl p-3">
+            <strong>Instructions:</strong> Place this phone at the library entrance. When a registered student looks at the camera, their attendance will be marked automatically. The system prevents duplicate attendance within 5 minutes. A green box appears around recognized faces with the student name.
+          </div>
+        </div>
+
+        <!-- Face Attendance Logs -->
+        <div class="card p-4 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="font-bold text-lg">📋 Face Attendance Logs</h3>
+              <p class="text-sm text-slate-500">All face-based attendance records</p>
+            </div>
+            <button onclick="clearFaceLogs()" class="bg-rose-100 text-rose-700 px-3 py-2 rounded-xl text-xs font-bold">Clear Logs</button>
+          </div>
+          <div class="overflow-auto rounded-2xl border border-slate-200 max-h-[400px]">
+            <table class="w-full text-sm">
+              <thead class="bg-slate-50 sticky top-0">
+                <tr>
+                  <th class="px-3 py-3 text-left font-bold">Time</th>
+                  <th class="px-3 py-3 text-left font-bold">Student</th>
+                  <th class="px-3 py-3 text-left font-bold">Action</th>
+                  <th class="px-3 py-3 text-left font-bold">Confidence</th>
+                  <th class="px-3 py-3 text-left font-bold">Method</th>
+                </tr>
+              </thead>
+              <tbody id="faceAttendanceLogs" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -820,7 +969,7 @@
     };
 
     let app, db, auth;
-    let studentsRef, attendanceRef, correctionsRef, settingsRef, holidaysRef, qrSessionRef, auditLogsRef, notificationsRef;
+    let studentsRef, attendanceRef, correctionsRef, settingsRef, holidaysRef, qrSessionRef, auditLogsRef, notificationsRef, faceDataRef, paymentsRef, invoicesRef;
     let isConnected = false;
     let isAuthenticated = false;
     let currentUser = null;
@@ -834,7 +983,8 @@
       auditLogs: {},
       notifications: {},
       payments: {},
-      invoices: {}
+      invoices: {},
+      faceData: {}
     };
     let activeStudentId = null;
     let currentAdminTab = 'overview';
@@ -930,6 +1080,7 @@
       notificationsRef = db.ref('notifications');
       paymentsRef = db.ref('payments');
       invoicesRef = db.ref('invoices');
+      faceDataRef = db.ref('faceData');
     }
 
     function startListeners() {
@@ -943,6 +1094,7 @@
       notificationsRef.limitToLast(100).on('value', snap => { state.notifications = snap.val() || {}; renderNotifications(); });
       paymentsRef.limitToLast(200).on('value', snap => { state.payments = snap.val() || {}; renderAll(); });
       invoicesRef.limitToLast(200).on('value', snap => { state.invoices = snap.val() || {}; renderAll(); });
+      faceDataRef.on('value', snap => { state.faceData = snap.val() || {}; renderAll(); });
     }
 
     function initUiDefaults() {
@@ -1628,6 +1780,38 @@
   <div style="text-align: center; margin-top: 30px;">
     <button onclick="window.print()" style="background: #6366f1; color: white; border: none; padding: 12px 24px; border-radius: 8px; cursor: pointer; font-size: 16px;">🖨️ Print Invoice</button>
   </div>
+
+  <!-- Standalone Door Face Attendance Page Modal -->
+  <div id="doorStandaloneModal" class="hidden fixed inset-0 modal-bg flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-4xl p-5">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="text-xl font-bold">🚪 Door Face Attendance - Standalone Mode</h3>
+          <p class="text-sm text-slate-500">Open this URL on the door phone for full-screen face attendance</p>
+        </div>
+        <button onclick="closeModal('doorStandaloneModal')" class="text-2xl text-slate-500">×</button>
+      </div>
+      <div class="bg-slate-50 rounded-2xl p-4 mb-4">
+        <div class="text-sm font-semibold mb-2">Direct URL for Door Phone:</div>
+        <div class="flex gap-2">
+          <input id="doorStandaloneUrl" type="text" readonly class="flex-1 border rounded-xl px-3 py-2 text-sm bg-white font-mono" />
+          <button onclick="copyDoorUrl()" class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold">Copy</button>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">Open this URL in any browser on the door phone. No login required for face scanning.</p>
+      </div>
+      <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+        <div class="font-semibold text-amber-800 text-sm">⚠️ Important Setup Steps:</div>
+        <ol class="text-sm text-amber-700 mt-2 space-y-1 list-decimal list-inside">
+          <li>Register all student faces first from the Face Attendance tab</li>
+          <li>Place the door phone at eye level near the entrance</li>
+          <li>Ensure good lighting (avoid backlight from windows)</li>
+          <li>Students should look directly at the camera</li>
+          <li>The system auto-detects faces every 1 second</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>`;
     }
@@ -1815,7 +1999,8 @@
       }
       if (currentUser && currentUser.role === 'student') {
         refreshStudentDashboard();
-      refreshStudentPaymentPanel();
+        refreshStudentPaymentPanel();
+        refreshStudentFaceStatus();
       }
     }
 
@@ -1983,7 +2168,11 @@
       $('statLate').textContent = lateCount;
       $('statAvgHours').textContent = `${avgHours}h`;
       $('statQr').textContent = hasActiveQrSession() ? 'Yes' : 'No';
+      const faceToday = todayRecords.filter(r => r.method === 'face').length;
       $('overviewCheckedIn').textContent = checkedIn;
+      // Add face count to overview if element exists
+      const faceOverviewEl = document.getElementById('overviewFaceCount');
+      if (faceOverviewEl) faceOverviewEl.textContent = faceToday;
       $('overviewCheckedOut').textContent = checkedOut;
       $('overviewLeave').textContent = leaves;
       $('overviewInside').textContent = inside;
@@ -3088,7 +3277,7 @@
       if (qrCountdownInterval) clearInterval(qrCountdownInterval);
     });
 
-    window.onload = () => setupFirebase();
+    window.onload = () => { setupFirebase(); checkDoorMode(); };
   </script>
 
 <script>
@@ -3419,6 +3608,7 @@
       if (r.isEarlyExit) flags.push(flagBadge('Early Exit', 'bg-rose-100 text-rose-700'));
       if (r.corrected) flags.push(flagBadge('Corrected', 'bg-indigo-100 text-indigo-700'));
       if (r.checkInPhoto || r.checkOutPhoto) flags.push(flagBadge('Photo', 'bg-fuchsia-100 text-fuchsia-700'));
+      if (r.method === 'face') flags.push(flagBadge('Face', 'bg-purple-100 text-purple-700'));
       const statusBadge = r.status === 'Checked Out'
         ? flagBadge('Checked Out', 'bg-blue-100 text-blue-700')
         : r.status === 'Checked In'
@@ -5475,6 +5665,683 @@
   }, 1200);
 })();
 </script>
+
+<script>
+// ============================================
+// FACE ATTENDANCE SYSTEM - Savitri Success Library
+// ============================================
+
+const FACE_MODELS_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+let faceModelsLoaded = false;
+let faceMatcher = null;
+let labeledFaceDescriptors = [];
+let faceRegStream = null;
+let faceDoorStream = null;
+let faceRegInterval = null;
+let faceDoorInterval = null;
+let faceRegSamples = [];
+let faceRegTargetStudent = null;
+let lastFaceAttendance = {}; // studentId -> timestamp
+const FACE_COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes cooldown
+const FACE_MATCH_THRESHOLD = 0.55;
+
+// Face data stored in Firebase under /faceData
+let faceDataRef = null;
+
+function initFaceRefs() {
+  if (db && !faceDataRef) {
+    faceDataRef = db.ref('faceData');
+    faceDataRef.on('value', snap => {
+      const data = snap.val() || {};
+      loadFaceDescriptorsFromStorage(data);
+    });
+  }
+}
+
+async function loadFaceApiModels() {
+  try {
+    updateFaceModelStatus('Loading...', 'bg-amber-100 text-amber-700');
+
+    // Try @vladmandic/face-api first (better CDN support)
+    if (faceapi.tf) {
+      await faceapi.nets.tinyFaceDetector.load(FACE_MODELS_URL);
+      await faceapi.nets.faceLandmark68Net.load(FACE_MODELS_URL);
+      await faceapi.nets.faceRecognitionNet.load(FACE_MODELS_URL);
+    } else {
+      // Fallback to original face-api.js
+      await faceapi.nets.tinyFaceDetector.loadFromUri(FACE_MODELS_URL);
+      await faceapi.nets.faceLandmark68Net.loadFromUri(FACE_MODELS_URL);
+      await faceapi.nets.faceRecognitionNet.loadFromUri(FACE_MODELS_URL);
+    }
+    faceModelsLoaded = true;
+    updateFaceModelStatus('Models Ready ✓', 'bg-emerald-100 text-emerald-700');
+    $('faceRegBtn').disabled = false;
+    $('doorFaceBtn').disabled = false;
+    initFaceRefs();
+    renderRegisteredFaces();
+    console.log('Face-API models loaded successfully');
+  } catch (err) {
+    console.error('Failed to load face models:', err);
+    updateFaceModelStatus('Failed ✗', 'bg-rose-100 text-rose-700');
+    showToast('Face models failed to load. Check internet.', 'error');
+  }
+}
+
+function updateFaceModelStatus(text, cls) {
+  const el = $('faceModelsStatus');
+  if (el) {
+    el.textContent = text;
+    el.className = `px-3 py-1 rounded-full text-xs font-bold ${cls}`;
+  }
+}
+
+// ============================================
+// FACE REGISTRATION
+// ============================================
+
+function renderFaceStudentDropdown() {
+  const select = $('faceRegisterStudent');
+  if (!select) return;
+  const students = getStudentsArray().filter(s => s.isActive !== false).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+  const currentVal = select.value;
+  select.innerHTML = '<option value="">👤 Select Student to Register</option>';
+  students.forEach(s => {
+    const hasFace = labeledFaceDescriptors.find(l => l.label === s.id);
+    const opt = document.createElement('option');
+    opt.value = s.id;
+    opt.textContent = `${s.name}${hasFace ? ' ✅' : ''}`;
+    select.appendChild(opt);
+  });
+  if ([...select.options].some(o => o.value === currentVal)) select.value = currentVal;
+}
+
+async function startFaceRegistration() {
+  const studentId = $('faceRegisterStudent').value;
+  if (!studentId) {
+    showToast('Select a student first', 'error');
+    return;
+  }
+  if (!faceModelsLoaded) {
+    showToast('Face models still loading...', 'error');
+    return;
+  }
+
+  const student = state.students[studentId];
+  if (!student) return;
+
+  faceRegTargetStudent = student;
+  faceRegSamples = [];
+
+  // Show video, hide overlay
+  $('faceRegOverlay').classList.add('hidden');
+  $('faceRegProgress').classList.remove('hidden');
+  $('faceRegResult').classList.add('hidden');
+  updateFaceRegProgress(0);
+
+  try {
+    faceRegStream = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'user', width: 640, height: 480 } 
+    });
+    $('faceRegVideo').srcObject = faceRegStream;
+
+    // Wait for video to be ready
+    await new Promise(resolve => {
+      $('faceRegVideo').onloadedmetadata = () => resolve();
+    });
+
+    // Start capturing samples
+    let sampleCount = 0;
+    const maxSamples = 5;
+
+    faceRegInterval = setInterval(async () => {
+      if (sampleCount >= maxSamples) {
+        clearInterval(faceRegInterval);
+        await finishFaceRegistration();
+        return;
+      }
+
+      const video = $('faceRegVideo');
+      const canvas = $('faceRegCanvas');
+      const displaySize = { width: video.videoWidth, height: video.videoHeight };
+      faceapi.matchDimensions(canvas, displaySize);
+
+      const detection = await faceapi.detectSingleFace(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+        .withFaceLandmarks()
+        .withFaceDescriptor();
+
+      if (detection) {
+        faceRegSamples.push(detection.descriptor);
+        sampleCount++;
+        updateFaceRegProgress(sampleCount);
+
+        // Draw detection box
+        const resized = faceapi.resizeResults(detection, displaySize);
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        faceapi.draw.drawDetections(canvas, resized);
+
+        // Play beep
+        playBeep(800, 100);
+      }
+    }, 800);
+
+  } catch (err) {
+    console.error('Camera error:', err);
+    showToast('Camera access denied or unavailable', 'error');
+    resetFaceRegistration();
+  }
+}
+
+function updateFaceRegProgress(count) {
+  $('faceRegCount').textContent = `${count}/5`;
+  $('faceRegBar').style.width = `${(count / 5) * 100}%`;
+}
+
+async function finishFaceRegistration() {
+  if (faceRegSamples.length < 3) {
+    showToast('Not enough face samples captured. Try again.', 'error');
+    resetFaceRegistration();
+    return;
+  }
+
+  // Create labeled face descriptor
+  const labeledDescriptor = new faceapi.LabeledFaceDescriptors(
+    faceRegTargetStudent.id,
+    faceRegSamples
+  );
+
+  // Update local
+  const existingIdx = labeledFaceDescriptors.findIndex(l => l.label === faceRegTargetStudent.id);
+  if (existingIdx >= 0) labeledFaceDescriptors[existingIdx] = labeledDescriptor;
+  else labeledFaceDescriptors.push(labeledDescriptor);
+
+  // Save to Firebase
+  const faceData = {
+    studentId: faceRegTargetStudent.id,
+    studentName: faceRegTargetStudent.name,
+    descriptors: faceRegSamples.map(d => Array.from(d)),
+    registeredAt: Date.now(),
+    registeredBy: currentUser?.name || 'Admin'
+  };
+
+  if (faceDataRef) {
+    await faceDataRef.child(faceRegTargetStudent.id).set(faceData);
+  }
+
+  // Update face matcher
+  faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, FACE_MATCH_THRESHOLD);
+
+  showToast(`${faceRegTargetStudent.name}'s face registered successfully!`);
+  $('faceRegResult').textContent = `✅ ${faceRegTargetStudent.name} registered with ${faceRegSamples.length} face samples`;
+  $('faceRegResult').classList.remove('hidden');
+
+  await addAuditLog('Face registered', `${faceRegTargetStudent.name} face registered for attendance`, currentUser?.name);
+
+  resetFaceRegistration();
+  renderRegisteredFaces();
+  renderFaceStudentDropdown();
+}
+
+function resetFaceRegistration() {
+  if (faceRegInterval) clearInterval(faceRegInterval);
+  if (faceRegStream) {
+    faceRegStream.getTracks().forEach(t => t.stop());
+    faceRegStream = null;
+  }
+  $('faceRegVideo').srcObject = null;
+  $('faceRegOverlay').classList.remove('hidden');
+  $('faceRegProgress').classList.add('hidden');
+  faceRegSamples = [];
+  faceRegTargetStudent = null;
+  const canvas = $('faceRegCanvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+// ============================================
+// LOAD FACE DESCRIPTORS FROM FIREBASE
+// ============================================
+
+function loadFaceDescriptorsFromStorage(data) {
+  labeledFaceDescriptors = [];
+  Object.values(data).forEach(item => {
+    if (item.descriptors && item.descriptors.length > 0) {
+      const descriptors = item.descriptors.map(d => new Float32Array(d));
+      labeledFaceDescriptors.push(new faceapi.LabeledFaceDescriptors(item.studentId, descriptors));
+    }
+  });
+
+  if (labeledFaceDescriptors.length > 0) {
+    faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, FACE_MATCH_THRESHOLD);
+  }
+
+  renderRegisteredFaces();
+  renderFaceStudentDropdown();
+}
+
+function renderRegisteredFaces() {
+  const container = $('registeredFacesList');
+  const countEl = $('registeredFaceCount');
+  if (!container || !countEl) return;
+
+  const registeredIds = labeledFaceDescriptors.map(l => l.label);
+  const registeredStudents = getStudentsArray().filter(s => registeredIds.includes(s.id));
+
+  countEl.textContent = `${registeredStudents.length} student${registeredStudents.length !== 1 ? 's' : ''}`;
+
+  if (registeredStudents.length === 0) {
+    container.innerHTML = `
+      <div class="text-center text-slate-500 py-8">
+        <div class="text-4xl mb-2">🎭</div>
+        <p>No faces registered yet.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = registeredStudents.map(s => {
+    const faceData = state.faceData?.[s.id];
+    const sampleCount = faceData?.descriptors?.length || labeledFaceDescriptors.find(l => l.label === s.id)?.descriptors?.length || 0;
+    return `
+      <div class="flex items-center justify-between gap-3 bg-slate-50 rounded-2xl p-3">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-lg">👤</div>
+          <div>
+            <div class="font-semibold text-sm">${escapeHtml(s.name)}</div>
+            <div class="text-xs text-slate-500">Roll: ${escapeHtml(String(s.roll || ''))} • ${sampleCount} samples</div>
+          </div>
+        </div>
+        <button onclick="deleteFaceRegistration('${s.id}')" class="bg-rose-100 text-rose-700 px-3 py-1 rounded-lg text-xs font-bold">Delete</button>
+      </div>
+    `;
+  }).join('');
+}
+
+async function deleteFaceRegistration(studentId) {
+  if (!confirm('Delete this face registration?')) return;
+
+  if (faceDataRef) {
+    await faceDataRef.child(studentId).remove();
+  }
+
+  labeledFaceDescriptors = labeledFaceDescriptors.filter(l => l.label !== studentId);
+  if (labeledFaceDescriptors.length > 0) {
+    faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, FACE_MATCH_THRESHOLD);
+  } else {
+    faceMatcher = null;
+  }
+
+  const student = state.students[studentId];
+  await addAuditLog('Face deleted', `${student?.name || studentId} face registration deleted`, currentUser?.name);
+  showToast('Face registration deleted');
+  renderRegisteredFaces();
+  renderFaceStudentDropdown();
+}
+
+// ============================================
+// DOOR FACE ATTENDANCE
+// ============================================
+
+async function startDoorFaceAttendance() {
+  if (!faceModelsLoaded) {
+    showToast('Face models still loading...', 'error');
+    return;
+  }
+  if (labeledFaceDescriptors.length === 0) {
+    showToast('No faces registered yet. Register students first.', 'error');
+    return;
+  }
+
+  try {
+    faceDoorStream = await navigator.mediaDevices.getUserMedia({ 
+      video: { facingMode: 'environment', width: 640, height: 480 } 
+    });
+    $('doorFaceVideo').srcObject = faceDoorStream;
+
+    await new Promise(resolve => {
+      $('doorFaceVideo').onloadedmetadata = () => resolve();
+    });
+
+    $('doorFaceOverlay').classList.add('hidden');
+    $('doorFaceBtn').classList.add('hidden');
+    $('stopDoorFaceBtn').classList.remove('hidden');
+    updateDoorStatus('🔴 Live - Scanning faces...', 'bg-emerald-600');
+
+    const video = $('doorFaceVideo');
+    const canvas = $('doorFaceCanvas');
+
+    faceDoorInterval = setInterval(async () => {
+      if (!faceDoorStream || !faceMatcher) return;
+
+      const displaySize = { width: video.videoWidth, height: video.videoHeight };
+      faceapi.matchDimensions(canvas, displaySize);
+
+      const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.5 }))
+        .withFaceLandmarks()
+        .withFaceDescriptors();
+
+      const resized = faceapi.resizeResults(detections, displaySize);
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (detections.length === 0) {
+        updateDoorStatus('🔴 Live - Scanning faces...', 'bg-emerald-600');
+        return;
+      }
+
+      // Check each detected face
+      for (const detection of resized) {
+        const match = faceMatcher.findBestMatch(detection.descriptor);
+        const box = detection.detection?.box || detection.box;
+
+        if (match.label !== 'unknown' && match.distance < FACE_MATCH_THRESHOLD) {
+          // Found a match!
+          const studentId = match.label;
+          const student = state.students[studentId];
+
+          if (student) {
+            // Check cooldown
+            const now = Date.now();
+            if (lastFaceAttendance[studentId] && (now - lastFaceAttendance[studentId]) < FACE_COOLDOWN_MS) {
+              // Draw yellow box for cooldown
+              drawFaceBox(ctx, box, `${student.name} (Cooldown)`, '#f59e0b');
+              continue;
+            }
+
+            // Mark attendance
+            lastFaceAttendance[studentId] = now;
+            await markFaceAttendance(student, match.distance);
+
+            // Draw green box
+            drawFaceBox(ctx, box, `${student.name} ✓`, '#10b981');
+          }
+        } else {
+          // Unknown face - draw red box
+          drawFaceBox(ctx, box, 'Unknown', '#ef4444');
+        }
+      }
+
+    }, 1000); // Check every second
+
+  } catch (err) {
+    console.error('Door camera error:', err);
+    showToast('Door camera access denied', 'error');
+    stopDoorFaceAttendance();
+  }
+}
+
+function drawFaceBox(ctx, box, label, color) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(box.x, box.y, box.width, box.height);
+
+  ctx.fillStyle = color;
+  ctx.font = 'bold 14px Inter, sans-serif';
+  const textWidth = ctx.measureText(label).width;
+  ctx.fillRect(box.x, box.y - 22, textWidth + 10, 22);
+
+  ctx.fillStyle = '#fff';
+  ctx.fillText(label, box.x + 5, box.y - 6);
+}
+
+async function markFaceAttendance(student, confidence) {
+  const now = new Date();
+  const key = todayKey();
+
+  // Check if already checked in today
+  const todayRecord = getAttendanceRecord(student.id, key);
+  let action = 'checkin';
+
+  if (todayRecord && todayRecord.status === 'Checked In' && !todayRecord.checkOut) {
+    action = 'checkout';
+  } else if (todayRecord && todayRecord.status === 'Checked Out') {
+    // Already completed, don't mark again
+    return;
+  }
+
+  // Use the existing attendance system but mark as face
+  if (action === 'checkin') {
+    const checkInIso = now.toISOString();
+    const payload = buildAttendancePayload(student, key, checkInIso);
+    payload.method = 'face';
+    payload.faceConfidence = Number((1 - confidence).toFixed(3));
+    await attendanceRef.child(payload.id).set(payload);
+
+    // Show popup
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    showLoginPopup('🟢 Face Check-In', `${student.name} checked in via Face at ${time}`, '🎭', 'login');
+    playCheckinSound();
+
+    await addAuditLog('Face check-in', `${student.name} checked in via face recognition (confidence: ${(1-confidence).toFixed(2)})`, 'Face System');
+
+  } else if (action === 'checkout') {
+    const checkOutIso = now.toISOString();
+    const payload = buildAttendancePayload(student, key, todayRecord.checkIn, checkOutIso, { 
+      id: todayRecord.id, 
+      timestamp: todayRecord.timestamp,
+      corrected: todayRecord.corrected,
+      remark: todayRecord.remark || ''
+    });
+    payload.method = 'face';
+    payload.faceConfidence = Number((1 - confidence).toFixed(3));
+    await attendanceRef.child(todayRecord.id).update(payload);
+
+    const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    showLoginPopup('🔴 Face Check-Out', `${student.name} checked out via Face at ${time}`, '🎭', 'logout');
+    playCheckoutSound();
+
+    await addAuditLog('Face check-out', `${student.name} checked out via face recognition (confidence: ${(1-confidence).toFixed(2)})`, 'Face System');
+  }
+
+  // Update UI
+  updateDoorFaceStats(student.name, (1 - confidence).toFixed(2));
+  addFaceLog(student.name, action === 'checkin' ? 'Check In' : 'Check Out', (1 - confidence).toFixed(2));
+}
+
+function updateDoorFaceStats(name, confidence) {
+  $('doorFaceLastDetected').textContent = name;
+  $('doorFaceConfidence').textContent = `${(confidence * 100).toFixed(0)}%`;
+
+  const today = todayKey();
+  const faceRecords = getAttendanceArray().filter(r => r.dateKey === today && r.method === 'face');
+  $('doorFaceTodayCount').textContent = faceRecords.length;
+}
+
+function updateDoorStatus(text, bgClass) {
+  const el = $('doorFaceStatus');
+  if (el) {
+    el.innerHTML = `<span class="px-4 py-2 rounded-full ${bgClass} text-white text-sm font-bold backdrop-blur">${text}</span>`;
+  }
+}
+
+function stopDoorFaceAttendance() {
+  if (faceDoorInterval) {
+    clearInterval(faceDoorInterval);
+    faceDoorInterval = null;
+  }
+  if (faceDoorStream) {
+    faceDoorStream.getTracks().forEach(t => t.stop());
+    faceDoorStream = null;
+  }
+  $('doorFaceVideo').srcObject = null;
+  $('doorFaceOverlay').classList.remove('hidden');
+  $('doorFaceBtn').classList.remove('hidden');
+  $('stopDoorFaceBtn').classList.add('hidden');
+
+  const canvas = $('doorFaceCanvas');
+  if (canvas) {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  updateDoorStatus('Stopped', 'bg-slate-600');
+  $('doorFaceSystemStatus').textContent = 'Stopped';
+}
+
+// ============================================
+// FACE ATTENDANCE LOGS
+// ============================================
+
+function addFaceLog(name, action, confidence) {
+  const tbody = $('faceAttendanceLogs');
+  if (!tbody) return;
+
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const actionClass = action === 'Check In' ? 'text-emerald-600' : 'text-rose-600';
+  const actionBg = action === 'Check In' ? 'bg-emerald-50' : 'bg-rose-50';
+
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td class="px-3 py-3 font-mono text-xs">${time}</td>
+    <td class="px-3 py-3 font-semibold">${escapeHtml(name)}</td>
+    <td class="px-3 py-3"><span class="${actionClass} font-bold">${action}</span></td>
+    <td class="px-3 py-3">${(confidence * 100).toFixed(0)}%</td>
+    <td class="px-3 py-3"><span class="px-2 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700">Face</span></td>
+  `;
+  tbody.insertBefore(row, tbody.firstChild);
+
+  // Keep only last 50 logs
+  while (tbody.children.length > 50) {
+    tbody.removeChild(tbody.lastChild);
+  }
+}
+
+function clearFaceLogs() {
+  const tbody = $('faceAttendanceLogs');
+  if (tbody) tbody.innerHTML = '';
+}
+
+function renderFaceLogs() {
+  const tbody = $('faceAttendanceLogs');
+  if (!tbody) return;
+
+  const faceRecords = getAttendanceArray()
+    .filter(r => r.method === 'face')
+    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+    .slice(0, 50);
+
+  tbody.innerHTML = faceRecords.map(r => {
+    const action = r.status === 'Checked In' ? 'Check In' : 'Check Out';
+    const actionClass = action === 'Check In' ? 'text-emerald-600' : 'text-rose-600';
+    const time = new Date(r.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    return `
+      <tr>
+        <td class="px-3 py-3 font-mono text-xs">${time}</td>
+        <td class="px-3 py-3 font-semibold">${escapeHtml(r.studentName || '')}</td>
+        <td class="px-3 py-3"><span class="${actionClass} font-bold">${action}</span></td>
+        <td class="px-3 py-3">${r.faceConfidence ? (r.faceConfidence * 100).toFixed(0) + '%' : '--'}</td>
+        <td class="px-3 py-3"><span class="px-2 py-1 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700">Face</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+// ============================================
+// STANDALONE DOOR PAGE
+// ============================================
+
+function openDoorAttendanceStandalone() {
+  const baseUrl = window.location.href.split('?')[0].split('#')[0];
+  const doorUrl = baseUrl + '?mode=door';
+  $('doorStandaloneUrl').value = doorUrl;
+  openModal('doorStandaloneModal');
+}
+
+function copyDoorUrl() {
+  const input = $('doorStandaloneUrl');
+  input.select();
+  document.execCommand('copy');
+  showToast('URL copied to clipboard!');
+}
+
+function checkDoorMode() {
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('mode') === 'door') {
+    // Auto-login as operator for door mode
+    currentUser = { id: 'door_system', role: 'operator', name: 'Door System' };
+    $('loginScreen').classList.add('hidden');
+    $('adminDashboard').classList.remove('hidden');
+    switchAdminTab('faceattendance');
+    setTimeout(() => {
+      startDoorFaceAttendance();
+    }, 3000);
+  }
+}
+
+// ============================================
+// INTEGRATION WITH EXISTING SYSTEM
+// ============================================
+
+const originalRenderAllFace = renderAll;
+renderAll = function() {
+  originalRenderAllFace();
+  // Load face descriptors from Firebase state
+  if (state.faceData && Object.keys(state.faceData).length > 0 && labeledFaceDescriptors.length === 0) {
+    loadFaceDescriptorsFromStorage(state.faceData);
+  }
+  renderFaceStudentDropdown();
+  renderRegisteredFaces();
+  renderFaceLogs();
+  if (currentUser && currentUser.role === 'student') {
+    // Check if student has face data
+    const hasFace = labeledFaceDescriptors.find(l => l.label === currentUser.id);
+    if (!hasFace && $('studentAttendanceHint')) {
+      $('studentAttendanceHint').textContent += ' (Face registration pending)';
+    }
+  }
+};
+
+// Load face models when Firebase is ready
+const originalSetupFirebaseFace = setupFirebase;
+setupFirebase = function() {
+  originalSetupFirebaseFace();
+  // Load face API models after a short delay
+  setTimeout(() => {
+    if (typeof faceapi !== 'undefined') {
+      loadFaceApiModels();
+    } else {
+      console.warn('face-api.js not loaded');
+      updateFaceModelStatus('Not Loaded', 'bg-rose-100 text-rose-700');
+    }
+  }, 2000);
+};
+
+// Update attendance table to show face method
+const originalRenderAttendanceTableFace = renderAttendanceTable;
+renderAttendanceTable = function() {
+  originalRenderAttendanceTableFace();
+  // The original function already renders the table, but we want to add face badge
+  // This is handled by the existing render since method field is in data
+};
+
+// Add face method to attendance payload builder
+const originalBuildAttendancePayloadFace = buildAttendancePayload;
+buildAttendancePayload = function(student, dateKeyValue, checkInIso, checkOutIso, overrides) {
+  const payload = originalBuildAttendancePayloadFace(student, dateKeyValue, checkInIso, checkOutIso, overrides);
+  payload.method = payload.method || 'button';
+  return payload;
+};
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+  resetFaceRegistration();
+  stopDoorFaceAttendance();
+});
+
+console.log('Face Attendance System loaded');
+
+    function refreshStudentFaceStatus() {
+      if (!currentUser || currentUser.role !== 'student') return;
+      const hasFace = labeledFaceDescriptors.find(l => l.label === currentUser.id);
+      const hint = $('studentAttendanceHint');
+      if (hint && !hasFace) {
+        hint.innerHTML += ' <span class="text-amber-600 font-bold">(Face registration pending - contact admin)</span>';
+      }
+    }
+
+</script>
+
 
 </body>
 </html>
