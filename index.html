@@ -34,6 +34,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
 <base target="_blank">
 <base target="_blank">
+<base target="_blank">
 </head>
 <body class="bg-slate-100 min-h-screen text-slate-800">
   <div id="connectionStatus" class="fixed top-3 right-3 z-50 flex items-center gap-2 bg-white px-3 py-2 rounded-full shadow-lg text-xs font-bold">
@@ -2150,6 +2151,9 @@
       $('loginScreen').classList.remove('hidden');
       $('adminDashboard').classList.add('hidden');
       $('studentDashboard').classList.add('hidden');
+      // FIX: Hide parent dashboard too
+      const parentDashboard = document.getElementById('parentDashboard');
+      if (parentDashboard) parentDashboard.classList.add('hidden');
       $('staffId').value = '';
       $('staffPass').value = '';
       $('studentPass').value = '';
@@ -4985,171 +4989,11 @@
     return v6lGetTodayRecord(studentId);
   }
 
-  function v6lEnsureLocationUi() {
-    const studentMain = document.querySelector('#studentDashboard main');
-    if (studentMain && !document.getElementById('studentLocationSection')) {
-      const attendanceCard = document.querySelector('#studentDashboard main section.card:nth-of-type(2)');
-      if (attendanceCard) {
-        attendanceCard.insertAdjacentHTML('afterend', `
-          
-        `);
-      }
-    }
+  function v6lEnsureLocationUi() { return; /* Live location UI disabled */ }
 
-    const parentMain = document.querySelector('#parentDashboard main');
-    if (parentMain && !document.getElementById('parentLocationSection')) {
-      const todaySection = document.querySelector('#parentDashboard main section.grid.grid-cols-1.md\\:grid-cols-2.gap-4');
-      if (todaySection) {
-        todaySection.insertAdjacentHTML('afterend', `
-          
-        `);
-      }
-    }
-  }
+  function v6lRenderStudentLocationUi() { return; /* Live location UI disabled */ }
 
-  function v6lRenderStudentLocationUi() {
-    if (!currentUser || currentUser.role !== 'student') return;
-    v6lEnsureLocationUi();
-    const student = v6lStudentById(currentUser.id) || currentUser;
-    const todayRecord = v6lGetTodayRecord(student.id);
-    const checkInLoc = todayRecord && todayRecord.checkInLocation;
-    const checkOutLoc = todayRecord && todayRecord.checkOutLocation;
-    const lastSnapshot = checkOutLoc || checkInLoc || student.lastCheckOutLocation || student.lastCheckInLocation;
-    const share = student.liveLocationSharing || {};
-    const live = student.liveLocation || null;
-    const checkedIn = v6lIsCheckedIn(student.id);
-
-    const badge = document.getElementById('studentLiveShareBadge');
-    if (badge) {
-      if (share.enabled && checkedIn) {
-        badge.textContent = 'Live On';
-        badge.className = 'px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold';
-      } else {
-        badge.textContent = 'Off';
-        badge.className = 'px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold';
-      }
-    }
-
-    const latestText = document.getElementById('studentLatestLocationText');
-    const latestMeta = document.getElementById('studentLatestLocationMeta');
-    if (latestText) latestText.textContent = lastSnapshot ? v6lLocationTitle(lastSnapshot, 'Location not captured yet.') : 'Location not captured yet.';
-    if (latestMeta) {
-      latestMeta.textContent = lastSnapshot
-        ? `${v6lFormatMoment(lastSnapshot.capturedAt)} • ${v6lFormatCoords(lastSnapshot)} ${v6lFormatAccuracy(lastSnapshot)}`.trim()
-        : 'Turn on location permission in browser when asked.';
-    }
-
-    const inText = document.getElementById('studentCheckInLocationText');
-    const inMeta = document.getElementById('studentCheckInLocationMeta');
-    if (inText) inText.textContent = checkInLoc ? v6lLocationTitle(checkInLoc, 'Check-in snapshot unavailable') : '--';
-    if (inMeta) inMeta.textContent = checkInLoc ? `${v6lFormatMoment(checkInLoc.capturedAt)} • ${v6lFormatCoords(checkInLoc)} ${v6lFormatAccuracy(checkInLoc)}`.trim() : 'No check-in snapshot yet.';
-
-    const outText = document.getElementById('studentCheckOutLocationText');
-    const outMeta = document.getElementById('studentCheckOutLocationMeta');
-    if (outText) outText.textContent = checkOutLoc ? v6lLocationTitle(checkOutLoc, 'Check-out snapshot unavailable') : '--';
-    if (outMeta) outMeta.textContent = checkOutLoc ? `${v6lFormatMoment(checkOutLoc.capturedAt)} • ${v6lFormatCoords(checkOutLoc)} ${v6lFormatAccuracy(checkOutLoc)}`.trim() : 'No check-out snapshot yet.';
-
-    const liveText = document.getElementById('studentLiveLocationText');
-    const liveMeta = document.getElementById('studentLiveLocationMeta');
-    if (liveText) {
-      if (share.enabled && checkedIn && live) liveText.textContent = v6lLocationTitle(live, 'Live location updating...');
-      else if (checkedIn) liveText.textContent = 'Sharing is off.';
-      else liveText.textContent = 'Live sharing becomes available after check-in.';
-    }
-    if (liveMeta) {
-      if (share.enabled && checkedIn && live) {
-        const parts = [`Updated ${v6lFormatMoment(live.capturedAt)}`, v6lFormatCoords(live), v6lFormatAccuracy(live)].filter(Boolean);
-        liveMeta.textContent = parts.join(' • ');
-      } else if (share.lastError) {
-        liveMeta.textContent = share.lastError;
-      } else if (checkedIn) {
-        liveMeta.textContent = 'Parent can see your current location only after you start live sharing.';
-      } else {
-        liveMeta.textContent = 'Available only while you are checked-in.';
-      }
-    }
-
-    const toggleBtn = document.getElementById('toggleLiveShareBtn');
-    if (toggleBtn) {
-      if (!checkedIn) {
-        toggleBtn.disabled = true;
-        toggleBtn.textContent = 'Check In First';
-        toggleBtn.className = 'w-full py-3 rounded-xl font-bold text-sm bg-slate-200 text-slate-500 cursor-not-allowed';
-      } else if (share.enabled) {
-        toggleBtn.disabled = false;
-        toggleBtn.textContent = 'Stop Live Sharing';
-        toggleBtn.className = 'w-full py-3 rounded-xl font-bold text-sm bg-rose-600 text-white';
-      } else {
-        toggleBtn.disabled = false;
-        toggleBtn.textContent = 'Start Live Sharing';
-        toggleBtn.className = 'w-full py-3 rounded-xl font-bold text-sm bg-emerald-600 text-white';
-      }
-    }
-
-    const refreshBtn = document.getElementById('refreshLiveLocationBtn');
-    if (refreshBtn) {
-      const allowed = checkedIn && !!share.enabled;
-      refreshBtn.disabled = !allowed;
-      refreshBtn.className = allowed
-        ? 'w-full py-3 rounded-xl font-bold text-sm bg-indigo-100 text-indigo-700'
-        : 'w-full py-3 rounded-xl font-bold text-sm bg-slate-200 text-slate-500 cursor-not-allowed';
-    }
-  }
-
-  function v6lRenderParentLocationUi() {
-    if (!currentUser || currentUser.role !== 'parent') return;
-    v6lEnsureLocationUi();
-    const student = v6lStudentById(currentUser.selectedChildId);
-    if (!student) return;
-    const todayRecord = v6lGetTodayRecord(student.id);
-    const checkInLoc = todayRecord && todayRecord.checkInLocation;
-    const checkOutLoc = todayRecord && todayRecord.checkOutLocation;
-    const share = student.liveLocationSharing || {};
-    const live = student.liveLocation || null;
-    const liveActive = !!share.enabled && v6lIsCheckedIn(student.id);
-
-    const badge = document.getElementById('parentLiveShareBadge');
-    if (badge) {
-      if (liveActive) {
-        badge.textContent = 'Live On';
-        badge.className = 'px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold';
-      } else {
-        badge.textContent = 'Off';
-        badge.className = 'px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-bold';
-      }
-    }
-
-    const liveText = document.getElementById('parentLiveLocationText');
-    const liveMeta = document.getElementById('parentLiveLocationMeta');
-    if (liveText) {
-      if (liveActive && live) liveText.textContent = v6lLocationTitle(live, 'Live location available');
-      else if (v6lIsCheckedIn(student.id)) liveText.textContent = 'Student is checked-in, but live sharing is off.';
-      else liveText.textContent = 'No active live location right now.';
-    }
-    if (liveMeta) {
-      if (liveActive && live) {
-        const parts = [`Updated ${v6lFormatMoment(live.capturedAt)}`, `Lat/Lng ${v6lFormatCoords(live)}`, v6lFormatAccuracy(live)].filter(Boolean);
-        liveMeta.textContent = parts.join(' • ');
-      } else if (share.lastUpdated) {
-        liveMeta.textContent = `Last share status updated ${v6lFormatMoment(share.lastUpdated)}.`;
-      } else {
-        liveMeta.textContent = 'Live location appears only while the student keeps sharing turned on during active check-in.';
-      }
-    }
-    v6lSetMapLink('parentLiveLocationMap', liveActive && live ? (live.mapsUrl || v6lMapsUrl(live.lat, live.lng)) : '');
-
-    const inText = document.getElementById('parentCheckInLocationText');
-    const inMeta = document.getElementById('parentCheckInLocationMeta');
-    if (inText) inText.textContent = checkInLoc ? v6lLocationTitle(checkInLoc, 'Check-in snapshot unavailable') : 'No check-in snapshot yet.';
-    if (inMeta) inMeta.textContent = checkInLoc ? `${v6lFormatMoment(checkInLoc.capturedAt)} • Lat/Lng ${v6lFormatCoords(checkInLoc)} ${v6lFormatAccuracy(checkInLoc)}`.trim() : 'Snapshot appears after check-in.';
-    v6lSetMapLink('parentCheckInLocationMap', checkInLoc ? (checkInLoc.mapsUrl || v6lMapsUrl(checkInLoc.lat, checkInLoc.lng)) : '');
-
-    const outText = document.getElementById('parentCheckOutLocationText');
-    const outMeta = document.getElementById('parentCheckOutLocationMeta');
-    if (outText) outText.textContent = checkOutLoc ? v6lLocationTitle(checkOutLoc, 'Check-out snapshot unavailable') : 'No check-out snapshot yet.';
-    if (outMeta) outMeta.textContent = checkOutLoc ? `${v6lFormatMoment(checkOutLoc.capturedAt)} • Lat/Lng ${v6lFormatCoords(checkOutLoc)} ${v6lFormatAccuracy(checkOutLoc)}`.trim() : 'Snapshot appears after check-out.';
-    v6lSetMapLink('parentCheckOutLocationMap', checkOutLoc ? (checkOutLoc.mapsUrl || v6lMapsUrl(checkOutLoc.lat, checkOutLoc.lng)) : '');
-  }
+  function v6lRenderParentLocationUi() { return; /* Live location UI disabled */ }
 
   async function v6lUpdateLiveLocation(forceAddress = false, quiet = true) {
     if (v6lLiveBusy || !currentUser || currentUser.role !== 'student') return;
@@ -5253,23 +5097,14 @@
   }
 
   async function toggleLiveLocationSharing() {
-    if (!currentUser || currentUser.role !== 'student') return;
-    const student = v6lStudentById(currentUser.id) || currentUser;
-    const share = student.liveLocationSharing || {};
-    if (share.enabled) await v6lStopLiveSharing('manual_stop');
-    else await v6lStartLiveSharing();
+    showToast('Live location sharing is disabled', 'error');
+    return;
   }
   window.toggleLiveLocationSharing = toggleLiveLocationSharing;
 
   async function refreshLiveLocationNow() {
-    if (!currentUser || currentUser.role !== 'student') return;
-    const student = v6lStudentById(currentUser.id) || currentUser;
-    if (!(student.liveLocationSharing && student.liveLocationSharing.enabled)) {
-      showToast('Start live sharing first', 'error');
-      return;
-    }
-    await v6lUpdateLiveLocation(true, false);
-    showToast('Location refreshed');
+    showToast('Live location sharing is disabled', 'error');
+    return;
   }
   window.refreshLiveLocationNow = refreshLiveLocationNow;
 
@@ -5370,6 +5205,9 @@
         }
       }
     }
+    // Hide parent dashboard too
+    const parentDashboard = document.getElementById('parentDashboard');
+    if (parentDashboard) parentDashboard.classList.add('hidden');
     return previousLogoutV6L();
   };
 
