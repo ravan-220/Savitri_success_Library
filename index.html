@@ -1,6 +1,5 @@
-Aapka poora source code updated Firebase configuration ke saath yahan ready hai. Isme aapke **face--authentication** project ki details integrate kar di gayi hain:
-```html
-<!DOCTYPE html>   <html lang="hi">   
+<!DOCTYPE html>   
+<html lang="hi">   
 <head>   
 <meta charset="UTF-8">   
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">   
@@ -19,9 +18,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .mode-subtitle{color:rgba(255,255,255,0.6);font-size:14px;text-align:center;margin-bottom:40px}   
 .mode-owner{color:var(--success);font-size:16px;font-weight:600;margin-bottom:40px}   
 .mode-buttons{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}   
-.mode-btn{width:160px;height:180px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;cursor:pointer;transition:all 0.3s;color:#fff;backdrop-filter:blur(10px)}   
+.mode-btn{width:160px;height:160px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;cursor:pointer;transition:all 0.3s;color:#fff;backdrop-filter:blur(10px)}   
 .mode-btn:hover{background:rgba(255,255,255,0.15);transform:translateY(-5px);border-color:var(--primary);box-shadow:0 20px 40px rgba(99,102,241,0.3)}   
-.mode-btn i{font-size:40px}.mode-btn span{font-size:16px;font-weight:600}.mode-btn small{font-size:12px;color:rgba(255,255,255,0.5)}   
+.mode-btn i{font-size:44px}.mode-btn span{font-size:18px;font-weight:600}   
 .loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:10000}   
 .loading-screen.show{display:flex}   
 .loader-ring{width:80px;height:80px;border:4px solid rgba(99,102,241,0.2);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:24px}   
@@ -85,7 +84,7 @@ tr:hover{background:#f9fafb}.student-img{width:40px;height:40px;border-radius:50
 .capture-btn{width:60px;height:60px;border-radius:50%;border:4px solid #fff;background:var(--danger);cursor:pointer;transition:transform 0.2s}   
 .capture-btn:hover{transform:scale(1.1)}.view{display:none}.view.active{display:block}   
 .menu-toggle{display:none;position:fixed;top:20px;left:20px;z-index:200;width:40px;height:40px;background:var(--dark);color:#fff;border:none;border-radius:10px;font-size:18px;cursor:pointer}   
-@media(max-width:768px){.admin-sidebar{transform:translateX(-100%)}.admin-sidebar.open{transform:translateX(0)}.admin-main{margin-left:0}.menu-toggle{display:flex;align-items:center;justify-content:center}.stats-grid{grid-template-columns:1fr 1fr}.mode-buttons{flex-direction:column}.mode-btn{width:100%;max-width:300px;height:120px;flex-direction:row}}   
+@media(max-width:768px){.admin-sidebar{transform:translateX(-100%)}.admin-sidebar.open{transform:translateX(0)}.admin-main{margin-left:0}.menu-toggle{display:flex;align-items:center;justify-content:center}.stats-grid{grid-template-columns:1fr 1fr}.mode-buttons{flex-direction:column}.mode-btn{width:100%;max-width:300px;height:100px;flex-direction:row}}   
 .kiosk-body{background:#000;color:#fff;width:100vw;height:100vh;overflow:hidden;position:relative}   
 #kioskVideo{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}   
 #kioskCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none}   
@@ -121,18 +120,27 @@ tr:hover{background:#f9fafb}.student-img{width:40px;height:40px;border-radius:50
  <div class="mode-owner">👤 Owner: Rahul Chauhan</div>   
  <div class="mode-buttons">   
  <div class="mode-btn" onclick="enterAdminMode()">   
- <i class="fas fa-user-shield"></i> <span>Admin Panel</span> <small>Laptop / Manager</small>   
+ <i class="fas fa-user-shield"></i> <span>Admin Panel</span>   
  </div>   
  <div class="mode-btn" onclick="enterKioskMode()">   
- <i class="fas fa-camera"></i> <span>Attendance</span> <small>Kiosk / Phone</small>   
+ <i class="fas fa-camera"></i> <span>Attendance</span>   
  </div>   
  </div>   
-</div>   <!-- LOADING -->   <div class="loading-screen" id="loadingScreen">   
+</div>   
+
+<!-- LOADING -->   
+<div class="loading-screen" id="loadingScreen">   
  <div class="loader-ring"></div>   
  <div class="loading-text" id="loadingText">Loading...</div>   
  <div class="loading-sub" id="loadingSub">Please wait</div>   
  <div class="loading-bar"><div class="loading-bar-fill" id="loadingBar"></div></div>   
-</div>   <!-- TOAST -->   <div class="toast" id="toast"></div>   <!-- ADMIN PANEL -->   <div class="admin-layout hidden" id="adminPanel">   
+</div>   
+
+<!-- TOAST -->   
+<div class="toast" id="toast"></div>   
+
+<!-- ADMIN PANEL -->   
+<div class="admin-layout hidden" id="adminPanel">   
  <button class="menu-toggle" onclick="toggleAdminSidebar()">☰</button>   
  <aside class="admin-sidebar" id="adminSidebar">   
  <div class="admin-sidebar-header">   
@@ -233,7 +241,10 @@ tr:hover{background:#f9fafb}.student-img{width:40px;height:40px;border-radius:50
  </div>   
  </div>   
  </main>   
-</div>   <!-- KIOSK -->   <div class="kiosk-body hidden" id="kioskPanel">   
+</div>   
+
+<!-- KIOSK -->   
+<div class="kiosk-body hidden" id="kioskPanel">   
  <video id="kioskVideo" autoplay playsinline muted></video>   
  <canvas id="kioskCanvas"></canvas>   
  <div class="kiosk-scanner" id="kioskScanner"></div>   
@@ -251,7 +262,10 @@ tr:hover{background:#f9fafb}.student-img{width:40px;height:40px;border-radius:50
  <div class="kiosk-bottom-title">📚 SAVITRI SUCCESS LIBRARY</div>   
  <div class="kiosk-bottom-sub" id="kioskLastEntry">Waiting for students...</div>   
  </div>   
-</div>   <!-- ADD STUDENT MODAL -->   <div class="modal-overlay" id="addStudentModal">   
+</div>   
+
+<!-- ADD STUDENT MODAL -->   
+<div class="modal-overlay" id="addStudentModal">   
  <div class="modal">   
  <div class="modal-header"><h3>➕ Add New Student</h3><button class="modal-close" onclick="closeAddStudentModal()">×</button></div>   
  <div class="modal-body">   
@@ -272,11 +286,13 @@ tr:hover{background:#f9fafb}.student-img{width:40px;height:40px;border-radius:50
  <button class="btn btn-primary" onclick="saveStudent()"><i class="fas fa-save"></i> Save Student</button>   
  </div>   
  </div>   
-</div>   <!-- FIREBASE INTEGRATION SCRIPT -->  <script type="module">  
+</div>   
+
+<!-- FIREBASE INTEGRATION SCRIPT -->  
+<script type="module">  
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";  
   import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";  
   
-  // Updated Firebase Configuration for face--authentication
   const firebaseConfig = {  
     apiKey: "AIzaSyDrfXfFIMbAYUXv4tQtUyLyTfZN9rRXyHo",  
     authDomain: "face--authentication.firebaseapp.com",  
@@ -294,15 +310,14 @@ tr:hover{background:#f9fafb}.student-img{width:40px;height:40px;border-radius:50
   let localStudentsCache = {};  
   let localAttendanceCache = {};  
   
-  // Sync with Cloud Database in Real-time  
   onValue(ref(db, 'students'), (snapshot) => {  
     localStudentsCache = snapshot.val() || {};  
-    window.refreshAllViews();  
+    if(window.refreshAllViews) window.refreshAllViews();  
   });  
   
   onValue(ref(db, 'attendance'), (snapshot) => {  
     localAttendanceCache = snapshot.val() || {};  
-    window.refreshAllViews();  
+    if(window.refreshAllViews) window.refreshAllViews();  
   });  
   
   window.DB = {  
@@ -330,7 +345,9 @@ tr:hover{background:#f9fafb}.student-img{width:40px;height:40px;border-radius:50
       await remove(ref(db, 'attendance'));  
     }  
   };  
-</script>  <script>  
+</script>  
+
+<script>  
 // ===================== STATE =====================   
 let isModelLoaded = false;   
 let webcamStream = null;   
@@ -338,10 +355,11 @@ let capturedImageData = null;
 let kioskProcessing = false;   
 let lastMarkedStudent = null;   
 let lastMarkedTime = 0;   
-const COOLDOWN = 4000;   
+const COOLDOWN = 60000; // 60 Seconds delay to avoid accidental logouts
 const MATCH_THRESHOLD = 0.55;   
 let kioskVideo, kioskCanvas, kioskCtx;   
-  
+const ADMIN_PIN = "1234"; // Default Password for Admin
+
 // ===================== AUDIO =====================   
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();   
 function playTone(freq, dur, type='sine', vol=0.3) {   
@@ -375,10 +393,15 @@ function showToast(msg, type='success') {
   
 // ===================== MODE SWITCHING =====================   
 function enterAdminMode() {   
- document.getElementById('modeScreen').classList.add('hidden');   
- document.getElementById('adminPanel').classList.remove('hidden');   
- document.getElementById('kioskPanel').classList.add('hidden');   
- refreshAllViews();   
+ const password = prompt("Admin Panel kholne ke liye password daalein:");
+ if(password === ADMIN_PIN) {
+   document.getElementById('modeScreen').classList.add('hidden');   
+   document.getElementById('adminPanel').classList.remove('hidden');   
+   document.getElementById('kioskPanel').classList.add('hidden');   
+   refreshAllViews();   
+ } else if(password !== null) {
+   alert("Galat Password!");
+ }
 }   
 function enterKioskMode() {   
  document.getElementById('modeScreen').classList.add('hidden');   
@@ -851,5 +874,3 @@ window.addEventListener('beforeunload', (e) => {
 });   
 </script>   </body>   
 </html>
-
-```
