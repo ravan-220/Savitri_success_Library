@@ -1,948 +1,855 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Savitri Success Library - Face Attendance</title>
-
-<style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:Arial,sans-serif;
-  background:#f5f7fb;
-  color:#222;
-}
-.hidden{display:none!important}
-
-.mode-screen{
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  padding:20px;
-}
-.mode-box{
-  width:100%;
-  max-width:500px;
-  background:#fff;
-  padding:30px;
-  border-radius:20px;
-  box-shadow:0 10px 30px rgba(0,0,0,.12);
-  text-align:center;
-}
-.mode-box h1{margin-bottom:25px}
-
-.mode-btn{
-  width:100%;
-  padding:18px;
-  margin:12px 0;
-  border:0;
-  border-radius:14px;
-  background:#2563eb;
-  color:#fff;
-  font-size:18px;
-  cursor:pointer;
-}
-.mode-btn:hover{opacity:.9}
-
-.container{
-  max-width:1100px;
-  margin:auto;
-  padding:20px;
-}
-
-.header{
-  background:#fff;
-  padding:20px;
-  border-radius:16px;
-  margin-bottom:20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-  box-shadow:0 5px 20px rgba(0,0,0,.08);
-}
-
-.card{
-  background:#fff;
-  padding:20px;
-  border-radius:16px;
-  margin-bottom:20px;
-  box-shadow:0 5px 20px rgba(0,0,0,.07);
-}
-
-input,button{
-  font:inherit;
-}
-input{
-  width:100%;
-  padding:12px;
-  margin:8px 0;
-  border:1px solid #ddd;
-  border-radius:10px;
-}
-
-.btn{
-  padding:11px 16px;
-  border:0;
-  border-radius:10px;
-  cursor:pointer;
-  background:#2563eb;
-  color:#fff;
-  margin:5px;
-}
-.btn-danger{background:#dc2626}
-.btn-success{background:#16a34a}
-.btn-secondary{background:#64748b}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-th,td{
-  padding:10px;
-  border-bottom:1px solid #eee;
-  text-align:left;
-}
-
-.stats{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:15px;
-}
-.stat{
-  background:#fff;
-  padding:20px;
-  border-radius:15px;
-  box-shadow:0 5px 15px rgba(0,0,0,.06);
-}
-.stat h2{margin:0}
-
-video{
-  width:100%;
-  max-width:500px;
-  border-radius:15px;
-  background:#000;
-}
-
-.toast{
-  position:fixed;
-  right:20px;
-  bottom:20px;
-  background:#222;
-  color:#fff;
-  padding:14px 18px;
-  border-radius:10px;
-  display:none;
-  z-index:9999;
-}
-</style>
-</head>
-
-<body>
-
-<!-- MODE SCREEN -->
-<div id="modeScreen" class="mode-screen">
-  <div class="mode-box">
-    <h1>Savitri Success Library</h1>
-    <p>Face Attendance System</p>
-
-    <button class="mode-btn" onclick="enterAdminMode()">
-      🛡️ Admin Panel
-    </button>
-
-    <button class="mode-btn" onclick="enterKioskMode()">
-      📷 Attendance
-    </button>
-  </div>
-</div>
-
-
-<!-- ADMIN PANEL -->
-<div id="adminPanel" class="hidden">
-  <div class="container">
-
-    <div class="header">
-      <div>
-        <h2>Savitri Success Library</h2>
-        <div>Admin Panel</div>
-      </div>
-
-      <button class="btn btn-danger" onclick="logout()">
-        Logout
-      </button>
-    </div>
-
-    <div class="stats">
-      <div class="stat">
-        <small>Total Students</small>
-        <h2 id="totalStudents">0</h2>
-      </div>
-
-      <div class="stat">
-        <small>Today's Attendance</small>
-        <h2 id="todayAttendance">0</h2>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Add Student</h3>
-
-      <input id="studentName" placeholder="Student Name">
-
-      <input id="studentPhone" placeholder="Phone Number">
-
-      <input id="studentId" placeholder="Student ID">
-
-      <button class="btn btn-success" onclick="saveStudent()">
-        Save Student
-      </button>
-    </div>
-
-    <div class="card">
-      <h3>Students</h3>
-
-      <div style="overflow:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Phone</th>
-              <th>ID</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody id="studentTable"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Attendance Log</h3>
-
-      <div style="overflow:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Date</th>
-              <th>Time</th>
-            </tr>
-          </thead>
-
-          <tbody id="attendanceTable"></tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-
-<!-- ATTENDANCE PANEL -->
-<div id="kioskPanel" class="hidden">
-
-  <div class="container">
-
-    <div class="header">
-      <div>
-        <h2>Savitri Success Library</h2>
-        <div>Attendance</div>
-      </div>
-
-      <button class="btn btn-danger" onclick="logout()">
-        Exit
-      </button>
-    </div>
-
-    <div class="card" style="text-align:center">
-
-      <h2>Mark Attendance</h2>
-
-      <video id="camera" autoplay playsinline></video>
-
-      <br>
-
-      <button class="btn btn-success" onclick="startCamera()">
-        Start Camera
-      </button>
-
-      <button class="btn btn-secondary" onclick="markAttendance()">
-        Mark Attendance
-      </button>
-
-      <p id="attendanceMessage"></p>
-
-    </div>
-
-    <div class="card">
-      <h3>Students</h3>
-
-      <div style="overflow:auto">
-        <table>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Student ID</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-
-          <tbody id="kioskStudentTable"></tbody>
-        </table>
-      </div>
-    </div>
-
-  </div>
-
-</div>
-
-
-<div id="toast" class="toast"></div>
-
-
-<script type="module">
-
-import { initializeApp }
-from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-
-import {
-  getDatabase,
-  ref,
-  set,
-  push,
-  onValue,
-  remove
-}
-from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-
-/* =========================
-   FIREBASE CONFIG
-========================= */
-
-const firebaseConfig = {
-  apiKey: "AIzaSyD6K4XYLzmvUF-qfm_6YM4vATwKfQQ5ZVA",
-  authDomain: "savitri-library.firebaseapp.com",
-  databaseURL: "https://savitri-library-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "savitri-library",
-  storageBucket: "savitri-library.firebasestorage.app",
-  messagingSenderId: "77666381914",
-  appId: "1:77666381914:web:3fcedc130fc706c6416863",
-  measurementId: "G-28RJRZTD78"
-};
-
-const app = initializeApp(firebaseConfig);
-
-const db = getDatabase(app);
-
-
-/* =========================
-   PASSWORDS
-========================= */
-
-const ADMIN_PASSWORD = "Mona@2000";
-
-const ATTENDANCE_PASSWORD = "Mona@1996";
-
-
-/* =========================
-   GLOBAL DATA
-========================= */
-
-let students = {};
-
-let attendance = {};
-
-let currentStudentForAttendance = null;
-
-let cameraStream = null;
-
-
-/* =========================
-   TOAST
-========================= */
-
-function showToast(message){
-
-  const toast = document.getElementById("toast");
-
-  toast.innerText = message;
-
-  toast.style.display = "block";
-
-  setTimeout(()=>{
-    toast.style.display = "none";
-  },2500);
-}
-
-
-/* =========================
-   ADMIN LOGIN
-========================= */
-
-window.enterAdminMode = function(){
-
-  const password = prompt("Admin Panel Password:");
-
-  if(password !== ADMIN_PASSWORD){
-
-    if(password !== null){
-
-      showToast("Wrong Admin password");
-
-    }
-
-    return;
-  }
-
-  document.getElementById("modeScreen")
-    .classList.add("hidden");
-
-  document.getElementById("adminPanel")
-    .classList.remove("hidden");
-
-  document.getElementById("kioskPanel")
-    .classList.add("hidden");
-
-  loadData();
-};
-
-
-/* =========================
-   ATTENDANCE LOGIN
-========================= */
-
-window.enterKioskMode = async function(){
-
-  const password = prompt("Attendance Password:");
-
-  if(password !== ATTENDANCE_PASSWORD){
-
-    if(password !== null){
-
-      showToast("Wrong Attendance password");
-
-    }
-
-    return;
-  }
-
-  document.getElementById("modeScreen")
-    .classList.add("hidden");
-
-  document.getElementById("adminPanel")
-    .classList.add("hidden");
-
-  document.getElementById("kioskPanel")
-    .classList.remove("hidden");
-
-  loadData();
-
-  setTimeout(startCamera,500);
-};
-
-
-/* =========================
-   LOGOUT
-========================= */
-
-window.logout = function(){
-
-  if(cameraStream){
-
-    cameraStream.getTracks().forEach(track=>{
-      track.stop();
-    });
-
-    cameraStream = null;
-  }
-
-  document.getElementById("adminPanel")
-    .classList.add("hidden");
-
-  document.getElementById("kioskPanel")
-    .classList.add("hidden");
-
-  document.getElementById("modeScreen")
-    .classList.remove("hidden");
-};
-
-
-/* =========================
-   LOAD DATA
-========================= */
-
-function loadData(){
-
-  onValue(
-    ref(db,"students"),
-    snapshot=>{
-
-      students = snapshot.val() || {};
-
-      renderStudents();
-
-      renderKioskStudents();
-
-      document.getElementById("totalStudents")
-        .innerText = Object.keys(students).length;
-
-    },
-    error=>{
-
-      console.error(error);
-
-      showToast("Firebase students load error");
-
-    }
-  );
-
-
-  onValue(
-    ref(db,"attendance"),
-    snapshot=>{
-
-      attendance = snapshot.val() || {};
-
-      renderAttendance();
-
-      updateTodayCount();
-
-    },
-    error=>{
-
-      console.error(error);
-
-      showToast("Firebase attendance load error");
-
-    }
-  );
-}
-
-
-/* =========================
-   SAVE STUDENT
-========================= */
-
-window.saveStudent = async function(){
-
-  const name =
-    document.getElementById("studentName").value.trim();
-
-  const phone =
-    document.getElementById("studentPhone").value.trim();
-
-  const studentId =
-    document.getElementById("studentId").value.trim();
-
-
-  if(!name){
-
-    showToast("Student name required");
-
-    return;
-  }
-
-
-  try{
-
-    const studentRef = push(ref(db,"students"));
-
-    await set(studentRef,{
-
-      name:name,
-
-      phone:phone,
-
-      studentId:studentId,
-
-      createdAt:Date.now()
-
-    });
-
-
-    document.getElementById("studentName").value = "";
-
-    document.getElementById("studentPhone").value = "";
-
-    document.getElementById("studentId").value = "";
-
-
-    showToast("Student saved successfully");
-
-  }
-
-  catch(error){
-
-    console.error(error);
-
-    showToast(
-      "Student save failed: " + error.message
-    );
-
-  }
-
-};
-
-
-/* =========================
-   RENDER STUDENTS
-========================= */
-
-function renderStudents(){
-
-  const table =
-    document.getElementById("studentTable");
-
-  table.innerHTML = "";
-
-
-  Object.entries(students).forEach(
-    ([key,student])=>{
-
-      const tr =
-        document.createElement("tr");
-
-
-      tr.innerHTML = `
-
-        <td>${escapeHtml(student.name || "")}</td>
-
-        <td>${escapeHtml(student.phone || "")}</td>
-
-        <td>${escapeHtml(student.studentId || "")}</td>
-
-        <td>
-
-          <button
-            class="btn btn-danger"
-            onclick="deleteStudent('${key}')">
-
-            Delete
-
-          </button>
-
-        </td>
-
-      `;
-
-
-      table.appendChild(tr);
-
-    }
-  );
-}
-
-
-/* =========================
-   KIOSK STUDENTS
-========================= */
-
-function renderKioskStudents(){
-
-  const table =
-    document.getElementById("kioskStudentTable");
-
-  table.innerHTML = "";
-
-
-  Object.entries(students).forEach(
-    ([key,student])=>{
-
-      const tr =
-        document.createElement("tr");
-
-
-      tr.innerHTML = `
-
-        <td>${escapeHtml(student.name || "")}</td>
-
-        <td>${escapeHtml(student.studentId || "")}</td>
-
-        <td>
-
-          <button
-            class="btn btn-success"
-            onclick="selectStudent('${key}')">
-
-            Mark
-
-          </button>
-
-        </td>
-
-      `;
-
-
-      table.appendChild(tr);
-
-    }
-  );
-}
-
-
-/* =========================
-   DELETE STUDENT
-========================= */
-
-window.deleteStudent = async function(key){
-
-  if(!confirm("Delete this student?")){
-
-    return;
-
-  }
-
-
-  try{
-
-    await remove(ref(db,"students/"+key));
-
-    showToast("Student deleted");
-
-  }
-
-  catch(error){
-
-    console.error(error);
-
-    showToast("Delete failed");
-
-  }
-
-};
-
-
-/* =========================
-   SELECT STUDENT
-========================= */
-
-window.selectStudent = function(key){
-
-  currentStudentForAttendance = key;
-
-  const student = students[key];
-
-  document.getElementById(
-    "attendanceMessage"
-  ).innerText =
-    "Selected: " + (student.name || "");
-
-};
-
-
-/* =========================
-   CAMERA
-========================= */
-
-window.startCamera = async function(){
-
-  try{
-
-    cameraStream =
-      await navigator.mediaDevices.getUserMedia({
-
-        video:true,
-
-        audio:false
-
-      });
-
-
-    const video =
-      document.getElementById("camera");
-
-    video.srcObject = cameraStream;
-
-  }
-
-  catch(error){
-
-    console.error(error);
-
-    showToast(
-      "Camera permission allow karo"
-    );
-
-  }
-
-};
-
-
-/* =========================
-   MARK ATTENDANCE
-========================= */
-
-window.markAttendance = async function(){
-
-  if(!currentStudentForAttendance){
-
-    showToast("Pehle student select karo");
-
-    return;
-
-  }
-
-
-  const student =
-    students[currentStudentForAttendance];
-
-
-  if(!student){
-
-    showToast("Student not found");
-
-    return;
-
-  }
-
-
-  const now = new Date();
-
-  const date =
-    now.toISOString().split("T")[0];
-
-  const time =
-    now.toLocaleTimeString();
-
-
-  try{
-
-    const attendanceRef =
-      push(ref(db,"attendance"));
-
-
-    await set(attendanceRef,{
-
-      studentKey:currentStudentForAttendance,
-
-      name:student.name || "",
-
-      studentId:student.studentId || "",
-
-      date:date,
-
-      time:time,
-
-      timestamp:Date.now()
-
-    });
-
-
-    document.getElementById(
-      "attendanceMessage"
-    ).innerText =
-      "Attendance marked for " +
-      student.name;
-
-
-    showToast("Attendance marked");
-
-  }
-
-  catch(error){
-
-    console.error(error);
-
-    showToast(
-      "Attendance failed: " + error.message
-    );
-
-  }
-
-};
-
-
-/* =========================
-   ATTENDANCE TABLE
-========================= */
-
-function renderAttendance(){
-
-  const table =
-    document.getElementById("attendanceTable");
-
-  table.innerHTML = "";
-
-
-  const list =
-    Object.values(attendance)
-      .sort((a,b)=>
-        (b.timestamp || 0) -
-        (a.timestamp || 0)
-      );
-
-
-  list.forEach(item=>{
-
-    const tr =
-      document.createElement("tr");
-
-
-    tr.innerHTML = `
-
-      <td>${escapeHtml(item.name || "")}</td>
-
-      <td>${escapeHtml(item.date || "")}</td>
-
-      <td>${escapeHtml(item.time || "")}</td>
-
-    `;
-
-
-    table.appendChild(tr);
-
-  });
-
-}
-
-
-/* =========================
-   TODAY COUNT
-========================= */
-
-function updateTodayCount(){
-
-  const today =
-    new Date()
-      .toISOString()
-      .split("T")[0];
-
-
-  const count =
-    Object.values(attendance)
-      .filter(item =>
-        item.date === today
-      ).length;
-
-
-  document.getElementById(
-    "todayAttendance"
-  ).innerText = count;
-
-}
-
-
-/* =========================
-   HTML ESCAPE
-========================= */
-
-function escapeHtml(value){
-
-  return String(value)
-    .replace(/&/g,"&amp;")
-    .replace(/</g,"&lt;")
-    .replace(/>/g,"&gt;")
-    .replace(/"/g,"&quot;")
-    .replace(/'/g,"&#039;");
-
-}
-
-</script>
-
-</body>
+Aapka poora source code updated Firebase configuration ke saath yahan ready hai. Isme aapke **face--authentication** project ki details integrate kar di gayi hain:
+```html
+<!DOCTYPE html>   <html lang="hi">   
+<head>   
+<meta charset="UTF-8">   
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">   
+<title>Savitri Success Library - Face Attendance</title>   
+<script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>   
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">   
+<style>   
+:root{--primary:#6366f1;--primary-dark:#4f46e5;--success:#10b981;--danger:#ef4444;--warning:#f59e0b;--info:#3b82f6;--dark:#0f172a;--card:#fff;--text:#1f2937;--text-light:#6b7280;--bg:#f3f4f6;--border:#e5e7eb}   
+*{margin:0;padding:0;box-sizing:border-box}   
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}   
+.mode-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#0f172a 0%,#1e1b4b 50%,#312e81 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:20px}   
+.mode-screen.hidden{display:none}   
+.mode-logo{width:100px;height:100px;background:rgba(255,255,255,0.1);border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:24px;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.2);animation:float 3s ease-in-out infinite}   
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}   
+.mode-title{color:#fff;font-size:28px;font-weight:700;text-align:center;margin-bottom:8px}   
+.mode-subtitle{color:rgba(255,255,255,0.6);font-size:14px;text-align:center;margin-bottom:40px}   
+.mode-owner{color:var(--success);font-size:16px;font-weight:600;margin-bottom:40px}   
+.mode-buttons{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}   
+.mode-btn{width:160px;height:180px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;cursor:pointer;transition:all 0.3s;color:#fff;backdrop-filter:blur(10px)}   
+.mode-btn:hover{background:rgba(255,255,255,0.15);transform:translateY(-5px);border-color:var(--primary);box-shadow:0 20px 40px rgba(99,102,241,0.3)}   
+.mode-btn i{font-size:40px}.mode-btn span{font-size:16px;font-weight:600}.mode-btn small{font-size:12px;color:rgba(255,255,255,0.5)}   
+.loading-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:#0f172a;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:10000}   
+.loading-screen.show{display:flex}   
+.loader-ring{width:80px;height:80px;border:4px solid rgba(99,102,241,0.2);border-top-color:var(--primary);border-radius:50%;animation:spin 1s linear infinite;margin-bottom:24px}   
+@keyframes spin{to{transform:rotate(360deg)}}   
+.loading-text{color:#fff;font-size:18px;font-weight:600}.loading-sub{color:rgba(255,255,255,0.5);font-size:14px;margin-top:8px}   
+.loading-bar{width:200px;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;margin-top:20px;overflow:hidden}   
+.loading-bar-fill{height:100%;width:0%;background:var(--primary);border-radius:2px;transition:width 0.3s}   
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%) translateY(100px);background:#1f2937;color:#fff;padding:14px 24px;border-radius:12px;font-size:14px;font-weight:500;z-index:5000;opacity:0;transition:all 0.3s;display:flex;align-items:center;gap:10px;box-shadow:0 10px 30px rgba(0,0,0,0.3)}   
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}.toast.success{border-left:4px solid var(--success)}.toast.error{border-left:4px solid var(--danger)}   
+.admin-layout{display:flex;min-height:100vh}   
+.admin-sidebar{width:260px;background:var(--dark);color:#fff;position:fixed;height:100vh;overflow-y:auto;z-index:100;transition:transform 0.3s}   
+.admin-sidebar-header{padding:24px 20px;border-bottom:1px solid rgba(255,255,255,0.1)}   
+.admin-sidebar-header h1{font-size:18px;font-weight:700}.admin-sidebar-header p{font-size:12px;color:#94a3b8;margin-top:4px}   
+.admin-sidebar-header .owner{font-size:13px;color:var(--success);margin-top:6px;font-weight:600}   
+.admin-nav{padding:16px 12px}   
+.admin-nav-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;cursor:pointer;transition:all 0.2s;color:#94a3b8;margin-bottom:4px}   
+.admin-nav-item:hover,.admin-nav-item.active{background:rgba(99,102,241,0.15);color:#fff}   
+.admin-nav-item i{width:20px;text-align:center}   
+.admin-main{flex:1;margin-left:260px;padding:24px;min-height:100vh}   
+.admin-topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}   
+.admin-topbar h2{font-size:24px;font-weight:700}   
+.live-badge{display:flex;align-items:center;gap:8px;background:#fff;padding:8px 16px;border-radius:20px;font-size:13px;font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,0.1)}   
+.live-dot{width:8px;height:8px;background:var(--success);border-radius:50%;animation:pulse 2s infinite}   
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}   
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:20px;margin-bottom:24px}   
+.stat-card{background:var(--card);border-radius:16px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,0.08);transition:transform 0.2s}   
+.stat-card:hover{transform:translateY(-2px)}.stat-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}   
+.stat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}   
+.stat-icon.blue{background:#e0e7ff;color:var(--primary)}.stat-icon.green{background:#d1fae5;color:var(--success)}.stat-icon.orange{background:#fef3c7;color:var(--warning)}.stat-icon.red{background:#fee2e2;color:var(--danger)}   
+.stat-value{font-size:32px;font-weight:700}.stat-label{font-size:14px;color:var(--text-light);margin-top:4px}   
+.card{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,0.08);margin-bottom:24px;overflow:hidden}   
+.card-header{padding:20px 24px;border-bottom:1px solid var(--bg);display:flex;justify-content:space-between;align-items:center}   
+.card-header h3{font-size:18px;font-weight:600}.card-body{padding:20px 24px}   
+.btn{padding:10px 20px;border-radius:10px;border:none;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:all 0.2s}   
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-dark)}.btn-success{background:var(--success);color:#fff}.btn-danger{background:var(--danger);color:#fff}.btn-warning{background:var(--warning);color:#fff}.btn-sm{padding:6px 14px;font-size:13px}.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}   
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}   
+th,td{padding:14px 16px;text-align:left;border-bottom:1px solid var(--bg)}   
+th{font-weight:600;color:var(--text-light);font-size:12px;text-transform:uppercase;letter-spacing:0.5px}   
+tr:hover{background:#f9fafb}.student-img{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--border)}   
+.badge{padding:4px 12px;border-radius:20px;font-size:12px;font-weight:600}.badge-login{background:#d1fae5;color:#065f46}.badge-logout{background:#fee2e2;color:#991b1b}.badge-present{background:#d1fae5;color:#065f46}   
+.search-box{position:relative;margin-bottom:16px}.search-box input{width:100%;padding:12px 16px 12px 44px;border:1px solid var(--border);border-radius:10px;font-size:14px}   
+.search-box i{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--text-light)}   
+.present-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:16px}   
+.present-card{background:#f9fafb;border-radius:12px;padding:16px;text-align:center;border:2px solid transparent;transition:all 0.2s}   
+.present-card:hover{border-color:var(--success);transform:translateY(-2px)}   
+.present-card img{width:64px;height:64px;border-radius:50%;object-fit:cover;margin-bottom:10px;border:3px solid var(--success)}   
+.present-card .name{font-weight:600;font-size:14px;margin-bottom:4px}.present-card .time{font-size:12px;color:var(--text-light)}   
+.empty-state{text-align:center;padding:60px 20px;color:var(--text-light)}.empty-state i{font-size:48px;margin-bottom:16px;opacity:0.3}   
+.modal-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}   
+.modal-overlay.show{display:flex}.modal{background:#fff;border-radius:20px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:modalIn 0.3s ease}   
+@keyframes modalIn{from{opacity:0;transform:scale(0.95)}to{opacity:1;transform:scale(1)}}   
+.modal-header{padding:24px 24px 0;display:flex;justify-content:space-between;align-items:center}.modal-header h3{font-size:20px}   
+.modal-close{width:36px;height:36px;border-radius:10px;border:none;background:var(--bg);cursor:pointer;font-size:18px}   
+.modal-body{padding:20px 24px}.form-group{margin-bottom:16px}.form-group label{display:block;font-size:14px;font-weight:600;margin-bottom:6px}   
+.form-group input,.form-group textarea{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:10px;font-size:14px}   
+.form-group input:focus,.form-group textarea:focus{outline:none;border-color:var(--primary)}   
+.modal-footer{padding:0 24px 24px;display:flex;gap:10px;justify-content:flex-end}   
+.webcam-container{position:relative;width:100%;height:280px;background:#000;border-radius:12px;overflow:hidden;margin-bottom:16px}   
+.webcam-container video,.webcam-container img{width:100%;height:100%;object-fit:cover}   
+.webcam-overlay{position:absolute;bottom:16px;left:50%;transform:translateX(-50%);display:flex;gap:12px}   
+.capture-btn{width:60px;height:60px;border-radius:50%;border:4px solid #fff;background:var(--danger);cursor:pointer;transition:transform 0.2s}   
+.capture-btn:hover{transform:scale(1.1)}.view{display:none}.view.active{display:block}   
+.menu-toggle{display:none;position:fixed;top:20px;left:20px;z-index:200;width:40px;height:40px;background:var(--dark);color:#fff;border:none;border-radius:10px;font-size:18px;cursor:pointer}   
+@media(max-width:768px){.admin-sidebar{transform:translateX(-100%)}.admin-sidebar.open{transform:translateX(0)}.admin-main{margin-left:0}.menu-toggle{display:flex;align-items:center;justify-content:center}.stats-grid{grid-template-columns:1fr 1fr}.mode-buttons{flex-direction:column}.mode-btn{width:100%;max-width:300px;height:120px;flex-direction:row}}   
+.kiosk-body{background:#000;color:#fff;width:100vw;height:100vh;overflow:hidden;position:relative}   
+#kioskVideo{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}   
+#kioskCanvas{position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none}   
+.kiosk-scanner{position:fixed;left:10%;width:80%;height:2px;background:linear-gradient(90deg,transparent,#00ff88,transparent);box-shadow:0 0 10px #00ff88,0 0 20px #00ff88;animation:scan 2.5s ease-in-out infinite;top:25%;z-index:10}   
+@keyframes scan{0%,100%{top:20%;opacity:0}50%{top:80%;opacity:1}}   
+.kiosk-frame{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:260px;height:260px;border:3px solid rgba(0,255,136,0.3);border-radius:50%;pointer-events:none;z-index:10}   
+.kiosk-frame::before,.kiosk-frame::after{content:'';position:absolute;width:20px;height:20px;border-color:#00ff88;border-style:solid}   
+.kiosk-frame::before{top:-3px;left:-3px;border-width:3px 0 0 3px;border-radius:20px 0 0 0}   
+.kiosk-frame::after{bottom:-3px;right:-3px;border-width:0 3px 3px 0;border-radius:0 0 20px 0}   
+.kiosk-status{position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);backdrop-filter:blur(10px);padding:12px 24px;border-radius:30px;font-size:14px;display:flex;align-items:center;gap:10px;border:1px solid rgba(255,255,255,0.1);z-index:100}   
+.kiosk-status-dot{width:10px;height:10px;border-radius:50%;background:#ff4444;animation:pulse 1.5s infinite}   
+.kiosk-status-dot.active{background:#00ff88}.kiosk-status-dot.scanning{background:#ffaa00;animation:pulse 0.5s infinite}   
+.kiosk-popup{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(0);background:linear-gradient(135deg,#1a1a2e 0%,#16213e 100%);border:2px solid #00ff88;border-radius:24px;padding:40px;text-align:center;min-width:300px;z-index:200;transition:transform 0.4s cubic-bezier(0.175,0.885,0.32,1.275);box-shadow:0 20px 60px rgba(0,255,136,0.3)}   
+.kiosk-popup.show{transform:translate(-50%,-50%) scale(1)}   
+.kiosk-popup-icon{width:80px;height:80px;background:#00ff88;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;animation:popIn 0.5s ease}   
+.kiosk-popup-icon::after{content:'✓';color:#000;font-size:40px;font-weight:bold}   
+@keyframes popIn{0%{transform:scale(0)}80%{transform:scale(1.1)}100%{transform:scale(1)}}   
+.kiosk-popup-name{font-size:26px;font-weight:700;margin-bottom:8px}.kiosk-popup-type{font-size:18px;font-weight:600;margin-bottom:8px}.kiosk-popup-time{font-size:14px;color:#aaa}   
+.kiosk-bottom{position:fixed;bottom:0;left:0;width:100%;background:linear-gradient(to top,rgba(0,0,0,0.9),transparent);padding:30px 20px 20px;text-align:center;z-index:100}   
+.kiosk-bottom-title{font-size:20px;font-weight:700;color:#00ff88;letter-spacing:1px}.kiosk-bottom-sub{font-size:13px;color:#aaa;margin-top:6px}   
+.kiosk-exit{position:fixed;top:20px;right:20px;width:44px;height:44px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:12px;color:#fff;font-size:18px;cursor:pointer;z-index:300;display:flex;align-items:center;justify-content:center}   
+.kiosk-count{position:fixed;top:20px;left:20px;background:rgba(0,0,0,0.7);padding:8px 16px;border-radius:20px;font-size:13px;color:#aaa;z-index:100}   
+.data-actions{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap}.hidden{display:none !important}   
+</style>   
+<base target="_blank">   
+</head>   
+<body>   
+<!-- MODE SELECTOR -->   
+<div class="mode-screen" id="modeScreen">   
+ <div class="mode-logo">📚</div>   
+ <div class="mode-title">Savitri Success Library</div>   
+ <div class="mode-subtitle">Smart Face Attendance System</div>   
+ <div class="mode-owner">👤 Owner: Rahul Chauhan</div>   
+ <div class="mode-buttons">   
+ <div class="mode-btn" onclick="enterAdminMode()">   
+ <i class="fas fa-user-shield"></i> <span>Admin Panel</span> <small>Laptop / Manager</small>   
+ </div>   
+ <div class="mode-btn" onclick="enterKioskMode()">   
+ <i class="fas fa-camera"></i> <span>Attendance</span> <small>Kiosk / Phone</small>   
+ </div>   
+ </div>   
+</div>   <!-- LOADING -->   <div class="loading-screen" id="loadingScreen">   
+ <div class="loader-ring"></div>   
+ <div class="loading-text" id="loadingText">Loading...</div>   
+ <div class="loading-sub" id="loadingSub">Please wait</div>   
+ <div class="loading-bar"><div class="loading-bar-fill" id="loadingBar"></div></div>   
+</div>   <!-- TOAST -->   <div class="toast" id="toast"></div>   <!-- ADMIN PANEL -->   <div class="admin-layout hidden" id="adminPanel">   
+ <button class="menu-toggle" onclick="toggleAdminSidebar()">☰</button>   
+ <aside class="admin-sidebar" id="adminSidebar">   
+ <div class="admin-sidebar-header">   
+ <h1>📚 Savitri Success Library</h1>   
+ <p>Face Attendance System</p>   
+ <div class="owner">👤 Owner: Rahul Chauhan</div>   
+ </div>   
+ <nav class="admin-nav">   
+ <div class="admin-nav-item active" onclick="showAdminView('dashboard',this)"><i class="fas fa-chart-line"></i><span>Dashboard</span></div>   
+ <div class="admin-nav-item" onclick="showAdminView('students',this)"><i class="fas fa-users"></i><span>Students</span></div>   
+ <div class="admin-nav-item" onclick="showAdminView('attendance',this)"><i class="fas fa-clipboard-list"></i><span>Attendance Log</span></div>   
+ <div class="admin-nav-item" onclick="showAdminView('present',this)"><i class="fas fa-user-check"></i><span>Present Now</span></div>   
+ <div class="admin-nav-item" onclick="showAdminView('data',this)"><i class="fas fa-database"></i><span>Data Manager</span></div>   
+ <div class="admin-nav-item" onclick="backToMode()"><i class="fas fa-arrow-left"></i><span>Back to Menu</span></div>   
+ </nav>   
+ </aside>   
+ <main class="admin-main">   
+ <!-- DASHBOARD -->   
+ <div class="view active" id="admin-dashboard">   
+ <div class="admin-topbar"><h2>Dashboard</h2><div class="live-badge"><div class="live-dot"></div><span>CLOUD LIVE</span></div></div>   
+ <div class="stats-grid">   
+ <div class="stat-card"><div class="stat-header"><div><div class="stat-value" id="dashTotal">0</div><div class="stat-label">Total Students</div></div><div class="stat-icon blue"><i class="fas fa-users"></i></div></div></div>   
+ <div class="stat-card"><div class="stat-header"><div><div class="stat-value" id="dashPresent">0</div><div class="stat-label">Present Today</div></div><div class="stat-icon green"><i class="fas fa-user-check"></i></div></div></div>   
+ <div class="stat-card"><div class="stat-header"><div><div class="stat-value" id="dashAbsent">0</div><div class="stat-label">Absent Today</div></div><div class="stat-icon red"><i class="fas fa-user-times"></i></div></div></div>   
+ <div class="stat-card"><div class="stat-header"><div><div class="stat-value" id="dashVisits">0</div><div class="stat-label">Total Visits</div></div><div class="stat-icon orange"><i class="fas fa-walking"></i></div></div></div>   
+ </div>   
+ <div class="card">   
+ <div class="card-header"><h3>📊 Today's Attendance Overview</h3><span style="font-size:13px;color:#6b7280;" id="dashDate"></span></div>   
+ <div class="card-body">   
+ <div class="table-wrap">   
+ <table>   
+ <thead><tr><th>Student</th><th>Login</th><th>Logout</th><th>Duration</th><th>Status</th></tr></thead>   
+ <tbody id="dashTable"><tr><td colspan="5" class="empty-state"><i class="fas fa-inbox"></i><div>No attendance today</div></td></tr></tbody>   
+ </table>   
+ </div>   
+ </div>   
+ </div>   
+ </div>   
+ <!-- STUDENTS -->   
+ <div class="view" id="admin-students">   
+ <div class="admin-topbar"><h2>Students</h2><button class="btn btn-primary" onclick="showAddStudentModal()"><i class="fas fa-plus"></i> Add Student</button></div>   
+ <div class="card">   
+ <div class="card-body">   
+ <div class="search-box"><i class="fas fa-search"></i><input type="text" id="studentSearch" placeholder="Search students..." oninput="filterStudents()"></div>   
+ <div class="table-wrap">   
+ <table>   
+ <thead><tr><th>Photo</th><th>Name</th><th>ID</th><th>Registered</th><th>Actions</th></tr></thead>   
+ <tbody id="studentsTable"><tr><td colspan="5" class="empty-state"><i class="fas fa-users"></i><div>No students registered</div></td></tr></tbody> </table>   
+ </div>   
+ </div>   
+ </div>   
+ </div>   
+ <!-- ATTENDANCE LOG -->   
+ <div class="view" id="admin-attendance">   
+ <div class="admin-topbar"><h2>Attendance Log</h2><button class="btn btn-primary" onclick="exportCSV()"><i class="fas fa-download"></i> Export CSV</button></div>   
+ <div class="card">   
+ <div class="card-body">   
+ <div class="search-box"><i class="fas fa-search"></i><input type="text" id="logSearch" placeholder="Search by name or date..." oninput="filterLogs()"></div>   
+ <div class="table-wrap">   
+ <table>   
+ <thead><tr><th>Student</th><th>Type</th><th>Date</th><th>Time</th></tr></thead>   
+ <tbody id="attendanceTable"><tr><td colspan="4" class="empty-state"><i class="fas fa-clipboard-list"></i><div>No attendance records</div></td></tr></tbody> </table>   
+ </div>   
+ </div>   
+ </div>   
+ </div>   
+ <!-- PRESENT NOW -->   
+ <div class="view" id="admin-present">   
+ <div class="admin-topbar"><h2>Present Now</h2><span style="font-size:14px;color:#6b7280;" id="presentBadge">0 students</span></div>   
+ <div class="card">   
+ <div class="card-body">   
+ <div class="present-grid" id="presentGrid">   
+ <div class="empty-state" style="grid-column:1/-1"><i class="fas fa-user-clock"></i><div>No students currently present</div></div>   
+ </div>   
+ </div>   
+ </div>   
+ </div>   
+ <!-- DATA MANAGER -->   
+ <div class="view" id="admin-data">   
+ <div class="admin-topbar"><h2>Data Manager</h2></div>   
+ <div class="card">   
+ <div class="card-header"><h3>☁️ Cloud Database Status</h3></div>   
+ <div class="card-body">   
+ <p style="margin-bottom:16px;color:var(--text-light);">Data is automatically synced to Firebase Realtime Database in the Cloud.</p>   
+ <div class="data-actions">   
+ <button class="btn btn-primary" onclick="exportData()"><i class="fas fa-file-export"></i> Export All Data (JSON)</button>   
+ <button class="btn btn-danger" onclick="clearAllData()"><i class="fas fa-trash"></i> Clear All Data</button>   
+ </div>   
+ <div style="margin-top:20px;padding:16px;background:#f0fdf4;border-radius:10px;border:1px solid #bbf7d0;">   
+ <strong style="color:#166534;">📊 Current Cloud Data:</strong>   
+ <div style="margin-top:10px;color:#374151;font-size:14px;line-height:2;">   
+ <div>👥 Students: <strong id="dataStudentCount">0</strong></div>   
+ <div>📋 Attendance Records: <strong id="dataRecordCount">0</strong></div>   
+ <div>☁️ Storage Mode: <strong>Firebase Cloud</strong></div>   
+ </div>   
+ </div>   
+ </div>   
+ </div>   
+ </div>   
+ </main>   
+</div>   <!-- KIOSK -->   <div class="kiosk-body hidden" id="kioskPanel">   
+ <video id="kioskVideo" autoplay playsinline muted></video>   
+ <canvas id="kioskCanvas"></canvas>   
+ <div class="kiosk-scanner" id="kioskScanner"></div>   
+ <div class="kiosk-frame"></div>   
+ <div class="kiosk-status"><div class="kiosk-status-dot" id="kioskStatusDot"></div><span id="kioskStatusText">Initializing...</span></div>   
+ <div class="kiosk-count" id="kioskCount">Students: 0</div>   
+ <button class="kiosk-exit" onclick="backToMode()" title="Exit">✕</button>   
+ <div class="kiosk-popup" id="kioskPopup">   
+ <div class="kiosk-popup-icon"></div>   
+ <div class="kiosk-popup-name" id="kPopupName">Student</div>   
+ <div class="kiosk-popup-type" id="kPopupType">Login</div>   
+ <div class="kiosk-popup-time" id="kPopupTime">10:00 AM</div>   
+ </div>   
+ <div class="kiosk-bottom">   
+ <div class="kiosk-bottom-title">📚 SAVITRI SUCCESS LIBRARY</div>   
+ <div class="kiosk-bottom-sub" id="kioskLastEntry">Waiting for students...</div>   
+ </div>   
+</div>   <!-- ADD STUDENT MODAL -->   <div class="modal-overlay" id="addStudentModal">   
+ <div class="modal">   
+ <div class="modal-header"><h3>➕ Add New Student</h3><button class="modal-close" onclick="closeAddStudentModal()">×</button></div>   
+ <div class="modal-body">   
+ <div class="webcam-container">   
+ <video id="webcam" autoplay playsinline></video>   
+ <img id="capturedPhoto" style="display:none;">   
+ <div class="webcam-overlay">   
+ <button class="capture-btn" id="captureBtn" onclick="capturePhoto()" title="Capture"></button>   
+ <button class="btn btn-sm" id="retakeBtn" onclick="retakePhoto()" style="display:none;background:#fff;color:#333;"><i class="fas fa-redo"></i></button>   
+ </div>   
+ </div>   
+ <div class="form-group"><label>Student Name *</label><input type="text" id="studentName" placeholder="Enter full name"></div>   
+ <div class="form-group"><label>Roll Number (Optional)</label><input type="text" id="studentRoll" placeholder="e.g. SSL-001"></div>   
+ <p style="font-size:12px;color:#6b7280;"><i class="fas fa-info-circle"></i> Face should be clearly visible and well-lit.</p>   
+ </div>   
+ <div class="modal-footer">   
+ <button class="btn" onclick="closeAddStudentModal()" style="background:var(--bg);color:var(--text);">Cancel</button>   
+ <button class="btn btn-primary" onclick="saveStudent()"><i class="fas fa-save"></i> Save Student</button>   
+ </div>   
+ </div>   
+</div>   <!-- FIREBASE INTEGRATION SCRIPT -->  <script type="module">  
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";  
+  import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";  
+  
+  // Updated Firebase Configuration for face--authentication
+  const firebaseConfig = {  
+    apiKey: "AIzaSyDrfXfFIMbAYUXv4tQtUyLyTfZN9rRXyHo",  
+    authDomain: "face--authentication.firebaseapp.com",  
+    databaseURL: "https://face--authentication-default-rtdb.firebaseio.com",  
+    projectId: "face--authentication",  
+    storageBucket: "face--authentication.firebasestorage.app",  
+    messagingSenderId: "1080222250138",  
+    appId: "1:1080222250138:web:3f1e7c0ac099346f291b23",  
+    measurementId: "G-LSL532LEH9"  
+  };  
+  
+  const app = initializeApp(firebaseConfig);  
+  const db = getDatabase(app);  
+  
+  let localStudentsCache = {};  
+  let localAttendanceCache = {};  
+  
+  // Sync with Cloud Database in Real-time  
+  onValue(ref(db, 'students'), (snapshot) => {  
+    localStudentsCache = snapshot.val() || {};  
+    window.refreshAllViews();  
+  });  
+  
+  onValue(ref(db, 'attendance'), (snapshot) => {  
+    localAttendanceCache = snapshot.val() || {};  
+    window.refreshAllViews();  
+  });  
+  
+  window.DB = {  
+    getStudents() { return localStudentsCache; },  
+    getAttendance() { return localAttendanceCache; },  
+    async addStudent(student) {  
+      const studentRef = ref(db, 'students');  
+      const newRef = push(studentRef);  
+      const id = newRef.key;  
+      await set(newRef, { ...student, id, createdAt: Date.now() });  
+      return id;  
+    },  
+    async deleteStudent(id) {  
+      await remove(ref(db, 'students/' + id));  
+    },  
+    async addAttendance(record) {  
+      const attRef = ref(db, 'attendance');  
+      const newRef = push(attRef);  
+      const id = newRef.key;  
+      await set(newRef, { ...record, id });  
+      return id;  
+    },  
+    async clearAll() {  
+      await remove(ref(db, 'students'));  
+      await remove(ref(db, 'attendance'));  
+    }  
+  };  
+</script>  <script>  
+// ===================== STATE =====================   
+let isModelLoaded = false;   
+let webcamStream = null;   
+let capturedImageData = null;   
+let kioskProcessing = false;   
+let lastMarkedStudent = null;   
+let lastMarkedTime = 0;   
+const COOLDOWN = 4000;   
+const MATCH_THRESHOLD = 0.55;   
+let kioskVideo, kioskCanvas, kioskCtx;   
+  
+// ===================== AUDIO =====================   
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();   
+function playTone(freq, dur, type='sine', vol=0.3) {   
+ try {   
+ const osc = audioCtx.createOscillator();   
+ const gain = audioCtx.createGain();   
+ osc.connect(gain);   
+ gain.connect(audioCtx.destination);   
+ osc.frequency.value = freq;   
+ osc.type = type;   
+ gain.gain.setValueAtTime(vol, audioCtx.currentTime);   
+ gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + dur);   
+ osc.start();   
+ osc.stop(audioCtx.currentTime + dur);   
+ } catch(e){}   
+}   
+function playSuccess() {   
+ playTone(523, 0.1);   
+ setTimeout(()=>playTone(659, 0.1), 100);   
+ setTimeout(()=>playTone(784, 0.25), 200);   
+}   
+  
+// ===================== TOAST =====================   
+function showToast(msg, type='success') {   
+ const t = document.getElementById('toast');   
+ t.className = 'toast ' + type;   
+ t.innerHTML = type==='success' ? '<i class="fas fa-check-circle" style="color:#10b981"></i> ' + msg : '<i class="fas fa-exclamation-circle" style="color:#ef4444"></i> ' + msg;   
+ t.classList.add('show');   
+ setTimeout(()=>t.classList.remove('show'), 3000);   
+}   
+  
+// ===================== MODE SWITCHING =====================   
+function enterAdminMode() {   
+ document.getElementById('modeScreen').classList.add('hidden');   
+ document.getElementById('adminPanel').classList.remove('hidden');   
+ document.getElementById('kioskPanel').classList.add('hidden');   
+ refreshAllViews();   
+}   
+function enterKioskMode() {   
+ document.getElementById('modeScreen').classList.add('hidden');   
+ document.getElementById('adminPanel').classList.add('hidden');   
+ document.getElementById('kioskPanel').classList.remove('hidden');   
+ startKiosk();   
+}   
+function backToMode() {   
+ stopKiosk();   
+ document.getElementById('modeScreen').classList.remove('hidden');   
+ document.getElementById('adminPanel').classList.add('hidden');   
+ document.getElementById('kioskPanel').classList.add('hidden');   
+}   
+  
+// ===================== MODEL LOADING =====================   
+async function loadModels() {   
+ const screen = document.getElementById('loadingScreen');   
+ const bar = document.getElementById('loadingBar');   
+ const txt = document.getElementById('loadingText');   
+ const sub = document.getElementById('loadingSub');   
+ screen.classList.add('show');   
+ const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';   
+ try {   
+ txt.textContent = 'Loading Face Detection Model...';   
+ bar.style.width = '25%';   
+ await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);   
+ txt.textContent = 'Loading Face Landmarks Model...';   
+ bar.style.width = '60%';   
+ await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);   
+ txt.textContent = 'Loading Face Recognition Model...';   
+ bar.style.width = '90%';   
+ await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);   
+ bar.style.width = '100%';   
+ isModelLoaded = true;   
+ setTimeout(()=>screen.classList.remove('show'), 500);   
+ } catch(e) {   
+ txt.textContent = 'Failed to load AI models!';   
+ sub.textContent = 'Please check your internet connection and refresh.';   
+ console.error(e);   
+ }   
+}   
+  
+// ===================== ADMIN PANEL =====================   
+function showAdminView(viewName, el) {   
+ document.querySelectorAll('.admin-main .view').forEach(v=>v.classList.remove('active'));   
+ document.querySelectorAll('.admin-nav-item').forEach(n=>n.classList.remove('active'));   
+ document.getElementById('admin-'+viewName).classList.add('active');   
+ if(el) el.classList.add('active');   
+ if(viewName==='dashboard') refreshDashboard();   
+ if(viewName==='students') refreshStudents();   
+ if(viewName==='attendance') refreshAttendance();   
+ if(viewName==='present') refreshPresent();   
+ if(viewName==='data') refreshDataManager();   
+ if(window.innerWidth<=768) toggleAdminSidebar();   
+}   
+function toggleAdminSidebar() {   
+ document.getElementById('adminSidebar').classList.toggle('open');   
+}   
+window.refreshAllViews = function() {   
+ refreshDashboard();   
+ refreshStudents();   
+ refreshAttendance();   
+ refreshPresent();   
+ refreshDataManager();   
+}   
+  
+// ===================== DASHBOARD =====================   
+function refreshDashboard() {   
+ if(!window.DB) return;  
+ const students = DB.getStudents();   
+ const attendance = DB.getAttendance();   
+ const today = new Date().toLocaleDateString('en-CA');   
+ const records = Object.values(attendance).filter(r=>r.date===today);   
+ const total = Object.keys(students).length;   
+ const studentLast = {};   
+ records.forEach(r=>{   
+ studentLast[r.studentId] = r.type;   
+ });   
+ const present = Object.values(studentLast).filter(t=>t==='login').length;   
+ const absent = Math.max(0, total - present);   
+ const visits = records.length;   
+ document.getElementById('dashTotal').textContent = total;   
+ document.getElementById('dashPresent').textContent = present;   
+ document.getElementById('dashAbsent').textContent = absent;   
+ document.getElementById('dashVisits').textContent = visits;   
+ document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});   
+ const tbody = document.getElementById('dashTable');   
+ if(records.length===0) {   
+ tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><i class="fas fa-inbox"></i><div>No attendance today</div></td></tr>';   
+ return;   
+ }   
+ const byStudent = {};   
+ records.forEach(r=>{   
+ if(!byStudent[r.studentId]) byStudent[r.studentId]=[];   
+ byStudent[r.studentId].push(r);   
+ });   
+ let html = '';   
+ Object.entries(byStudent).forEach(([sid,recs])=>{   
+ const s = students[sid] || {name:'Unknown',photo:''};   
+ const login = recs.find(r=>r.type==='login');   
+ const logout = recs.find(r=>r.type==='logout');   
+ const loginT = login?login.time:'-';   
+ const logoutT = logout?logout.time:'-';   
+ let dur = '-';   
+ if(login&&logout) {   
+ const diff = Math.floor((logout.timestamp - login.timestamp)/60000);   
+ dur = diff<60? diff+' min' : Math.floor(diff/60)+'h '+(diff%60)+'m';   
+ }   
+ const status = logout?'<span class="badge badge-logout">Left</span>':'<span class="badge badge-login">Present</span>';   
+ html += `<tr><td><div style="display:flex;align-items:center;gap:10px"><img src="${s.photo||'https://via.placeholder.com/40'}" class="student-img" onerror="this.src='https://via.placeholder.com/40'"><strong>${s.name}</strong></div></td><td>${loginT}</td><td>${logoutT}</td><td>${dur}</td><td>${status}</td></tr>`;   
+ });   
+ tbody.innerHTML = html;   
+}   
+  
+// ===================== STUDENTS =====================   
+function refreshStudents() {   
+ if(!window.DB) return;  
+ const students = DB.getStudents();   
+ const tbody = document.getElementById('studentsTable');   
+ const entries = Object.entries(students);   
+ if(entries.length===0) {   
+ tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><i class="fas fa-users"></i><div>No students registered</div></td></tr>';   
+ return;   
+ }   
+ let html = '';   
+ entries.forEach(([id,s])=>{   
+ const date = s.createdAt ? new Date(s.createdAt).toLocaleDateString('en-IN') : '-';   
+ html += `<tr><td><img src="${s.photo||'https://via.placeholder.com/40'}" class="student-img" onerror="this.src='https://via.placeholder.com/40'"></td><td><strong>${s.name}</strong></td><td>${id.substring(0,10)}...</td><td>${date}</td><td><button class="btn btn-danger btn-sm" onclick="deleteStudent('${id}')"><i class="fas fa-trash"></i> Delete</button></td></tr>`;   
+ });   
+ tbody.innerHTML = html;   
+}   
+function filterStudents() {   
+ const q = document.getElementById('studentSearch').value.toLowerCase();   
+ document.querySelectorAll('#studentsTable tr').forEach(row=>{   
+ row.style.display = row.textContent.toLowerCase().includes(q)?'':'none';   
+ });   
+}   
+async function deleteStudent(id) {   
+ if(!confirm('Delete this student?')) return;   
+ await DB.deleteStudent(id);   
+ showToast('Student deleted');   
+}   
+  
+// ===================== ADD STUDENT MODAL =====================   
+function showAddStudentModal() {   
+ document.getElementById('addStudentModal').classList.add('show');   
+ document.getElementById('studentName').value = '';   
+ document.getElementById('studentRoll').value = '';   
+ capturedImageData = null;   
+ startWebcam();   
+}   
+function closeAddStudentModal() {   
+ document.getElementById('addStudentModal').classList.remove('show');   
+ stopWebcam();   
+}   
+async function startWebcam() {   
+ const video = document.getElementById('webcam');   
+ const captureBtn = document.getElementById('captureBtn');   
+ const retakeBtn = document.getElementById('retakeBtn');   
+ const img = document.getElementById('capturedPhoto');   
+ img.style.display = 'none';   
+ video.style.display = 'block';   
+ captureBtn.style.display = 'block';   
+ retakeBtn.style.display = 'none';   
+ try {   
+ webcamStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'}});   
+ video.srcObject = webcamStream;   
+ } catch(e) {   
+ showToast('Camera access denied','error');   
+ }   
+}   
+function stopWebcam() {   
+ if(webcamStream) {   
+ webcamStream.getTracks().forEach(t=>t.stop());   
+ webcamStream = null;   
+ }   
+}   
+function capturePhoto() {   
+ const video = document.getElementById('webcam');   
+ const canvas = document.createElement('canvas');   
+ canvas.width = video.videoWidth || 640;   
+ canvas.height = video.videoHeight || 480;   
+ const ctx = canvas.getContext('2d');   
+ ctx.translate(canvas.width, 0);   
+ ctx.scale(-1, 1);   
+ ctx.drawImage(video, 0, 0, canvas.width, canvas.height);   
+ capturedImageData = canvas.toDataURL('image/jpeg', 0.7);   
+ document.getElementById('capturedPhoto').src = capturedImageData;   
+ document.getElementById('capturedPhoto').style.display = 'block';   
+ document.getElementById('webcam').style.display = 'none';   
+ document.getElementById('captureBtn').style.display = 'none';   
+ document.getElementById('retakeBtn').style.display = 'block';   
+}   
+function retakePhoto() {   
+ capturedImageData = null;   
+ document.getElementById('capturedPhoto').style.display = 'none';   
+ document.getElementById('webcam').style.display = 'block';   
+ document.getElementById('captureBtn').style.display = 'block';   
+ document.getElementById('retakeBtn').style.display = 'none';   
+}   
+async function saveStudent() {   
+ const name = document.getElementById('studentName').value.trim();   
+ if(!name) { showToast('Enter student name','error'); return; }   
+ if(!capturedImageData) { showToast('Capture photo first','error'); return; }   
+ if(!isModelLoaded) { showToast('AI models loading...','error'); return; }   
+ try {   
+ const img = await faceapi.fetchImage(capturedImageData);   
+ const detection = await faceapi.detectSingleFace(img, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceDescriptor();   
+ if(!detection) { showToast('No face detected! Retake photo.','error'); return; }   
+ const descriptor = Array.from(detection.descriptor);   
+ await DB.addStudent({ name, photo: capturedImageData, descriptor, roll: document.getElementById('studentRoll').value.trim() });   
+ closeAddStudentModal();   
+ showToast('Student added successfully!');   
+ } catch(e) {   
+ console.error(e);   
+ showToast('Error processing face','error');   
+ }   
+}   
+  
+// ===================== ATTENDANCE LOG =====================   
+function refreshAttendance() {   
+ if(!window.DB) return;  
+ const attendance = DB.getAttendance();   
+ const tbody = document.getElementById('attendanceTable');   
+ const records = Object.values(attendance).sort((a,b)=>b.timestamp - a.timestamp);   
+ if(records.length===0) {   
+ tbody.innerHTML = '<tr><td colspan="4" class="empty-state"><i class="fas fa-clipboard-list"></i><div>No attendance records</div></td></tr>';   
+ return;   
+ }   
+ let html = '';   
+ records.slice(0, 300).forEach(r=>{   
+ const badge = r.type==='login'?'badge-login':'badge-logout';   
+ html += `<tr><td><strong>${r.studentName||'Unknown'}</strong></td><td><span class="badge ${badge}">${r.type.toUpperCase()}</span></td><td>${r.date}</td><td style="font-family:monospace">${r.time}</td></tr>`;   
+ });   
+ tbody.innerHTML = html;   
+}   
+function filterLogs() {   
+ const q = document.getElementById('logSearch').value.toLowerCase();   
+ document.querySelectorAll('#attendanceTable tr').forEach(row=>{   
+ row.style.display = row.textContent.toLowerCase().includes(q)?'':'none';   
+ });   
+}   
+function exportCSV() {   
+ const records = Object.values(DB.getAttendance()).sort((a,b)=>b.timestamp - a.timestamp);   
+ if(records.length===0) { showToast('No data to export','error'); return; }   
+ let csv = 'Student Name,Type,Date,Time\n';   
+ records.forEach(r=>{ csv += `"${r.studentName||''}","${r.type}","${r.date}","${r.time}"\n`; });   
+ const blob = new Blob([csv],{type:'text/csv'});   
+ const url = URL.createObjectURL(blob);   
+ const a = document.createElement('a');   
+ a.href = url;   
+ a.download = `attendance_${new Date().toISOString().split('T')[0]}.csv`;   
+ a.click();   
+ showToast('CSV exported!');   
+}   
+  
+// ===================== PRESENT NOW =====================   
+function refreshPresent() {   
+ if(!window.DB) return;  
+ const today = new Date().toLocaleDateString('en-CA');   
+ const records = Object.values(DB.getAttendance()).filter(r=>r.date===today);   
+ const studentLast = {};   
+ records.forEach(r=>{ studentLast[r.studentId] = r; });   
+ const present = Object.entries(studentLast).filter(([id,r])=>r.type==='login').map(([id,r])=>({...r, student: DB.getStudents()[id]||{name:r.studentName,photo:''}}));   
+ document.getElementById('presentBadge').textContent = present.length + ' students';   
+ const grid = document.getElementById('presentGrid');   
+ if(present.length===0) {   
+ grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-user-clock"></i><div>No students currently present</div></div>';   
+ return;   
+ }   
+ let html = '';   
+ present.forEach(p=>{   
+ html += `<div class="present-card"><img src="${p.student.photo||'https://via.placeholder.com/64'}" onerror="this.src='https://via.placeholder.com/64'"><div class="name">${p.student.name}</div><div class="time">In: ${p.time}</div></div>`;   
+ });   
+ grid.innerHTML = html;   
+}   
+  
+// ===================== DATA MANAGER =====================   
+function refreshDataManager() {   
+ if(!window.DB) return;  
+ const students = DB.getStudents();   
+ const attendance = DB.getAttendance();   
+ document.getElementById('dataStudentCount').textContent = Object.keys(students).length;   
+ document.getElementById('dataRecordCount').textContent = Object.keys(attendance).length;   
+}   
+function exportData() {   
+ const data = {   
+ students: DB.getStudents(),   
+ attendance: DB.getAttendance(),   
+ exportedAt: new Date().toISOString(),   
+ library: 'Savitri Success Library',   
+ owner: 'Rahul Chauhan'   
+ };   
+ const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});   
+ const url = URL.createObjectURL(blob);   
+ const a = document.createElement('a');   
+ a.href = url;   
+ a.download = `library_cloud_backup_${new Date().toISOString().split('T')[0]}.json`;   
+ a.click();   
+ showToast('Data exported!');   
+}   
+async function clearAllData() {   
+ if(!confirm('WARNING: This will delete ALL students and attendance records from Cloud! Are you sure?')) return;   
+ if(!confirm('Are you REALLY sure? This cannot be undone!')) return;   
+ await DB.clearAll();   
+ showToast('All cloud data cleared');   
+}   
+  
+// ===================== KIOSK MODE =====================   
+async function startKiosk() {   
+ if(!isModelLoaded) {   
+ showToast('Loading AI models... Please wait','error');   
+ await loadModels();   
+ }   
+ kioskVideo = document.getElementById('kioskVideo');   
+ kioskCanvas = document.getElementById('kioskCanvas');   
+ kioskCtx = kioskCanvas.getContext('2d');   
+ try {   
+ const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } });   
+ kioskVideo.srcObject = stream;   
+ await new Promise(r => kioskVideo.onloadedmetadata = r);   
+ kioskVideo.play();   
+ } catch(e) {   
+ showToast('Camera access denied!','error');   
+ backToMode();   
+ return;   
+ }   
+ kioskCanvas.width = kioskVideo.videoWidth || 640;   
+ kioskCanvas.height = kioskVideo.videoHeight || 480;   
+ updateKioskStatus('active', 'Scanning... Show Your Face');   
+ document.getElementById('kioskScanner').style.display = 'block';   
+ kioskProcessing = false;   
+ kioskDetectLoop();   
+ if('wakeLock' in navigator) {   
+ try { await navigator.wakeLock.request('screen'); } catch(e){}   
+ }   
+}   
+function stopKiosk() {   
+ if(kioskVideo && kioskVideo.srcObject) {   
+ kioskVideo.srcObject.getTracks().forEach(t=>t.stop());   
+ kioskVideo.srcObject = null;   
+ }   
+ kioskProcessing = false;   
+}   
+function updateKioskStatus(state, text) {   
+ const dot = document.getElementById('kioskStatusDot');   
+ const txt = document.getElementById('kioskStatusText');   
+ dot.className = 'kiosk-status-dot ' + state;   
+ txt.textContent = text;   
+}   
+async function kioskDetectLoop() {   
+ if(!kioskVideo || kioskVideo.paused || kioskVideo.ended || document.getElementById('kioskPanel').classList.contains('hidden')) {   
+ if(!document.getElementById('kioskPanel').classList.contains('hidden')) {   
+ requestAnimationFrame(kioskDetectLoop);   
+ }   
+ return;   
+ }   
+ const students = DB ? DB.getStudents() : {};   
+ const studentList = Object.entries(students).map(([id,s])=>({...s, id}));   
+ document.getElementById('kioskCount').textContent = 'Students: ' + studentList.length;   
+ if(studentList.length === 0) {   
+ kioskCtx.clearRect(0, 0, kioskCanvas.width, kioskCanvas.height);   
+ updateKioskStatus('scanning', 'No students registered! Add from Admin');   
+ requestAnimationFrame(kioskDetectLoop);   
+ return;   
+ }   
+ const detections = await faceapi.detectAllFaces(   
+ kioskVideo, new faceapi.TinyFaceDetectorOptions({ inputSize: 416, scoreThreshold: 0.5 })   
+ ).withFaceLandmarks().withFaceDescriptors();   
+ kioskCtx.clearRect(0, 0, kioskCanvas.width, kioskCanvas.height);   
+ const dims = faceapi.matchDimensions(kioskCanvas, { width: kioskVideo.videoWidth, height: kioskVideo.videoHeight });   
+ const resized = faceapi.resizeResults(detections, dims);   
+ resized.forEach((det, i) => {   
+ const box = det.detection.box;   
+ const isMatch = !kioskProcessing && findBestMatch(det.descriptor, studentList);   
+ const color = isMatch ? '#00ff88' : '#ff4444';   
+ kioskCtx.strokeStyle = color;   
+ kioskCtx.lineWidth = 3;   
+ kioskCtx.strokeRect(box.x, box.y, box.width, box.height);   
+ kioskCtx.fillStyle = color;   
+ kioskCtx.font = 'bold 16px Segoe UI';   
+ kioskCtx.fillText(isMatch ? '✓ ' + isMatch.student.name : '✗ Unknown', box.x, box.y - 8);   
+ });   
+ if(detections.length > 0 && !kioskProcessing && studentList.length > 0) {   
+ const descriptor = detections[0].descriptor;   
+ const match = findBestMatch(descriptor, studentList);   
+ if(match) {   
+ await kioskMarkAttendance(match.student);   
+ }   
+ }   
+ requestAnimationFrame(kioskDetectLoop);   
+}   
+function findBestMatch(descriptor, studentList) {   
+ let bestStudent = null;   
+ let minDistance = Infinity;   
+ for(const student of studentList) {   
+ if(!student.descriptor || !student.descriptor.length) continue;   
+ const studentDesc = new Float32Array(student.descriptor);   
+ const dist = faceapi.euclideanDistance(descriptor, studentDesc);   
+ if(dist < minDistance) {   
+ minDistance = dist;   
+ bestStudent = student;   
+ }   
+ }   
+ if(bestStudent && minDistance < MATCH_THRESHOLD) {   
+ return { student: bestStudent, distance: minDistance };   
+ }   
+ return null;   
+}   
+async function kioskMarkAttendance(student) {   
+ if(lastMarkedStudent === student.id && (Date.now() - lastMarkedTime) < COOLDOWN) {   
+ return;   
+ }   
+ kioskProcessing = true;   
+ document.getElementById('kioskScanner').style.display = 'none';   
+ updateKioskStatus('scanning', 'Recognizing...');   
+ try {   
+ const today = new Date().toLocaleDateString('en-CA');   
+ const attendance = DB.getAttendance();   
+ const records = Object.values(attendance).filter(r => r.studentId === student.id && r.date === today);   
+ let type = 'login';   
+ if(records.length > 0) {   
+ const lastRec = records.sort((a,b) => b.timestamp - a.timestamp)[0];   
+ if(lastRec.type === 'login') type = 'logout';   
+ }   
+ const now = new Date();   
+ const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });   
+ await DB.addAttendance({   
+ studentId: student.id,   
+ studentName: student.name,   
+ type: type,   
+ timestamp: Date.now(),   
+ date: today,   
+ time: timeStr,   
+ device: 'kiosk'   
+ });   
+ const popup = document.getElementById('kioskPopup');   
+ document.getElementById('kPopupName').textContent = student.name;   
+ document.getElementById('kPopupType').textContent = type === 'login' ? '✅ Login Successful' : '👋 Logout Successful';   
+ document.getElementById('kPopupType').style.color = type === 'login' ? '#00ff88' : '#ffaa00';   
+ document.getElementById('kPopupTime').textContent = timeStr;   
+ popup.classList.add('show');   
+ playSuccess();   
+ document.getElementById('kioskLastEntry').textContent = (type === 'login' ? '🟢' : '🔴') + ' ' + student.name + ' — ' + type.toUpperCase() + ' at ' + timeStr;   
+ lastMarkedStudent = student.id;   
+ lastMarkedTime = Date.now();   
+ setTimeout(() => {   
+ popup.classList.remove('show');   
+ kioskProcessing = false;   
+ document.getElementById('kioskScanner').style.display = 'block';   
+ updateKioskStatus('active', 'Scanning... Show Your Face');   
+ }, 2500);   
+ } catch(e) {   
+ console.error(e);   
+ kioskProcessing = false;   
+ document.getElementById('kioskScanner').style.display = 'block';   
+ updateKioskStatus('active', 'Scanning... Show Your Face');   
+ }   
+}   
+  
+// ===================== INIT =====================   
+window.addEventListener('DOMContentLoaded', () => {   
+ loadModels();   
+});   
+window.addEventListener('beforeunload', (e) => {   
+ if(!document.getElementById('kioskPanel').classList.contains('hidden')) {   
+ e.preventDefault();   
+ e.returnValue = '';   
+ }   
+});   
+</script>   </body>   
 </html>
+
+```
