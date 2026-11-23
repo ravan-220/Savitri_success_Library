@@ -104,7 +104,7 @@
     ========================================================================== -->
     <main id="panel-door" class="flex-1 flex flex-col items-center justify-center px-4 py-6 sm:py-10">
         <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden">
-            
+
             <!-- Kiosk Top Bar -->
             <div class="px-6 py-4 bg-slate-950/60 border-b border-slate-800 flex items-center justify-between">
                 <div>
@@ -134,7 +134,7 @@
                     </p>
 
                     <!-- Primary Scan Button -->
-                    <button onclick="activateDoorScanner()"
+                    <button type="button" onclick="window.activateDoorScanner()"
                         class="pulse-scan-btn w-full py-5 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 active:scale-[0.98] text-white font-extrabold text-base sm:text-lg tracking-wide shadow-xl shadow-emerald-950/80 transition flex items-center justify-center gap-3 cursor-pointer">
                         <i data-lucide="camera" class="w-6 h-6"></i>
                         <span>SCAN FACE FOR ATTENDANCE</span>
@@ -153,7 +153,7 @@
                             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
                             <span id="doorScanStatusText">Opening Camera...</span>
                         </span>
-                        <button onclick="resetDoorToIdle()" class="text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-slate-800">
+                        <button type="button" onclick="window.resetDoorToIdle()" class="text-xs text-slate-400 hover:text-white px-2.5 py-1 rounded-lg bg-slate-800 cursor-pointer">
                             Cancel
                         </button>
                     </div>
@@ -172,7 +172,6 @@
                             <div class="scanner-laser"></div>
                         </div>
 
-                        <!-- Fallback message if camera blocked in preview -->
                         <!-- Fallback / Status message if camera blocked or models unavailable -->
                         <div id="doorCamFallback" class="hidden p-4 text-center z-20 bg-slate-950/90 rounded-2xl max-w-xs">
                             <i data-lucide="camera-off" class="w-8 h-8 text-amber-400 mx-auto mb-2"></i>
@@ -278,27 +277,27 @@
                     <p class="text-xs text-slate-400">Live cloud sync with Door Kiosk &bull; Instant seat &amp; fee tracking</p>
                 </div>
                 <div class="flex flex-wrap items-center gap-2">
-                    <button onclick="openAddStudentModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-emerald-950 transition">
+                    <button type="button" onclick="window.openAddStudentModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg shadow-emerald-950 transition cursor-pointer">
                         <i data-lucide="user-plus" class="w-4 h-4"></i>
                         <span>+ Add New Student</span>
                     </button>
-                    <button onclick="simulateAdminTestScan()" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-indigo-950/70 hover:bg-indigo-900 text-indigo-200 text-xs sm:text-sm font-semibold border border-indigo-500/40 transition" title="Simulate a test scan for your first registered student">
+                    <button type="button" onclick="window.simulateAdminTestScan()" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-indigo-950/70 hover:bg-indigo-900 text-indigo-200 text-xs sm:text-sm font-semibold border border-indigo-500/40 transition cursor-pointer" title="Simulate a test scan for your first registered student">
                         <i data-lucide="scan-face" class="w-4 h-4 text-indigo-400"></i>
                         <span>Test Scan</span>
                     </button>
-                    <button onclick="exportAdminCSV()" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold border border-slate-700 transition">
+                    <button type="button" onclick="window.exportAdminCSV()" class="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold border border-slate-700 transition cursor-pointer">
                         <i data-lucide="download" class="w-4 h-4 text-emerald-400"></i>
                         <span>Export Selected Date CSV</span>
                     </button>
-                    <button onclick="openChangePinModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-amber-950 text-amber-300 text-xs sm:text-sm font-semibold border border-slate-700 transition" title="Change Owner Admin PIN">
+                    <button type="button" onclick="window.openChangePinModal()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-amber-950 text-amber-300 text-xs sm:text-sm font-semibold border border-slate-700 transition cursor-pointer" title="Change Owner Admin PIN">
                         <i data-lucide="key-round" class="w-4 h-4"></i>
                         <span>Change PIN</span>
                     </button>
-                    <button onclick="clearAllLibraryData()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-rose-950 text-rose-300 text-xs sm:text-sm font-semibold border border-slate-700 transition" title="Clear all students and attendance records">
+                    <button type="button" onclick="window.clearAllLibraryData()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-rose-950 text-rose-300 text-xs sm:text-sm font-semibold border border-slate-700 transition cursor-pointer" title="Clear all students and attendance records">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                         <span>Clear All Data</span>
                     </button>
-                    <button onclick="lockAndSwitchToDoor()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-rose-950 text-slate-300 hover:text-rose-300 text-xs sm:text-sm font-semibold border border-slate-700 transition" title="Lock & Switch to Door Kiosk">
+                    <button type="button" onclick="window.lockAndSwitchToDoor()" class="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-rose-950 text-slate-300 hover:text-rose-300 text-xs sm:text-sm font-semibold border border-slate-700 transition cursor-pointer" title="Lock & Switch to Door Kiosk">
                         <i data-lucide="log-out" class="w-4 h-4"></i>
                         <span>Lock &amp; Door Mode</span>
                     </button>
@@ -377,9 +376,9 @@
                         <p class="text-xs text-slate-400">Toggle Fee Status (Paid/Pending) with 1 click or edit student details</p>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
-                        <input type="text" id="adminStudentSearch" oninput="renderAdminStudentsTable()" placeholder="Search name, seat, mobile..."
+                        <input type="text" id="adminStudentSearch" oninput="window.renderAdminStudentsTable()" placeholder="Search name, seat, mobile..."
                             class="px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white focus:border-emerald-500 outline-none w-48 sm:w-56">
-                        <select id="adminStudentFilter" onchange="renderAdminStudentsTable()"
+                        <select id="adminStudentFilter" onchange="window.renderAdminStudentsTable()"
                             class="px-3 py-2 rounded-xl bg-slate-950 border border-slate-700 text-xs text-white outline-none">
                             <option value="ALL">All Students</option>
                             <option value="INSIDE">Inside Library Now</option>
@@ -422,17 +421,17 @@
 
                     <!-- Prominent Date Filter Bar -->
                     <div class="flex flex-wrap items-center gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800">
-                        <button type="button" onclick="setAdminLogDate('TODAY')" id="btnDateToday"
-                            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition">
+                        <button type="button" onclick="window.setAdminLogDate('TODAY')" id="btnDateToday"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white transition cursor-pointer">
                             Today
                         </button>
-                        <button type="button" onclick="setAdminLogDate('YESTERDAY')" id="btnDateYesterday"
-                            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                        <button type="button" onclick="window.setAdminLogDate('YESTERDAY')" id="btnDateYesterday"
+                            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-300 transition cursor-pointer">
                             Yesterday
                         </button>
                         <div class="flex items-center gap-1.5 pl-1">
                             <span class="text-[11px] text-slate-400 font-semibold">Custom Date:</span>
-                            <input type="date" id="adminLogDateInput" onchange="onAdminCustomDateChange()"
+                            <input type="date" id="adminLogDateInput" onchange="window.onAdminCustomDateChange()"
                                 class="px-2.5 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-xs font-mono text-white focus:border-emerald-500 outline-none">
                         </div>
                     </div>
@@ -470,12 +469,12 @@
                     <h3 id="modalTitle" class="text-base sm:text-lg font-extrabold text-white">Add New Library Student</h3>
                     <p class="text-[11px] text-slate-400">Capture student's live face photo from Admin Panel during registration</p>
                 </div>
-                <button onclick="closeStudentModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+                <button type="button" onclick="window.closeStudentModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
             </div>
 
-            <form id="studentForm" onsubmit="saveStudentForm(event)" class="p-6 space-y-5">
+            <form id="studentForm" onsubmit="window.saveStudentForm(event)" class="p-6 space-y-5">
                 <input type="hidden" id="editStudentId">
 
                 <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
@@ -492,18 +491,18 @@
                         </div>
 
                         <div class="flex flex-wrap justify-center gap-2 mt-3 w-full">
-                            <button type="button" id="btnModalOpenCam" onclick="startModalCamera()" class="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1">
+                            <button type="button" id="btnModalOpenCam" onclick="window.startModalCamera()" class="px-3 py-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold flex items-center gap-1 cursor-pointer">
                                 <i data-lucide="camera" class="w-3.5 h-3.5"></i> Open Camera
                             </button>
-                            <button type="button" id="btnModalSnap" onclick="snapModalPhoto()" class="hidden px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow">
+                            <button type="button" id="btnModalSnap" onclick="window.snapModalPhoto()" class="hidden px-3.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold shadow cursor-pointer">
                                 Click Photo
                             </button>
-                            <button type="button" id="btnModalRetake" onclick="startModalCamera()" class="hidden px-3.5 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-amber-300 text-xs font-bold">
+                            <button type="button" id="btnModalRetake" onclick="window.startModalCamera()" class="hidden px-3.5 py-1.5 rounded-lg bg-amber-600/20 hover:bg-amber-600/30 border border-amber-500/40 text-amber-300 text-xs font-bold cursor-pointer">
                                 Retake
                             </button>
                             <label class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold cursor-pointer flex items-center gap-1">
                                 <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload
-                                <input type="file" accept="image/*" onchange="uploadModalPhoto(event)" class="hidden">
+                                <input type="file" accept="image/*" onchange="window.uploadModalPhoto(event)" class="hidden">
                             </label>
                         </div>
                         <div id="modalFaceDescriptorBadge" class="mt-2.5 text-[10px] font-semibold text-slate-400 text-center">
@@ -560,10 +559,10 @@
                 </div>
 
                 <div class="pt-4 border-t border-slate-800 flex items-center justify-end gap-3">
-                    <button type="button" onclick="closeStudentModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold">
+                    <button type="button" onclick="window.closeStudentModal()" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold cursor-pointer">
                         Cancel
                     </button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg">
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg cursor-pointer">
                         Save Student Record
                     </button>
                 </div>
@@ -578,33 +577,33 @@
         <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-base font-extrabold text-white">Change Owner Admin PIN</h3>
-                <button type="button" onclick="closeChangePinModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+                <button type="button" onclick="window.closeChangePinModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer">
                     <i data-lucide="x" class="w-4 h-4"></i>
                 </button>
             </div>
-            <form onsubmit="saveNewAdminPin(event)" class="space-y-4">
+            <form onsubmit="window.saveNewAdminPin(event)" class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-300 mb-1">New 4-Digit PIN *</label>
-                    <input type="password" id="newAdminPinInput" maxlength="4" pattern="\d{4}" inputmode="numeric" required placeholder="e.g., 5678"
+                    <input type="password" id="newAdminPinInput" maxlength="4" pattern="\d{4}" inputmode="numeric" required placeholder="••••"
                         class="w-full text-center font-mono text-xl tracking-[0.5em] py-3 rounded-xl bg-slate-950 border border-slate-700 focus:border-emerald-500 outline-none text-white">
                 </div>
                 <div class="flex justify-end gap-2">
-                    <button type="button" onclick="closeChangePinModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-xs font-semibold text-slate-300">Cancel</button>
-                    <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white">Save New PIN</button>
+                    <button type="button" onclick="window.closeChangePinModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-xs font-semibold text-slate-300 cursor-pointer">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-xs font-bold text-white cursor-pointer">Save New PIN</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- =========================================================================
-         FIREBASE CLOUD SYNC + 2-PANEL APPLICATION SCRIPT
+         FIREBASE CLOUD SYNC + LOCAL PERSISTENCE + 2-PANEL APPLICATION SCRIPT
     ========================================================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global State
+        // Global Application State (Zero Demo Students on Start)
         let db = null;
         let auth = null;
         let currentUser = null;
@@ -612,43 +611,100 @@
 
         let students = [];
         let attendanceLogs = [];
-        let ownerPin = sessionStorage.getItem('ssl_owner_pin') || '1234';
+        let ownerPin = localStorage.getItem('ssl_owner_pin') || sessionStorage.getItem('ssl_owner_pin') || '1234';
         let isAdminUnlocked = sessionStorage.getItem('ssl_admin_unlocked') === 'true';
         let activePanel = 'door';
-        let selectedAdminLogDate = new Date().toISOString().split('T')[0];
+        let selectedAdminLogDate = getTodayKey();
         let doorCamStream = null;
         let modalCamStream = null;
         let capturedFaceDataUrl = null;
         let capturedFaceDescriptor = null;
         let faceModelsLoaded = false;
         let faceModelsLoading = false;
+        let faceModelError = '';
         let doorScanLoopId = null;
         let isProcessingFaceMatch = false;
         let confirmTimer = null;
         let countdownInterval = null;
 
+        const STORAGE_STUDENTS_KEY = 'ssl_v2_students';
+        const STORAGE_LOGS_KEY = 'ssl_v2_attendance';
+        const STORAGE_SYNC_KEY = 'ssl_v2_sync_ping';
+
         const FACE_MODEL_URLS = [
             'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model',
-            'https://unpkg.com/@vladmandic/face-api/model'
+            'https://unpkg.com/@vladmandic/face-api/model',
+            'https://justadudewhohacks.github.io/face-api.js/models'
         ];
-        const FACE_MATCH_THRESHOLD = 0.52;
+        const FACE_MATCH_THRESHOLD = 0.54;
 
         function getTodayKey() {
-            return new Date().toISOString().split('T')[0];
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         function getYesterdayKey() {
             const d = new Date();
             d.setDate(d.getDate() - 1);
-            return d.toISOString().split('T')[0];
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
+
+        function saveLocalCache() {
+            try {
+                localStorage.setItem(STORAGE_STUDENTS_KEY, JSON.stringify(students));
+                localStorage.setItem(STORAGE_LOGS_KEY, JSON.stringify(attendanceLogs));
+                localStorage.setItem(STORAGE_SYNC_KEY, String(Date.now()));
+            } catch (e) {
+                // Ignore storage quota errors
+            }
+        }
+
+        function loadLocalCache() {
+            try {
+                const rawStudents = localStorage.getItem(STORAGE_STUDENTS_KEY);
+                const rawLogs = localStorage.getItem(STORAGE_LOGS_KEY);
+                if (rawStudents) {
+                    const parsed = JSON.parse(rawStudents);
+                    if (Array.isArray(parsed)) {
+                        students = parsed.sort((a, b) => (a.seat || '').localeCompare(b.seat || ''));
+                    }
+                }
+                if (rawLogs) {
+                    const parsedLogs = JSON.parse(rawLogs);
+                    if (Array.isArray(parsedLogs)) {
+                        attendanceLogs = parsedLogs.sort((a, b) => (b.checkInTimestamp || 0) - (a.checkInTimestamp || 0));
+                    }
+                }
+            } catch (e) {
+                // Ignore malformed local cache
+            }
+        }
+
+        // Cross-tab live synchronization listener
+        window.addEventListener('storage', (event) => {
+            if (event.key === STORAGE_STUDENTS_KEY || event.key === STORAGE_LOGS_KEY || event.key === STORAGE_SYNC_KEY) {
+                loadLocalCache();
+                refreshAllViews();
+            } else if (event.key === 'ssl_owner_pin' && event.newValue) {
+                ownerPin = event.newValue;
+            }
+        });
 
         // =========================================================================
         // FACE-API BIOMETRIC MODEL LOADER & DESCRIPTOR HELPERS
         // =========================================================================
         async function ensureFaceModelsLoaded() {
             if (faceModelsLoaded) return true;
-            if (!window.faceapi) return false;
+            if (!window.faceapi) {
+                faceModelError = 'Face recognition library failed to load.';
+                return false;
+            }
             if (faceModelsLoading) {
                 while (faceModelsLoading) {
                     await new Promise(r => setTimeout(r, 120));
@@ -656,6 +712,7 @@
                 return faceModelsLoaded;
             }
             faceModelsLoading = true;
+            faceModelError = '';
             try {
                 for (const baseUrl of FACE_MODEL_URLS) {
                     try {
@@ -665,13 +722,16 @@
                             faceapi.nets.faceRecognitionNet.loadFromUri(baseUrl)
                         ]);
                         faceModelsLoaded = true;
+                        faceModelError = '';
                         faceModelsLoading = false;
                         return true;
                     } catch (e) {
                         // Try next CDN mirror
                     }
                 }
+                faceModelError = 'Could not reach face recognition weights. Check internet connection.';
             } catch (err) {
+                faceModelError = 'Face recognition initialization failed.';
                 console.warn('Face models unavailable:', err);
             }
             faceModelsLoading = false;
@@ -732,13 +792,26 @@
         }
 
         // =========================================================================
-        // 1. INITIALIZE FIREBASE CLOUD SYNC (ZERO DEMO STUDENTS)
+        // 1. INITIALIZE FIREBASE CLOUD SYNC + LOCAL PERSISTENCE
         // =========================================================================
+        function resolveFirebaseConfig() {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                return typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+            }
+            if (window.__SSL_FIREBASE_CONFIG__) {
+                return window.__SSL_FIREBASE_CONFIG__;
+            }
+            return null;
+        }
+
         async function initCloudSync() {
             const badge = document.getElementById('cloudSyncBadge');
+            loadLocalCache();
+            refreshAllViews();
+
             try {
-                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                    const firebaseConfig = JSON.parse(__firebase_config);
+                const firebaseConfig = resolveFirebaseConfig();
+                if (firebaseConfig && firebaseConfig.apiKey) {
                     const app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
@@ -757,13 +830,14 @@
                         subscribeToFirestore();
                     });
                 } else {
-                    throw new Error('Standalone live mode');
+                    badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+                    badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Local Sync Active';
+                    refreshAllViews();
                 }
             } catch (err) {
-                students = [];
-                attendanceLogs = [];
-                badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/15 text-blue-300 border border-blue-500/30';
-                badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Instant Live Mode';
+                console.warn('Cloud sync fallback to local storage:', err);
+                badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+                badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Local Sync Active';
                 refreshAllViews();
             }
             ensureFaceModelsLoaded();
@@ -776,6 +850,7 @@
             onSnapshot(studentsRef, (snapshot) => {
                 students = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
                     .sort((a, b) => (a.seat || '').localeCompare(b.seat || ''));
+                saveLocalCache();
                 refreshAllViews();
             }, (error) => {
                 console.error('Students listener error:', error);
@@ -785,6 +860,7 @@
             onSnapshot(logsRef, (snapshot) => {
                 attendanceLogs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
                     .sort((a, b) => (b.checkInTimestamp || 0) - (a.checkInTimestamp || 0));
+                saveLocalCache();
                 refreshAllViews();
             }, (error) => {
                 console.error('Attendance listener error:', error);
@@ -792,16 +868,21 @@
         }
 
         window.clearAllLibraryData = async function() {
-            if (db && currentUser) {
-                for (const s of students) {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', s.id));
+            try {
+                if (db && currentUser) {
+                    for (const s of students) {
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', s.id));
+                    }
+                    for (const l of attendanceLogs) {
+                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', l.id));
+                    }
                 }
-                for (const l of attendanceLogs) {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', l.id));
-                }
+            } catch (e) {
+                console.warn('Cloud clear failed, clearing local cache:', e);
             }
             students = [];
             attendanceLogs = [];
+            saveLocalCache();
             refreshAllViews();
             showToast('All student and attendance records cleared.', 'info');
         };
@@ -841,9 +922,9 @@
                 adminEl.classList.add('hidden');
                 navDoor.className = activeBtnClass;
                 navAdmin.className = inactiveBtnClass;
-                resetDoorToIdle();
+                window.resetDoorToIdle();
             } else {
-                resetDoorToIdle();
+                window.resetDoorToIdle();
                 doorEl.classList.add('hidden');
                 adminEl.classList.remove('hidden');
                 navDoor.className = inactiveBtnClass;
@@ -917,9 +998,10 @@
             const val = document.getElementById('newAdminPinInput').value.trim();
             if (/^\d{4}$/.test(val)) {
                 ownerPin = val;
+                localStorage.setItem('ssl_owner_pin', val);
                 sessionStorage.setItem('ssl_owner_pin', val);
-                closeChangePinModal();
-                showToast(`Owner PIN updated to ${val}`, 'success');
+                window.closeChangePinModal();
+                showToast('Owner PIN updated successfully', 'success');
             } else {
                 showToast('Please enter a valid 4-digit PIN', 'warning');
             }
@@ -962,7 +1044,7 @@
                 video.classList.add('hidden');
                 document.getElementById('doorCamFallback').classList.remove('hidden');
                 document.getElementById('doorFallbackTitle').textContent = 'Camera Permission Blocked or Unavailable';
-                document.getElementById('doorFallbackDesc').textContent = 'Enable browser camera access on the door device to scan faces automatically.';
+                document.getElementById('doorFallbackDesc').textContent = 'Allow browser camera access on the door device to scan faces automatically.';
                 document.getElementById('doorScanStatusText').textContent = 'Camera Unavailable';
                 document.getElementById('doorAutoMatchStatus').textContent = 'Camera access could not be opened';
                 document.getElementById('doorAutoMatchSub').textContent = 'Check device camera permissions and try again';
@@ -1005,7 +1087,6 @@
             ctx.roundRect(x, y, w, h, 10);
             ctx.stroke();
 
-            // Draw un-mirrored text label above box
             ctx.save();
             ctx.scale(-1, 1);
             ctx.font = 'bold 12px Inter, sans-serif';
@@ -1025,31 +1106,37 @@
                 if (isProcessingFaceMatch || !doorCamStream || video.paused || video.ended) return;
 
                 if (video.readyState >= 2) {
-                    const studentsWithFaces = students.filter(s => Array.isArray(s.faceDescriptor) && s.faceDescriptor.length > 0);
-                    if (studentsWithFaces.length === 0) {
-                        statusEl.textContent = 'No registered face profiles found';
-                        subEl.textContent = 'Add students and capture their face photo in Owner Admin Panel';
+                    const modelsOk = await ensureFaceModelsLoaded();
+                    if (!modelsOk) {
+                        statusEl.textContent = faceModelError || 'Loading face recognition engine...';
+                        subEl.textContent = 'Retrying connection to biometric model servers';
                     } else {
-                        const result = await extractDescriptorFromImageOrVideo(video);
-                        if (result && result.descriptor) {
-                            const match = findBestMatchedStudent(result.descriptor);
-                            if (match && match.student) {
-                                isProcessingFaceMatch = true;
-                                drawFaceBoxOnOverlay(result.box, result.dims, `Matched: ${match.student.name}`, true);
-                                statusEl.textContent = `Matched: ${match.student.name} (${match.student.seat})`;
-                                subEl.textContent = 'Marking attendance automatically...';
-                                stopDoorScanLoop();
-                                await window.completeDoorScan(match.student.id);
-                                return;
-                            } else {
-                                drawFaceBoxOnOverlay(result.box, result.dims, 'Scanning...', false);
-                                statusEl.textContent = 'Face detected — matching with registered students...';
-                                subEl.textContent = 'Hold steady in front of the camera';
-                            }
+                        const studentsWithFaces = students.filter(s => Array.isArray(s.faceDescriptor) && s.faceDescriptor.length > 0);
+                        if (studentsWithFaces.length === 0) {
+                            statusEl.textContent = 'No registered face profiles found';
+                            subEl.textContent = 'Add students and capture their face photo in Owner Admin Panel';
                         } else {
-                            clearDoorOverlay();
-                            statusEl.textContent = 'Looking for a face...';
-                            subEl.textContent = 'Position face clearly inside the scanner frame';
+                            const result = await extractDescriptorFromImageOrVideo(video);
+                            if (result && result.descriptor) {
+                                const match = findBestMatchedStudent(result.descriptor);
+                                if (match && match.student) {
+                                    isProcessingFaceMatch = true;
+                                    drawFaceBoxOnOverlay(result.box, result.dims, `Matched: ${match.student.name}`, true);
+                                    statusEl.textContent = `Matched: ${match.student.name} (${match.student.seat})`;
+                                    subEl.textContent = 'Marking attendance automatically...';
+                                    stopDoorScanLoop();
+                                    await window.completeDoorScan(match.student.id);
+                                    return;
+                                } else {
+                                    drawFaceBoxOnOverlay(result.box, result.dims, 'Scanning...', false);
+                                    statusEl.textContent = 'Face detected — matching with registered students...';
+                                    subEl.textContent = 'Hold steady in front of the camera';
+                                }
+                            } else {
+                                clearDoorOverlay();
+                                statusEl.textContent = 'Looking for a face...';
+                                subEl.textContent = 'Position face clearly inside the scanner frame';
+                            }
                         }
                     }
                 }
@@ -1140,28 +1227,38 @@
                     status: 'Inside'
                 };
 
-                if (db && currentUser) {
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', logId), newEntry);
-                } else {
-                    attendanceLogs.unshift(newEntry);
-                    refreshAllViews();
+                try {
+                    if (db && currentUser) {
+                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', logId), newEntry);
+                    }
+                } catch (e) {
+                    console.warn('Cloud log write failed, saved locally:', e);
                 }
+                const existingIdx = attendanceLogs.findIndex(l => l.id === logId);
+                if (existingIdx >= 0) attendanceLogs[existingIdx] = newEntry;
+                else attendanceLogs.unshift(newEntry);
+                saveLocalCache();
+                refreshAllViews();
                 playChime(false);
                 showDoorConfirmation(student, timeStr, 'ENTRY', newEntry);
             } else {
                 // 2nd Scan of the Day -> EXIT (CHECK-OUT)
-                if (db && currentUser) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', todayRecord.id), {
-                        checkOutTime: timeStr,
-                        checkOutTimestamp: nowMs,
-                        status: 'Checked Out'
-                    });
-                } else {
-                    todayRecord.checkOutTime = timeStr;
-                    todayRecord.checkOutTimestamp = nowMs;
-                    todayRecord.status = 'Checked Out';
-                    refreshAllViews();
+                todayRecord.checkOutTime = timeStr;
+                todayRecord.checkOutTimestamp = nowMs;
+                todayRecord.status = 'Checked Out';
+                try {
+                    if (db && currentUser) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', todayRecord.id), {
+                            checkOutTime: timeStr,
+                            checkOutTimestamp: nowMs,
+                            status: 'Checked Out'
+                        });
+                    }
+                } catch (e) {
+                    console.warn('Cloud log update failed, saved locally:', e);
                 }
+                saveLocalCache();
+                refreshAllViews();
                 playChime(true);
                 showDoorConfirmation(student, timeStr, 'EXIT', todayRecord);
             }
@@ -1254,7 +1351,7 @@
             document.getElementById('metricFeesPending').textContent = students.filter(s => s.feeStatus === 'Pending').length;
 
             renderVisualSeatMap(insideStudentIds);
-            renderAdminStudentsTable(insideStudentIds);
+            window.renderAdminStudentsTable(insideStudentIds);
             renderAdminAttendanceTable();
             if (window.lucide) lucide.createIcons();
         }
@@ -1383,26 +1480,34 @@
             const stu = students.find(s => s.id === studentId);
             if (!stu) return;
             const nextStatus = stu.feeStatus === 'Paid' ? 'Pending' : 'Paid';
-            if (db && currentUser) {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
-                    feeStatus: nextStatus
-                });
-            } else {
-                stu.feeStatus = nextStatus;
-                refreshAllViews();
+            stu.feeStatus = nextStatus;
+            try {
+                if (db && currentUser) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                        feeStatus: nextStatus
+                    });
+                }
+            } catch (e) {
+                console.warn('Cloud fee update failed, saved locally:', e);
             }
+            saveLocalCache();
+            refreshAllViews();
             showToast(`${stu.name}'s fee marked as ${nextStatus}`, nextStatus === 'Paid' ? 'success' : 'warning');
         };
 
         window.deleteStudentRecord = async function(studentId) {
             const stu = students.find(s => s.id === studentId);
             if (!stu) return;
-            if (db && currentUser) {
-                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', studentId));
-            } else {
-                students = students.filter(s => s.id !== studentId);
-                refreshAllViews();
+            students = students.filter(s => s.id !== studentId);
+            try {
+                if (db && currentUser) {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', studentId));
+                }
+            } catch (e) {
+                console.warn('Cloud delete failed, removed locally:', e);
             }
+            saveLocalCache();
+            refreshAllViews();
             showToast(`Removed ${stu.name} from registry`, 'info');
         };
 
@@ -1683,16 +1788,22 @@
 
             const record = { id: studentId, name, mobile, seat, shift, feeAmount, feeStatus, photo, faceDescriptor };
 
-            if (db && currentUser) {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', studentId), record);
-            } else {
-                const idx = students.findIndex(s => s.id === studentId);
-                if (idx >= 0) students[idx] = record;
-                else students.push(record);
-                refreshAllViews();
+            const idx = students.findIndex(s => s.id === studentId);
+            if (idx >= 0) students[idx] = record;
+            else students.push(record);
+            students.sort((a, b) => (a.seat || '').localeCompare(b.seat || ''));
+            saveLocalCache();
+            refreshAllViews();
+
+            try {
+                if (db && currentUser) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', studentId), record);
+                }
+            } catch (err) {
+                console.warn('Cloud student save failed, kept locally:', err);
             }
 
-            closeStudentModal();
+            window.closeStudentModal();
             showToast(existingId ? `Updated ${name} (${seat})` : `Registered ${name} (${seat})`, 'success');
         };
 
