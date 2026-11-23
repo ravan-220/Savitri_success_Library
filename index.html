@@ -596,18 +596,26 @@
     </div>
 
     <!-- =========================================================================
-         FIREBASE CLOUD SYNC + LOCAL PERSISTENCE + 2-PANEL APPLICATION SCRIPT
+         FIREBASE REALTIME DB CLOUD SYNC + LOCAL PERSISTENCE + 2-PANEL SCRIPT
     ========================================================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getDatabase, ref, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
         // Global Application State (Zero Demo Students on Start)
         let db = null;
-        let auth = null;
-        let currentUser = null;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'savitri-success-library';
+        const LIBRARY_ROOT_PATH = 'savitriSuccessLibrary';
+
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyDrfXfFIMBAYUXv4tQtUyLyTfZN9rRXyHo",
+            authDomain: "face--authentication.firebaseapp.com",
+            databaseURL: "https://face--authentication-default-rtdb.firebaseio.com",
+            projectId: "face--authentication",
+            storageBucket: "face--authentication.firebasestorage.app",
+            messagingSenderId: "1080222250138",
+            appId: "1:1080222250138:web:3f1e7c0ac099346f291b23",
+            measurementId: "G-LSL532LEH9"
+        };
 
         let students = [];
         let attendanceLogs = [];
@@ -792,93 +800,88 @@
         }
 
         // =========================================================================
-        // 1. INITIALIZE FIREBASE CLOUD SYNC + LOCAL PERSISTENCE
+        // 1. INITIALIZE FIREBASE REALTIME DATABASE SYNC + LOCAL PERSISTENCE
         // =========================================================================
-        function resolveFirebaseConfig() {
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                return typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+        function setSyncBadgeStatus(mode) {
+            const badge = document.getElementById('cloudSyncBadge');
+            if (!badge) return;
+            if (mode === 'live') {
+                badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+                badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live Firebase Synced';
+            } else {
+                badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
+                badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Local Sync Active';
             }
-            if (window.__SSL_FIREBASE_CONFIG__) {
-                return window.__SSL_FIREBASE_CONFIG__;
-            }
-            return null;
         }
 
         async function initCloudSync() {
-            const badge = document.getElementById('cloudSyncBadge');
             loadLocalCache();
             refreshAllViews();
 
             try {
-                const firebaseConfig = resolveFirebaseConfig();
-                if (firebaseConfig && firebaseConfig.apiKey) {
-                    const app = initializeApp(firebaseConfig);
-                    auth = getAuth(app);
-                    db = getFirestore(app);
-
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
-
-                    onAuthStateChanged(auth, (user) => {
-                        if (!user) return;
-                        currentUser = user;
-                        badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
-                        badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live Cloud Synced';
-                        subscribeToFirestore();
-                    });
+                if (FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.databaseURL) {
+                    const app = initializeApp(FIREBASE_CONFIG);
+                    db = getDatabase(app);
+                    setSyncBadgeStatus('live');
+                    subscribeToRealtimeDB();
                 } else {
-                    badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
-                    badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Local Sync Active';
-                    refreshAllViews();
+                    setSyncBadgeStatus('local');
                 }
             } catch (err) {
-                console.warn('Cloud sync fallback to local storage:', err);
-                badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
-                badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Local Sync Active';
-                refreshAllViews();
+                console.warn('Firebase Realtime DB fallback to local storage:', err);
+                setSyncBadgeStatus('local');
             }
             ensureFaceModelsLoaded();
         }
 
-        function subscribeToFirestore() {
-            if (!db || !currentUser) return;
+        function subscribeToRealtimeDB() {
+            if (!db) return;
 
-            const studentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'students');
-            onSnapshot(studentsRef, (snapshot) => {
-                students = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
-                    .sort((a, b) => (a.seat || '').localeCompare(b.seat || ''));
+            const studentsDbRef = ref(db, `${LIBRARY_ROOT_PATH}/students`);
+            onValue(studentsDbRef, (snapshot) => {
+                const rawVal = snapshot.val();
+                if (rawVal && typeof rawVal === 'object') {
+                    students = Object.entries(rawVal)
+                        .map(([key, item]) => ({ ...(item || {}), id: (item && item.id) || key }))
+                        .sort((a, b) => (a.seat || '').localeCompare(b.seat || ''));
+                } else {
+                    students = [];
+                }
+                setSyncBadgeStatus('live');
                 saveLocalCache();
                 refreshAllViews();
             }, (error) => {
-                console.error('Students listener error:', error);
+                console.error('Realtime DB students listener error:', error);
             });
 
-            const logsRef = collection(db, 'artifacts', appId, 'public', 'data', 'attendance');
-            onSnapshot(logsRef, (snapshot) => {
-                attendanceLogs = snapshot.docs.map(d => ({ id: d.id, ...d.data() }))
-                    .sort((a, b) => (b.checkInTimestamp || 0) - (a.checkInTimestamp || 0));
+            const logsDbRef = ref(db, `${LIBRARY_ROOT_PATH}/attendance`);
+            onValue(logsDbRef, (snapshot) => {
+                const rawVal = snapshot.val();
+                if (rawVal && typeof rawVal === 'object') {
+                    attendanceLogs = Object.entries(rawVal)
+                        .map(([key, item]) => ({ ...(item || {}), id: (item && item.id) || key }))
+                        .sort((a, b) => (b.checkInTimestamp || 0) - (a.checkInTimestamp || 0));
+                } else {
+                    attendanceLogs = [];
+                }
+                setSyncBadgeStatus('live');
                 saveLocalCache();
                 refreshAllViews();
             }, (error) => {
-                console.error('Attendance listener error:', error);
+                console.error('Realtime DB attendance listener error:', error);
             });
         }
 
         window.clearAllLibraryData = async function() {
             try {
-                if (db && currentUser) {
-                    for (const s of students) {
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', s.id));
-                    }
-                    for (const l of attendanceLogs) {
-                        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', l.id));
-                    }
+                if (db) {
+                    await Promise.all([
+                        remove(ref(db, `${LIBRARY_ROOT_PATH}/students`)),
+                        remove(ref(db, `${LIBRARY_ROOT_PATH}/attendance`))
+                    ]);
                 }
             } catch (e) {
-                console.warn('Cloud clear failed, clearing local cache:', e);
+                console.warn('Firebase clear failed, clearing local cache:', e);
             }
             students = [];
             attendanceLogs = [];
@@ -1228,11 +1231,11 @@
                 };
 
                 try {
-                    if (db && currentUser) {
-                        await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', logId), newEntry);
+                    if (db) {
+                        await set(ref(db, `${LIBRARY_ROOT_PATH}/attendance/${logId}`), newEntry);
                     }
                 } catch (e) {
-                    console.warn('Cloud log write failed, saved locally:', e);
+                    console.warn('Realtime DB log write failed, saved locally:', e);
                 }
                 const existingIdx = attendanceLogs.findIndex(l => l.id === logId);
                 if (existingIdx >= 0) attendanceLogs[existingIdx] = newEntry;
@@ -1247,15 +1250,15 @@
                 todayRecord.checkOutTimestamp = nowMs;
                 todayRecord.status = 'Checked Out';
                 try {
-                    if (db && currentUser) {
-                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'attendance', todayRecord.id), {
+                    if (db) {
+                        await update(ref(db, `${LIBRARY_ROOT_PATH}/attendance/${todayRecord.id}`), {
                             checkOutTime: timeStr,
                             checkOutTimestamp: nowMs,
                             status: 'Checked Out'
                         });
                     }
                 } catch (e) {
-                    console.warn('Cloud log update failed, saved locally:', e);
+                    console.warn('Realtime DB log update failed, saved locally:', e);
                 }
                 saveLocalCache();
                 refreshAllViews();
@@ -1482,13 +1485,13 @@
             const nextStatus = stu.feeStatus === 'Paid' ? 'Pending' : 'Paid';
             stu.feeStatus = nextStatus;
             try {
-                if (db && currentUser) {
-                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', studentId), {
+                if (db) {
+                    await update(ref(db, `${LIBRARY_ROOT_PATH}/students/${studentId}`), {
                         feeStatus: nextStatus
                     });
                 }
             } catch (e) {
-                console.warn('Cloud fee update failed, saved locally:', e);
+                console.warn('Realtime DB fee update failed, saved locally:', e);
             }
             saveLocalCache();
             refreshAllViews();
@@ -1500,11 +1503,11 @@
             if (!stu) return;
             students = students.filter(s => s.id !== studentId);
             try {
-                if (db && currentUser) {
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', studentId));
+                if (db) {
+                    await remove(ref(db, `${LIBRARY_ROOT_PATH}/students/${studentId}`));
                 }
             } catch (e) {
-                console.warn('Cloud delete failed, removed locally:', e);
+                console.warn('Realtime DB delete failed, removed locally:', e);
             }
             saveLocalCache();
             refreshAllViews();
@@ -1781,120 +1784,4 @@
             const feeAmount = Number(document.getElementById('inpFeeAmount').value) || 800;
             const feeStatus = document.getElementById('inpFeeStatus').value;
 
-            const studentId = existingId || `stu_${Date.now()}`;
-            const firstNameEncoded = encodeURIComponent(name.split(' ')[0]);
-            const photo = capturedFaceDataUrl || `https://placehold.co/200x200/065f46/ecfdf5?text=${firstNameEncoded}`;
-            const faceDescriptor = capturedFaceDescriptor || existingStudent?.faceDescriptor || null;
-
-            const record = { id: studentId, name, mobile, seat, shift, feeAmount, feeStatus, photo, faceDescriptor };
-
-            const idx = students.findIndex(s => s.id === studentId);
-            if (idx >= 0) students[idx] = record;
-            else students.push(record);
-            students.sort((a, b) => (a.seat || '').localeCompare(b.seat || ''));
-            saveLocalCache();
-            refreshAllViews();
-
-            try {
-                if (db && currentUser) {
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', studentId), record);
-                }
-            } catch (err) {
-                console.warn('Cloud student save failed, kept locally:', err);
-            }
-
-            window.closeStudentModal();
-            showToast(existingId ? `Updated ${name} (${seat})` : `Registered ${name} (${seat})`, 'success');
-        };
-
-        // =========================================================================
-        // 6. CSV EXPORT, CLOCK, SOUND & TOASTS
-        // =========================================================================
-        window.exportAdminCSV = function() {
-            const dateLogs = attendanceLogs.filter(l => l.date === selectedAdminLogDate);
-            if (dateLogs.length === 0) {
-                showToast(`No attendance logs on ${selectedAdminLogDate} to export`, 'warning');
-                return;
-            }
-            const headers = ['Date', 'Student Name', 'Seat', 'Check-In', 'Check-Out', 'Status'];
-            const rows = dateLogs.map(l => [
-                l.date, `"${l.studentName}"`, l.seat, l.checkInTime, l.checkOutTime || 'Inside', l.status
-            ]);
-            const csv = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-            const a = document.createElement('a');
-            a.href = encodeURI(csv);
-            a.download = `Savitri_Success_Library_${selectedAdminLogDate}.csv`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            showToast(`CSV exported for ${selectedAdminLogDate}!`, 'success');
-        };
-
-        function updateLiveClock() {
-            const now = new Date();
-            const clockEl = document.getElementById('doorClock');
-            const dateEl = document.getElementById('doorDate');
-            if (clockEl) {
-                clockEl.textContent = now.toLocaleTimeString('en-US', {
-                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
-                });
-            }
-            if (dateEl) {
-                dateEl.textContent = now.toLocaleDateString('en-US', {
-                    weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
-                });
-            }
-        }
-
-        function playChime(isExit) {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(isExit ? 520 : 660, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(isExit ? 390 : 880, ctx.currentTime + 0.18);
-                gain.gain.setValueAtTime(0.18, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.25);
-            } catch (e) {}
-        }
-
-        function showToast(msg, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const colors = {
-                success: 'bg-emerald-950/95 border-emerald-500 text-emerald-100',
-                error: 'bg-rose-950/95 border-rose-500 text-rose-100',
-                warning: 'bg-amber-950/95 border-amber-500 text-amber-100',
-                info: 'bg-slate-900/95 border-slate-600 text-slate-100'
-            };
-            const el = document.createElement('div');
-            el.className = `pointer-events-auto px-4 py-3 rounded-2xl border shadow-xl text-xs font-bold backdrop-blur-md transition-all ${colors[type] || colors.info}`;
-            el.textContent = msg;
-            container.appendChild(el);
-            setTimeout(() => {
-                el.style.opacity = '0';
-                setTimeout(() => el.remove(), 300);
-            }, 3000);
-        }
-
-        // Boot App
-        window.addEventListener('DOMContentLoaded', () => {
-            if (window.lucide) lucide.createIcons();
-            updateLiveClock();
-            setInterval(updateLiveClock, 1000);
-
-            const initialHash = window.location.hash.replace('#', '');
-            if (initialHash === 'admin') {
-                window.switchPanel('admin');
-            } else {
-                window.switchPanel('door');
-            }
-            initCloudSync();
-        });
-    </script>
-</body>
-</html>
+            const studentId = existingId || `stu_${
