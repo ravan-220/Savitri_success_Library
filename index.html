@@ -26,6 +26,7 @@
         }
     </script>
     <style>
+        /* Animated laser scan line inside the camera frame */
         @keyframes scanBeam {
             0% { top: 8%; opacity: 0.25; }
             50% { top: 88%; opacity: 1; }
@@ -42,6 +43,8 @@
             z-index: 20;
             border-radius: 999px;
         }
+
+        /* Gentle pulse highlight on the main Door Kiosk scan button */
         @keyframes pulseRing {
             0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.55); }
             70% { transform: scale(1); box-shadow: 0 0 0 18px rgba(16, 185, 129, 0); }
@@ -50,9 +53,13 @@
         .pulse-scan-btn {
             animation: pulseRing 2.4s infinite;
         }
+
+        /* Mirror camera feed so selfie/door preview feels natural */
         .mirror-video {
             transform: scaleX(-1);
         }
+
+        /* Custom subtle dark scrollbar */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #0f172a; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 999px; }
@@ -172,7 +179,7 @@
                             <div class="scanner-laser"></div>
                         </div>
 
-                        <!-- Fallback / Status message if camera blocked or models unavailable -->
+                        <!-- Fallback message if camera blocked or unavailable -->
                         <div id="doorCamFallback" class="hidden p-4 text-center z-20 bg-slate-950/90 rounded-2xl max-w-xs">
                             <i data-lucide="camera-off" class="w-8 h-8 text-amber-400 mx-auto mb-2"></i>
                             <p id="doorFallbackTitle" class="text-xs text-slate-200 font-bold">Camera Access Required</p>
@@ -180,7 +187,7 @@
                         </div>
                     </div>
 
-                    <!-- Automatic Face Recognition Status Banner (No Manual Student Selection) -->
+                    <!-- Automatic Face Recognition Status Banner -->
                     <div class="w-full mt-4 bg-slate-950/90 border border-slate-800 rounded-2xl p-3.5 text-center">
                         <div id="doorAutoMatchStatus" class="text-xs font-extrabold text-emerald-400">
                             Looking for a face...
@@ -596,18 +603,15 @@
     </div>
 
     <!-- =========================================================================
-         FIREBASE REALTIME DB CLOUD SYNC + LOCAL PERSISTENCE + 2-PANEL SCRIPT
+         FIREBASE REALTIME DATABASE SYNC + LOCAL CACHE + 2-PANEL APP SCRIPT
     ========================================================================== -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getDatabase, ref, set, update, remove, onValue } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-database.js";
 
-        // Global Application State (Zero Demo Students on Start)
-        let db = null;
-        const LIBRARY_ROOT_PATH = 'savitriSuccessLibrary';
-
-        const FIREBASE_CONFIG = {
-            apiKey: "AIzaSyDrfXfFIMBAYUXv4tQtUyLyTfZN9rRXyHo",
+        // Firebase Realtime Database configuration for Savitri Success Library
+        const firebaseConfig = {
+            apiKey: "AIzaSyDrfXfFIMbAYUXv4tQtUyLyTfZN9rRXyHo",
             authDomain: "face--authentication.firebaseapp.com",
             databaseURL: "https://face--authentication-default-rtdb.firebaseio.com",
             projectId: "face--authentication",
@@ -617,6 +621,8 @@
             measurementId: "G-LSL532LEH9"
         };
 
+        // Application state starts completely empty (zero demo students)
+        let db = null;
         let students = [];
         let attendanceLogs = [];
         let ownerPin = localStorage.getItem('ssl_owner_pin') || sessionStorage.getItem('ssl_owner_pin') || '1234';
@@ -638,6 +644,7 @@
         const STORAGE_STUDENTS_KEY = 'ssl_v2_students';
         const STORAGE_LOGS_KEY = 'ssl_v2_attendance';
         const STORAGE_SYNC_KEY = 'ssl_v2_sync_ping';
+        const RTDB_ROOT_PATH = 'savitriSuccessLibrary';
 
         const FACE_MODEL_URLS = [
             'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model',
@@ -646,6 +653,7 @@
         ];
         const FACE_MATCH_THRESHOLD = 0.54;
 
+        // Date helpers in YYYY-MM-DD format
         function getTodayKey() {
             const now = new Date();
             const year = now.getFullYear();
@@ -663,6 +671,7 @@
             return `${year}-${month}-${day}`;
         }
 
+        // Persist fast local copy and trigger same-device cross-tab sync
         function saveLocalCache() {
             try {
                 localStorage.setItem(STORAGE_STUDENTS_KEY, JSON.stringify(students));
@@ -673,6 +682,7 @@
             }
         }
 
+        // Load cached records from localStorage
         function loadLocalCache() {
             try {
                 const rawStudents = localStorage.getItem(STORAGE_STUDENTS_KEY);
@@ -690,7 +700,7 @@
                     }
                 }
             } catch (e) {
-                // Ignore malformed local cache
+                // Ignore malformed cache data
             }
         }
 
@@ -705,7 +715,7 @@
         });
 
         // =========================================================================
-        // FACE-API BIOMETRIC MODEL LOADER & DESCRIPTOR HELPERS
+        // 1. FACE-API BIOMETRIC MODEL LOADER & DESCRIPTOR HELPERS
         // =========================================================================
         async function ensureFaceModelsLoaded() {
             if (faceModelsLoaded) return true;
@@ -734,7 +744,7 @@
                         faceModelsLoading = false;
                         return true;
                     } catch (e) {
-                        // Try next CDN mirror
+                        // Try next mirror URL
                     }
                 }
                 faceModelError = 'Could not reach face recognition weights. Check internet connection.';
@@ -800,93 +810,100 @@
         }
 
         // =========================================================================
-        // 1. INITIALIZE FIREBASE REALTIME DATABASE SYNC + LOCAL PERSISTENCE
+        // 2. FIREBASE REALTIME DATABASE INITIALIZATION & LIVE LISTENERS
         // =========================================================================
-        function setSyncBadgeStatus(mode) {
+        function updateSyncBadge(state) {
             const badge = document.getElementById('cloudSyncBadge');
             if (!badge) return;
-            if (mode === 'live') {
+            if (state === 'live') {
                 badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
-                badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live Firebase Synced';
-            } else {
+                badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Live Cloud Synced';
+            } else if (state === 'local') {
                 badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30';
                 badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Local Sync Active';
+            } else {
+                badge.className = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30';
+                badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping"></span> Connecting Cloud...';
             }
         }
 
-        async function initCloudSync() {
+        function initCloudSync() {
             loadLocalCache();
             refreshAllViews();
+            updateSyncBadge('connecting');
 
             try {
-                if (FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey && FIREBASE_CONFIG.databaseURL) {
-                    const app = initializeApp(FIREBASE_CONFIG);
-                    db = getDatabase(app);
-                    setSyncBadgeStatus('live');
-                    subscribeToRealtimeDB();
-                } else {
-                    setSyncBadgeStatus('local');
-                }
+                const app = initializeApp(firebaseConfig);
+                db = getDatabase(app);
+
+                // Listen to connected state from Firebase Realtime Database
+                const connectedRef = ref(db, '.info/connected');
+                onValue(connectedRef, (snap) => {
+                    if (snap.val() === true) {
+                        updateSyncBadge('live');
+                    } else {
+                        updateSyncBadge('connecting');
+                    }
+                }, () => {
+                    updateSyncBadge('local');
+                });
+
+                // Live listener for students
+                const studentsRef = ref(db, `${RTDB_ROOT_PATH}/students`);
+                onValue(studentsRef, (snapshot) => {
+                    const val = snapshot.val();
+                    if (val && typeof val === 'object') {
+                        students = Object.entries(val)
+                            .map(([id, item]) => ({ id, ...item }))
+                            .sort((a, b) => (a.seat || '').localeCompare(b.seat || ''));
+                    } else {
+                        students = [];
+                    }
+                    saveLocalCache();
+                    refreshAllViews();
+                }, (error) => {
+                    console.warn('Realtime DB students read error:', error);
+                    updateSyncBadge('local');
+                });
+
+                // Live listener for attendance logs
+                const attendanceRef = ref(db, `${RTDB_ROOT_PATH}/attendance`);
+                onValue(attendanceRef, (snapshot) => {
+                    const val = snapshot.val();
+                    if (val && typeof val === 'object') {
+                        attendanceLogs = Object.entries(val)
+                            .map(([id, item]) => ({ id, ...item }))
+                            .sort((a, b) => (b.checkInTimestamp || 0) - (a.checkInTimestamp || 0));
+                    } else {
+                        attendanceLogs = [];
+                    }
+                    saveLocalCache();
+                    refreshAllViews();
+                }, (error) => {
+                    console.warn('Realtime DB attendance read error:', error);
+                    updateSyncBadge('local');
+                });
             } catch (err) {
-                console.warn('Firebase Realtime DB fallback to local storage:', err);
-                setSyncBadgeStatus('local');
+                console.warn('Firebase Realtime Database init fallback to local storage:', err);
+                updateSyncBadge('local');
             }
+
             ensureFaceModelsLoaded();
         }
 
-        function subscribeToRealtimeDB() {
-            if (!db) return;
-
-            const studentsDbRef = ref(db, `${LIBRARY_ROOT_PATH}/students`);
-            onValue(studentsDbRef, (snapshot) => {
-                const rawVal = snapshot.val();
-                if (rawVal && typeof rawVal === 'object') {
-                    students = Object.entries(rawVal)
-                        .map(([key, item]) => ({ ...(item || {}), id: (item && item.id) || key }))
-                        .sort((a, b) => (a.seat || '').localeCompare(b.seat || ''));
-                } else {
-                    students = [];
-                }
-                setSyncBadgeStatus('live');
-                saveLocalCache();
-                refreshAllViews();
-            }, (error) => {
-                console.error('Realtime DB students listener error:', error);
-            });
-
-            const logsDbRef = ref(db, `${LIBRARY_ROOT_PATH}/attendance`);
-            onValue(logsDbRef, (snapshot) => {
-                const rawVal = snapshot.val();
-                if (rawVal && typeof rawVal === 'object') {
-                    attendanceLogs = Object.entries(rawVal)
-                        .map(([key, item]) => ({ ...(item || {}), id: (item && item.id) || key }))
-                        .sort((a, b) => (b.checkInTimestamp || 0) - (a.checkInTimestamp || 0));
-                } else {
-                    attendanceLogs = [];
-                }
-                setSyncBadgeStatus('live');
-                saveLocalCache();
-                refreshAllViews();
-            }, (error) => {
-                console.error('Realtime DB attendance listener error:', error);
-            });
-        }
-
         window.clearAllLibraryData = async function() {
-            try {
-                if (db) {
-                    await Promise.all([
-                        remove(ref(db, `${LIBRARY_ROOT_PATH}/students`)),
-                        remove(ref(db, `${LIBRARY_ROOT_PATH}/attendance`))
-                    ]);
-                }
-            } catch (e) {
-                console.warn('Firebase clear failed, clearing local cache:', e);
-            }
             students = [];
             attendanceLogs = [];
             saveLocalCache();
             refreshAllViews();
+
+            try {
+                if (db) {
+                    await remove(ref(db, RTDB_ROOT_PATH));
+                }
+            } catch (e) {
+                console.warn('Cloud clear failed, cleared local cache:', e);
+            }
             showToast('All student and attendance records cleared.', 'info');
         };
 
@@ -902,7 +919,7 @@
         };
 
         // =========================================================================
-        // 2. PANEL SWITCHER & ADMIN PIN UNLOCK FLOW
+        // 3. PANEL SWITCHER & ADMIN PIN UNLOCK FLOW
         // =========================================================================
         window.switchPanel = function(panel) {
             activePanel = panel;
@@ -1011,7 +1028,7 @@
         };
 
         // =========================================================================
-        // 3. AUTOMATIC FACE RECOGNITION DOOR KIOSK & ATTENDANCE LOGIC
+        // 4. AUTOMATIC FACE RECOGNITION DOOR KIOSK & ATTENDANCE LOGIC
         // =========================================================================
         window.activateDoorScanner = async function() {
             clearTimeout(confirmTimer);
@@ -1190,6 +1207,7 @@
                 return;
             }
 
+            // Shut off camera immediately once matched
             stopDoorCameraOnly();
 
             const today = getTodayKey();
@@ -1230,18 +1248,19 @@
                     status: 'Inside'
                 };
 
-                try {
-                    if (db) {
-                        await set(ref(db, `${LIBRARY_ROOT_PATH}/attendance/${logId}`), newEntry);
-                    }
-                } catch (e) {
-                    console.warn('Realtime DB log write failed, saved locally:', e);
-                }
                 const existingIdx = attendanceLogs.findIndex(l => l.id === logId);
                 if (existingIdx >= 0) attendanceLogs[existingIdx] = newEntry;
                 else attendanceLogs.unshift(newEntry);
                 saveLocalCache();
                 refreshAllViews();
+
+                try {
+                    if (db) {
+                        await set(ref(db, `${RTDB_ROOT_PATH}/attendance/${logId}`), newEntry);
+                    }
+                } catch (e) {
+                    console.warn('Cloud log write failed, saved locally:', e);
+                }
                 playChime(false);
                 showDoorConfirmation(student, timeStr, 'ENTRY', newEntry);
             } else {
@@ -1249,19 +1268,20 @@
                 todayRecord.checkOutTime = timeStr;
                 todayRecord.checkOutTimestamp = nowMs;
                 todayRecord.status = 'Checked Out';
+                saveLocalCache();
+                refreshAllViews();
+
                 try {
                     if (db) {
-                        await update(ref(db, `${LIBRARY_ROOT_PATH}/attendance/${todayRecord.id}`), {
+                        await update(ref(db, `${RTDB_ROOT_PATH}/attendance/${todayRecord.id}`), {
                             checkOutTime: timeStr,
                             checkOutTimestamp: nowMs,
                             status: 'Checked Out'
                         });
                     }
                 } catch (e) {
-                    console.warn('Realtime DB log update failed, saved locally:', e);
+                    console.warn('Cloud log update failed, saved locally:', e);
                 }
-                saveLocalCache();
-                refreshAllViews();
                 playChime(true);
                 showDoorConfirmation(student, timeStr, 'EXIT', todayRecord);
             }
@@ -1312,6 +1332,7 @@
 
             if (window.lucide) lucide.createIcons();
 
+            // 3-second auto-close timer & countdown bar
             const bar = document.getElementById('confirmProgressBar');
             bar.style.transition = 'none';
             bar.style.width = '100%';
@@ -1337,7 +1358,7 @@
         }
 
         // =========================================================================
-        // 4. ADMIN DASHBOARD RENDERERS (SEATS, STUDENTS, FEES, DATE LOGS)
+        // 5. ADMIN DASHBOARD RENDERERS (SEATS, STUDENTS, FEES, DATE LOGS)
         // =========================================================================
         function refreshAllViews() {
             const today = getTodayKey();
@@ -1484,17 +1505,18 @@
             if (!stu) return;
             const nextStatus = stu.feeStatus === 'Paid' ? 'Pending' : 'Paid';
             stu.feeStatus = nextStatus;
+            saveLocalCache();
+            refreshAllViews();
+
             try {
                 if (db) {
-                    await update(ref(db, `${LIBRARY_ROOT_PATH}/students/${studentId}`), {
+                    await update(ref(db, `${RTDB_ROOT_PATH}/students/${studentId}`), {
                         feeStatus: nextStatus
                     });
                 }
             } catch (e) {
-                console.warn('Realtime DB fee update failed, saved locally:', e);
+                console.warn('Cloud fee update failed, saved locally:', e);
             }
-            saveLocalCache();
-            refreshAllViews();
             showToast(`${stu.name}'s fee marked as ${nextStatus}`, nextStatus === 'Paid' ? 'success' : 'warning');
         };
 
@@ -1502,15 +1524,16 @@
             const stu = students.find(s => s.id === studentId);
             if (!stu) return;
             students = students.filter(s => s.id !== studentId);
-            try {
-                if (db) {
-                    await remove(ref(db, `${LIBRARY_ROOT_PATH}/students/${studentId}`));
-                }
-            } catch (e) {
-                console.warn('Realtime DB delete failed, removed locally:', e);
-            }
             saveLocalCache();
             refreshAllViews();
+
+            try {
+                if (db) {
+                    await remove(ref(db, `${RTDB_ROOT_PATH}/students/${studentId}`));
+                }
+            } catch (e) {
+                console.warn('Cloud delete failed, removed locally:', e);
+            }
             showToast(`Removed ${stu.name} from registry`, 'info');
         };
 
@@ -1608,7 +1631,7 @@
         }
 
         // =========================================================================
-        // 5. ADD / EDIT STUDENT MODAL & FACE CAPTURE + DESCRIPTOR EXTRACTION
+        // 6. ADD / EDIT STUDENT MODAL & FACE CAPTURE + DESCRIPTOR EXTRACTION
         // =========================================================================
         window.openAddStudentModal = function(prefillSeat = '') {
             document.getElementById('modalTitle').textContent = 'Add New Library Student';
@@ -1784,4 +1807,120 @@
             const feeAmount = Number(document.getElementById('inpFeeAmount').value) || 800;
             const feeStatus = document.getElementById('inpFeeStatus').value;
 
-            const studentId = existingId || `stu_${
+            const studentId = existingId || `stu_${Date.now()}`;
+            const firstNameEncoded = encodeURIComponent(name.split(' ')[0]);
+            const photo = capturedFaceDataUrl || `https://placehold.co/200x200/065f46/ecfdf5?text=${firstNameEncoded}`;
+            const faceDescriptor = capturedFaceDescriptor || existingStudent?.faceDescriptor || null;
+
+            const record = { id: studentId, name, mobile, seat, shift, feeAmount, feeStatus, photo, faceDescriptor };
+
+            const idx = students.findIndex(s => s.id === studentId);
+            if (idx >= 0) students[idx] = record;
+            else students.push(record);
+            students.sort((a, b) => (a.seat || '').localeCompare(b.seat || ''));
+            saveLocalCache();
+            refreshAllViews();
+
+            try {
+                if (db) {
+                    await set(ref(db, `${RTDB_ROOT_PATH}/students/${studentId}`), record);
+                }
+            } catch (err) {
+                console.warn('Cloud student save failed, kept locally:', err);
+            }
+
+            window.closeStudentModal();
+            showToast(existingId ? `Updated ${name} (${seat})` : `Registered ${name} (${seat})`, 'success');
+        };
+
+        // =========================================================================
+        // 7. CSV EXPORT, CLOCK, SOUND & TOASTS
+        // =========================================================================
+        window.exportAdminCSV = function() {
+            const dateLogs = attendanceLogs.filter(l => l.date === selectedAdminLogDate);
+            if (dateLogs.length === 0) {
+                showToast(`No attendance logs on ${selectedAdminLogDate} to export`, 'warning');
+                return;
+            }
+            const headers = ['Date', 'Student Name', 'Seat', 'Check-In', 'Check-Out', 'Status'];
+            const rows = dateLogs.map(l => [
+                l.date, `"${l.studentName}"`, l.seat, l.checkInTime, l.checkOutTime || 'Inside', l.status
+            ]);
+            const csv = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const a = document.createElement('a');
+            a.href = encodeURI(csv);
+            a.download = `Savitri_Success_Library_${selectedAdminLogDate}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            showToast(`CSV exported for ${selectedAdminLogDate}!`, 'success');
+        };
+
+        function updateLiveClock() {
+            const now = new Date();
+            const clockEl = document.getElementById('doorClock');
+            const dateEl = document.getElementById('doorDate');
+            if (clockEl) {
+                clockEl.textContent = now.toLocaleTimeString('en-US', {
+                    hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true
+                });
+            }
+            if (dateEl) {
+                dateEl.textContent = now.toLocaleDateString('en-US', {
+                    weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
+                });
+            }
+        }
+
+        function playChime(isExit) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(isExit ? 520 : 660, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(isExit ? 390 : 880, ctx.currentTime + 0.18);
+                gain.gain.setValueAtTime(0.18, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.25);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.25);
+            } catch (e) {}
+        }
+
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const colors = {
+                success: 'bg-emerald-950/95 border-emerald-500 text-emerald-100',
+                error: 'bg-rose-950/95 border-rose-500 text-rose-100',
+                warning: 'bg-amber-950/95 border-amber-500 text-amber-100',
+                info: 'bg-slate-900/95 border-slate-600 text-slate-100'
+            };
+            const el = document.createElement('div');
+            el.className = `pointer-events-auto px-4 py-3 rounded-2xl border shadow-xl text-xs font-bold backdrop-blur-md transition-all ${colors[type] || colors.info}`;
+            el.textContent = msg;
+            container.appendChild(el);
+            setTimeout(() => {
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 300);
+            }, 3000);
+        }
+
+        // Boot App
+        window.addEventListener('DOMContentLoaded', () => {
+            if (window.lucide) lucide.createIcons();
+            updateLiveClock();
+            setInterval(updateLiveClock, 1000);
+
+            const initialHash = window.location.hash.replace('#', '');
+            if (initialHash === 'admin') {
+                window.switchPanel('admin');
+            } else {
+                window.switchPanel('door');
+            }
+            initCloudSync();
+        });
+    </script>
+</body>
+</html>
